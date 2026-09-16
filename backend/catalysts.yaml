@@ -1,0 +1,79 @@
+# Planned or under-way projects that could lift nearby neighborhoods over the next 10-20 years.
+# Edit freely: each project adds `weight` to every neighborhood within `radius_km` of any of its points.
+# Coordinates are approximate (station areas / corridor points), good enough for neighborhood-level scoring.
+# weight guide: 1.0 = funded & under construction, 0.75 = funded/committed, 0.5 = planned but uncertain.
+
+catalysts:
+  - name: Second Avenue Subway Phase 2 (106th, 116th, 125th St)
+    type: transit
+    status: under construction, service expected early 2030s
+    weight: 1.0
+    radius_km: 0.8
+    points:
+      - [-73.9412, 40.7894]
+      - [-73.9367, 40.7962]
+      - [-73.9377, 40.8042]
+
+  - name: Penn Station Access - new Metro-North stations in the East Bronx
+    type: transit
+    status: under construction, service expected ~2027-2028
+    weight: 1.0
+    radius_km: 0.8
+    points:
+      - [-73.8906, 40.8207]  # Hunts Point
+      - [-73.8605, 40.8423]  # Parkchester-Van Nest
+      - [-73.8435, 40.8468]  # Morris Park
+      - [-73.8247, 40.8667]  # Co-op City
+
+  - name: Interborough Express (Bay Ridge - Jackson Heights light rail)
+    type: transit
+    status: in design/environmental review; funding and timeline not final
+    weight: 0.5
+    radius_km: 0.8
+    points:  # approximate corridor points along the Bay Ridge Branch
+      - [-74.0210, 40.6400]
+      - [-74.0050, 40.6320]
+      - [-73.9850, 40.6270]
+      - [-73.9660, 40.6260]
+      - [-73.9480, 40.6320]
+      - [-73.9280, 40.6390]
+      - [-73.9050, 40.6480]
+      - [-73.9010, 40.6670]
+      - [-73.9030, 40.6790]
+      - [-73.9050, 40.6930]
+      - [-73.9050, 40.7020]
+      - [-73.8900, 40.7130]
+      - [-73.8800, 40.7260]
+      - [-73.8910, 40.7470]
+
+  - name: Willets Point redevelopment (housing, soccer stadium)
+    type: development
+    status: under construction
+    weight: 0.75
+    radius_km: 1.0
+    points:
+      - [-73.8420, 40.7580]
+
+  - name: Lower Manhattan office-to-residential conversions (467-m incentive)
+    type: development
+    status: multiple conversions under way
+    weight: 0.75
+    radius_km: 0.9
+    points:
+      - [-74.0090, 40.7070]
+
+  - name: Brooklyn Marine Terminal redevelopment
+    type: development
+    status: vision plan stage
+    weight: 0.5
+    radius_km: 1.0
+    points:
+      - [-74.0000, 40.6890]
+
+  - name: Sunnyside Yard master plan
+    type: development
+    status: long-range plan, unfunded
+    weight: 0.25
+    radius_km: 1.0
+    points:
+      - [-73.9300, 40.7480]

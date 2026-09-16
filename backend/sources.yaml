@@ -1,0 +1,54 @@
+# Data sources, run in this order on refresh. To add one: write an adapter subclassing
+# app.sources.base.Source, then add an entry here. `schedule` is a cron expression (NYC time);
+# omit it for manual-only sources. Set `enabled: false` to turn a source off.
+
+sources:
+  # --- geography (must run first) ---
+  nta_boundaries:
+    adapter: app.sources.nta_boundaries.NtaBoundaries
+    schedule: "0 3 1 1 *"          # yearly
+
+  # --- closed sales & price history ---
+  dof_condo_sales:
+    adapter: app.sources.dof_sales.DofCondoSales
+    schedule: "0 4 * * 1"          # weekly
+  zillow_research:
+    adapter: app.sources.zillow_research.ZillowResearch
+    schedule: "0 5 20 * *"         # monthly
+
+  # --- neighborhood growth signals ---
+  housing_database:
+    adapter: app.sources.development.HousingDatabase
+    schedule: "0 5 1 */3 *"        # quarterly
+  rezonings:
+    adapter: app.sources.development.Rezonings
+    schedule: "0 5 2 * *"
+    options: {lookback_years: 10}
+  subway_access:
+    adapter: app.sources.transit.SubwayAccess
+    schedule: "0 5 3 */3 *"
+  planned_catalysts:
+    adapter: app.sources.transit.PlannedCatalysts
+    schedule: "0 5 * * 0"          # re-reads catalysts.yaml weekly
+  nypd_felonies:
+    adapter: app.sources.livability.NypdFelonies
+    schedule: "0 5 15 2 *"         # yearly, once the prior year is published
+  liquor_licenses:
+    adapter: app.sources.livability.LiquorLicenses
+    schedule: "0 5 4 * *"
+    options: {recent_years: 3}
+  future_floodplain:
+    adapter: app.sources.livability.FutureFloodplain
+    schedule: "0 5 5 1 *"
+  census_acs:
+    adapter: app.sources.census_acs.CensusAcs
+    schedule: "0 5 1 1,7 *"
+
+  # --- listings ---
+  rentcast_listings:
+    adapter: app.sources.rentcast.RentCastListings
+    schedule: "0 8 * * *"          # daily; free tier is ~50 requests/month
+    options: {max_requests_per_run: 1, page_size: 500}
+  acris_sold_check:
+    adapter: app.sources.acris.AcrisSoldCheck
+    schedule: "0 9 * * *"          # daily
