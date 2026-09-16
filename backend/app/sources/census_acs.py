@@ -1,16 +1,21 @@
 """US Census ACS 5-year estimates by tract, aggregated to 2020 NTAs (requires CENSUS_API_KEY).
 
-Compares the latest ACS release with the one ten years earlier. Older releases use 2010 tracts; those are
-mapped to NTAs through their 2020 successors (same code, or split children sharing the first four digits).
+Compares the latest ACS release with the one ten years earlier. Releases before 2020 use 2010 tracts; their
+counts are split across 2020 tracts (and so NTAs) by land-area overlap, using the Census Bureau's official
+2020-2010 tract relationship file.
 """
 
-from collections import Counter, defaultdict
+import csv
+import io
+from collections import defaultdict
 from datetime import date
 
 from app.sources import socrata
 from app.sources.base import Source, SourceContext
 
 COUNTIES = ["005", "047", "061", "081", "085"]
+TRACT_RELATIONSHIP_URL = "https://www2.census.gov/geo/docs/maps-data/data/rel2020/tract/tab20_tract20_tract10_st36.txt"
+FIRST_ACS_WITH_2020_TRACTS = 2020
 VARS = {
     "pop": "B01003_001E",
     "households": "B11001_001E",
@@ -40,8 +45,10 @@ class CensusAcs(Source):
         tract_to_nta = {r["geoid"]: r["ntacode"] for r in socrata.nyc(
             ctx.http, "hm78-6dwm", ctx.settings.socrata_app_token, select="geoid,ntacode")}
 
-        now = self._aggregate(self._fetch(ctx, latest), tract_to_nta)
-        then = self._aggregate(self._fetch(ctx, earlier), _legacy_mapping(tract_to_nta))
+        direct = {geoid: [(nta, 1.0)] for geoid, nta in tract_to_nta.items()}
+        now = self._aggregate(self._fetch(ctx, latest), direct)
+        earlier_mapping = direct if earlier >= FIRST_ACS_WITH_2020_TRACTS else tract2010_to_nta(ctx, tract_to_nta)
+        then = self._aggregate(self._fetch(ctx, earlier), earlier_mapping)
 
         metrics = defaultdict(dict)
         for nta, v in now.items():
@@ -90,13 +97,13 @@ class CensusAcs(Source):
         return out
 
     @staticmethod
-    def _aggregate(tracts: dict[str, dict], mapping: dict[str, str]) -> dict[str, dict[str, float]]:
+    def _aggregate(tracts: dict[str, dict], mapping: dict[str, list[tuple[str, float]]]) -> dict[str, dict[str, float]]:
+        """Sum tract counts into NTAs; `mapping` gives each tract's (nta, share) pieces."""
         agg: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
         for geoid, values in tracts.items():
-            nta = mapping.get(geoid)
-            if nta:
+            for nta, share in mapping.get(geoid, []):
                 for k, v in values.items():
-                    agg[nta][k] += v
+                    agg[nta][k] += v * share
         return agg
 
 
@@ -104,12 +111,26 @@ def _share(v: dict, parts: list[str], total: str) -> float | None:
     return sum(v[p] for p in parts) / v[total] if v[total] else None
 
 
-def _legacy_mapping(tract_to_nta: dict[str, str]) -> dict[str, str]:
-    """Map 2010 tract GEOIDs to 2020 NTAs: exact code match, else the most common NTA among split children."""
-    mapping = dict(tract_to_nta)
-    by_parent = defaultdict(Counter)
-    for geoid, nta in tract_to_nta.items():
-        by_parent[geoid[:9]][nta] += 1
-    for parent, counter in by_parent.items():
-        mapping.setdefault(parent + "00", counter.most_common(1)[0][0])
-    return mapping
+def tract2010_to_nta(ctx: SourceContext, tract_to_nta: dict[str, str]) -> dict[str, list[tuple[str, float]]]:
+    """2010 tract GEOID -> [(2020 NTA, share of the 2010 tract's land area)]."""
+    resp = ctx.http.get(TRACT_RELATIONSHIP_URL, timeout=120)
+    resp.raise_for_status()
+    return parse_tract_relationships(resp.content.decode("utf-8-sig"), tract_to_nta)
+
+
+def parse_tract_relationships(text: str, tract_to_nta: dict[str, str]) -> dict[str, list[tuple[str, float]]]:
+    pieces: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+    land10: dict[str, float] = {}
+    for row in csv.DictReader(io.StringIO(text), delimiter="|"):
+        nta = tract_to_nta.get(row["GEOID_TRACT_20"])
+        if not nta:
+            continue
+        g10 = row["GEOID_TRACT_10"]
+        land10[g10] = float(row["AREALAND_TRACT_10"] or 0)
+        pieces[g10][nta] += float(row["AREALAND_PART"] or 0)
+    out = {}
+    for g10, by_nta in pieces.items():
+        total = land10[g10] or sum(by_nta.values())
+        if total:
+            out[g10] = [(nta, part / total) for nta, part in by_nta.items() if part > 0]
+    return out

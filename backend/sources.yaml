@@ -47,8 +47,22 @@ sources:
   # --- listings ---
   rentcast_listings:
     adapter: app.sources.rentcast.RentCastListings
-    schedule: "0 8 * * *"          # daily; free tier is ~50 requests/month
-    options: {max_requests_per_run: 1, page_size: 500}
+    schedule: "0 8 */3 * *"        # every 3 days at 8am -> at most ~10 requests/month
+    options:
+      max_requests_per_run: 1        # each request returns up to 500 listings
+      page_size: 500
+      seed_days_old: 30              # an area's first search backfills a month
+      max_days_old: 30
+      min_hours_between_requests: 60 # also blocks repeated "Refresh now" clicks
+      monthly_request_limit: 20      # hard cap, well under the free plan's 50
+      # One area per run, least recently searched first (each ~every 15 days). A request returns the
+      # 500 listings nearest the center, so a citywide circle would only ever cover Manhattan.
+      areas:
+        - {name: manhattan, latitude: 40.7831, longitude: -73.9712, radius: 6}
+        - {name: brooklyn, latitude: 40.6500, longitude: -73.9500, radius: 6}
+        - {name: queens, latitude: 40.7282, longitude: -73.8300, radius: 7}
+        - {name: bronx, latitude: 40.8448, longitude: -73.8648, radius: 5}
+        - {name: staten_island, latitude: 40.5795, longitude: -74.1502, radius: 6}
   acris_sold_check:
     adapter: app.sources.acris.AcrisSoldCheck
     schedule: "0 9 * * *"          # daily

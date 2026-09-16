@@ -21,6 +21,7 @@ export type ListingRow = {
   price_per_sqft: number | null;
   year_built: number | null;
   status: "active" | "off_market" | "sold" | "withdrawn";
+  ownership: "condo" | "likely_coop" | "unknown";
   listed_date: string;
   first_seen: string;
   is_new: boolean;
@@ -144,6 +145,7 @@ export type NeighborhoodDetail = {
 
 export type Summary = {
   active: number;
+  likely_coops_hidden: number;
   off_market: number;
   sold: number;
   withdrawn: number;

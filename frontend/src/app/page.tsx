@@ -20,11 +20,12 @@ type Filters = {
   max_days_on_market: string;
   price_cut: boolean;
   new_only: boolean;
+  include_coops: boolean;
 };
 
 const EMPTY: Filters = {
   borough: "", neighborhood: "", min_price: "", max_price: "", min_beds: "", min_growth: "",
-  min_cap_rate: "", max_days_on_market: "", price_cut: false, new_only: false,
+  min_cap_rate: "", max_days_on_market: "", price_cut: false, new_only: false, include_coops: false,
 };
 
 function toQuery(f: Filters) {
@@ -94,6 +95,10 @@ export default function ScreenerPage() {
         <label className="col-span-2 flex items-center gap-4 text-sm text-stone-700 md:col-span-4 xl:col-span-8">
           <span className="flex items-center gap-1.5"><input type="checkbox" checked={filters.new_only} onChange={(e) => set("new_only", e.target.checked)} /> New only</span>
           <span className="flex items-center gap-1.5"><input type="checkbox" checked={filters.price_cut} onChange={(e) => set("price_cut", e.target.checked)} /> Price cut</span>
+          <span className="flex items-center gap-1.5" title="Listings the feed calls condos but that sit on an ordinary tax lot, so they're probably co-ops">
+            <input type="checkbox" checked={filters.include_coops} onChange={(e) => set("include_coops", e.target.checked)} /> Show likely co-ops
+            {summary.data?.likely_coops_hidden ? <span className="text-xs text-stone-400">({summary.data.likely_coops_hidden} hidden)</span> : null}
+          </span>
           <button className="ml-auto text-xs text-stone-500 hover:text-stone-900" onClick={() => setFilters(EMPTY)}>Clear filters</button>
         </label>
       </div>

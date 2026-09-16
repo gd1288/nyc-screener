@@ -1,68 +1,128 @@
 """RentCast sale listings (https://developers.rentcast.io). Requires RENTCAST_API_KEY.
 
-The free tier allows ~50 requests/month, so by default each run makes one request for condos listed in the
-last `days_old` days (new-listing discovery). With a paid plan set `mode: full` and raise the limits to page
-through every active listing, which also lets the pipeline detect listings that went off market.
+A request returns at most 500 listings, nearest the search center first, so one citywide circle fills up
+with Manhattan and New Jersey. Instead each run searches one of `areas` (roughly a borough each): the one
+searched longest ago, asking for everything listed since that search (plus a 2-day overlap).
+
+The free tier allows 50 requests/month, so usage is capped three ways (all set in sources.yaml):
+  - `max_requests_per_run`: requests per run (default 1)
+  - `min_hours_between_requests`: runs this soon after a successful request are skipped (incl. "Refresh now")
+  - `monthly_request_limit`: hard stop per calendar month, kept well under the plan limit
+Every attempted request is counted, even if it fails, since RentCast doesn't document whether errors are billed.
+Each response's total match count (X-Total-Count) is saved so truncated areas are visible.
+
+With a paid plan, set `mode: full` and raise the limits to page through every active listing, which also lets
+the pipeline detect listings that went off market.
 """
 
-from datetime import date, datetime
+import logging
+from datetime import date, datetime, timedelta
 
 from app.models import AppSetting
 from app.pipeline.listings import RawListing, sync_listings
 from app.sources.base import Source, SourceContext, SourceSkipped
 
+log = logging.getLogger(__name__)
+
 API = "https://api.rentcast.io/v1/listings/sale"
-NYC_CENTER = (40.7128, -74.0060)
-NYC_RADIUS_MILES = 17  # reaches the far corners of Staten Island, the Bronx and eastern Queens
 USAGE_KEY = "rentcast_usage"
+DEFAULT_AREAS = [
+    {"name": "manhattan", "latitude": 40.7831, "longitude": -73.9712, "radius": 6},
+    {"name": "brooklyn", "latitude": 40.6500, "longitude": -73.9500, "radius": 6},
+    {"name": "queens", "latitude": 40.7282, "longitude": -73.8300, "radius": 7},
+    {"name": "bronx", "latitude": 40.8448, "longitude": -73.8648, "radius": 5},
+    {"name": "staten_island", "latitude": 40.5795, "longitude": -74.1502, "radius": 6},
+]
+OVERLAP_DAYS = 2
+
+
+def read_usage(ctx: SourceContext) -> dict:
+    row = ctx.session.get(AppSetting, USAGE_KEY)
+    value = dict(row.value) if row else {}
+    if "months" not in value:  # older format: {"YYYY-MM": count}
+        value = {"months": {k: v for k, v in value.items() if k[:2] == "20"}, "last_request_at": None}
+    value.setdefault("areas", {})
+    return value
+
+
+def pick_area(areas: list[dict], last_fetched: dict[str, str]) -> dict:
+    """The area never searched, else the one searched longest ago (config order breaks ties)."""
+    return min(areas, key=lambda a: last_fetched.get(a["name"], ""))
+
+
+def days_old_for(area: dict, last_fetched: dict[str, str], seed_days: int, max_days: int) -> int:
+    last = last_fetched.get(area["name"])
+    if not last:
+        return seed_days
+    return max(1, min((date.today() - date.fromisoformat(last)).days + OVERLAP_DAYS, max_days))
 
 
 class RentCastListings(Source):
     kind = "listings"
     requires = ["rentcast_api_key"]
-    description = "RentCast active condo sale listings (free tier: new listings only)"
+    description = "RentCast condo sale listings, one borough per run (free tier: request budget enforced)"
 
     def run(self, ctx: SourceContext) -> int:
         mode = self.options.get("mode", "new")
         page_size = int(self.options.get("page_size", 500))
         max_requests = int(self.options.get("max_requests_per_run", 1))
-        monthly_limit = int(self.options.get("monthly_request_limit", 45))
+        monthly_limit = int(self.options.get("monthly_request_limit", 20))
+        min_gap = timedelta(hours=float(self.options.get("min_hours_between_requests", 60)))
+        areas = self.options.get("areas") or DEFAULT_AREAS
 
-        usage = ctx.session.get(AppSetting, USAGE_KEY)
-        usage_by_month = dict(usage.value) if usage else {}
+        usage = read_usage(ctx)
         month = date.today().strftime("%Y-%m")
-        used = usage_by_month.get(month, 0)
+        used = usage["months"].get(month, 0)
+        last = datetime.fromisoformat(usage["last_request_at"]) if usage.get("last_request_at") else None
+        if last and datetime.now() - last < min_gap:
+            raise SourceSkipped(f"Saving RentCast requests: last request {last:%b %d %H:%M}, "
+                                f"next allowed after {last + min_gap:%b %d %H:%M}.")
+        if used >= monthly_limit:
+            raise SourceSkipped(f"Monthly RentCast budget used ({used}/{monthly_limit}).")
 
-        params = {"latitude": NYC_CENTER[0], "longitude": NYC_CENTER[1], "radius": NYC_RADIUS_MILES,
-                  "propertyType": "Condo", "status": "Active", "limit": page_size}
+        area = pick_area(areas, usage["areas"])
+        params = {"latitude": area["latitude"], "longitude": area["longitude"], "radius": area["radius"],
+                  "propertyType": "Condo", "status": "Active", "limit": page_size, "includeTotalCount": "true"}
         if mode == "new":
-            params["daysOld"] = int(self.options.get("days_old", 7))
+            params["daysOld"] = days_old_for(area, usage["areas"], int(self.options.get("seed_days_old", 30)),
+                                             int(self.options.get("max_days_old", 30)))
 
-        raws, requests_made, exhausted = [], 0, False
+        raws, requests_made, exhausted, succeeded, returned, total = [], 0, False, False, 0, None
         try:
-            while requests_made < max_requests:
-                if used + requests_made >= monthly_limit:
-                    if requests_made == 0:
-                        raise SourceSkipped(f"Monthly RentCast request budget reached ({monthly_limit}).")
-                    break
-                resp = ctx.http.get(API, params={**params, "offset": requests_made * page_size},
+            while requests_made < max_requests and used + requests_made < monthly_limit:
+                requests_made += 1  # count before sending: a failed request may still be billed
+                resp = ctx.http.get(API, params={**params, "offset": (requests_made - 1) * page_size},
                                     headers={"X-Api-Key": ctx.settings.rentcast_api_key}, timeout=60)
-                requests_made += 1
                 resp.raise_for_status()
+                succeeded = True
                 page = resp.json()
+                returned += len(page)
+                total = resp.headers.get("X-Total-Count", total)
                 raws += [r for r in (to_raw(item) for item in page) if r]
                 if len(page) < page_size:
                     exhausted = True
                     break
         finally:
-            usage_by_month[month] = used + requests_made
-            ctx.session.merge(AppSetting(key=USAGE_KEY, value=usage_by_month))
-            ctx.session.commit()
+            if requests_made:
+                usage["months"][month] = used + requests_made
+                if succeeded:  # a rejected key shouldn't block retrying for days once it's fixed
+                    usage["last_request_at"] = datetime.now().isoformat(timespec="seconds")
+                    usage["areas"][area["name"]] = date.today().isoformat()
+                ctx.session.merge(AppSetting(key=USAGE_KEY, value=usage))
+                ctx.session.commit()
 
-        # Keep only listings inside NYC neighborhoods; the search radius also reaches NJ and Westchester.
+        # Keep only listings inside NYC neighborhoods; search circles also reach NJ, Westchester and Nassau.
         codes = ctx.geo.lookup_many([r.longitude if r.longitude is not None else float("nan") for r in raws],
                                     [r.latitude if r.latitude is not None else float("nan") for r in raws])
         raws = [r for r, code in zip(raws, codes) if code]
+        usage["last_result"] = {"area": area["name"], "days_old": params.get("daysOld"), "returned": returned,
+                                "total_matches": int(total) if total is not None else None, "kept_in_nyc": len(raws),
+                                "truncated": total is not None and int(total) > returned}
+        ctx.session.merge(AppSetting(key=USAGE_KEY, value=usage))
+        ctx.session.commit()
+        if usage["last_result"]["truncated"]:
+            log.warning("RentCast %s: %s matches but only %s returned; shorten the schedule or add areas",
+                        area["name"], total, returned)
         stats = sync_listings(ctx.session, self.name, raws, complete=(mode == "full" and exhausted),
                               geo=ctx.geo, http=ctx.http)
         return stats.total

@@ -32,6 +32,7 @@ export const COLUMNS: Record<string, Column> = {
           {r.is_new && <Tag tone="new">New</Tag>}
           {r.price_cuts > 0 && <Tag tone="drop">Price cut ×{r.price_cuts}</Tag>}
           {r.times_relisted > 0 && <Tag tone="warn">Relisted</Tag>}
+          {r.ownership === "likely_coop" && <Tag tone="warn">Likely co-op</Tag>}
         </div>
       </div>
     ),

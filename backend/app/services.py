@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import Listing, Neighborhood, NeighborhoodMetric, NeighborhoodScore, Sale
-from app.pipeline.listings import days_on_market
+from app.pipeline.listings import days_on_market, ownership_type
 from app.scoring import investment as inv
 
 NEW_LISTING_DAYS = 3
@@ -129,6 +129,7 @@ def summarize(session: Session, listing: Listing, ctx: MarketContext, assumption
         "price_per_sqft": round(listing.price / listing.sqft) if listing.sqft else None,
         "year_built": listing.year_built,
         "status": listing.status,
+        "ownership": ownership_type(listing.bbl),
         "listed_date": listing.listed_date.isoformat(),
         "first_seen": listing.first_seen.isoformat(),
         "is_new": listing.first_seen >= datetime.now() - timedelta(days=NEW_LISTING_DAYS),

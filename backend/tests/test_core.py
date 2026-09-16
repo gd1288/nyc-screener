@@ -148,3 +148,106 @@ def test_building_address_key_matches_dof_format():
     assert building_address_key("15 William St") == building_address_key("15 WILLIAM STREET, 27A")
     assert building_address_key("200 E 72nd St") == building_address_key("200 EAST 72 STREET, 5B")
     assert building_address_key("25 Broad Street") != building_address_key("15 WILLIAM STREET")
+
+
+class _FakeResponse:
+    def __init__(self, items, total=None):
+        self.items = items
+        self.headers = {"X-Total-Count": str(total)} if total is not None else {}
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self.items
+
+
+class _CountingHttp:
+    def __init__(self):
+        self.calls = []
+
+    def get(self, url, params=None, **kw):
+        if "geosearch" in url:
+            return _FakeResponse({"features": []})
+        self.calls.append(params)
+        item = {"id": f"rc{len(self.calls)}", "price": 900_000, "addressLine1": "1 Test St", "addressLine2": "Apt 3B",
+                "latitude": 40.71, "longitude": -74.01, "listedDate": "2026-09-10T00:00:00Z"}
+        return _FakeResponse([item], total=1)
+
+
+def _expire_cooldown(session):
+    from app.models import AppSetting
+    from app.sources.rentcast import USAGE_KEY
+
+    usage = session.get(AppSetting, USAGE_KEY).value
+    usage["last_request_at"] = "2020-01-01T00:00:00"
+    session.merge(AppSetting(key=USAGE_KEY, value=usage))
+    session.commit()
+
+
+def test_rentcast_budget_guards_and_area_rotation(session):
+    from types import SimpleNamespace
+
+    from app.models import AppSetting
+    from app.sources.base import SourceContext, SourceSkipped
+    from app.sources.rentcast import USAGE_KEY, RentCastListings
+
+    http = _CountingHttp()
+    ctx = SourceContext(session=session, settings=SimpleNamespace(rentcast_api_key="k"), http=http)
+    areas = [{"name": "a", "latitude": 40.71, "longitude": -74.01, "radius": 1},
+             {"name": "b", "latitude": 40.71, "longitude": -74.01, "radius": 1}]
+    source = RentCastListings("rentcast_listings", min_hours_between_requests=60, monthly_request_limit=3,
+                              seed_days_old=30, areas=areas)
+
+    source.run(ctx)
+    assert len(http.calls) == 1 and http.calls[0]["daysOld"] == 30  # area "a" backfills
+
+    with pytest.raises(SourceSkipped, match="next allowed"):
+        source.run(ctx)  # e.g. a "Refresh now" click right after
+    assert len(http.calls) == 1
+
+    _expire_cooldown(session)
+    source.run(ctx)
+    assert len(http.calls) == 2 and http.calls[1]["daysOld"] == 30  # rotates to never-searched "b"
+
+    _expire_cooldown(session)
+    source.run(ctx)
+    assert http.calls[2]["daysOld"] == 2  # back to "a", searched today: only the overlap window
+
+    _expire_cooldown(session)
+    with pytest.raises(SourceSkipped, match="Monthly"):
+        source.run(ctx)  # 3 of 3 used
+    assert len(http.calls) == 3
+    assert session.get(AppSetting, USAGE_KEY).value["last_result"]["truncated"] is False
+
+
+def test_tract_relationships_split_2010_tracts_by_land_area():
+    from app.sources.census_acs import CensusAcs, parse_tract_relationships
+
+    text = ("GEOID_TRACT_20|GEOID_TRACT_10|AREALAND_TRACT_10|AREALAND_PART\n"
+            "36061000101|36061000100|100|75\n"
+            "36061000102|36061000100|100|25\n")
+    mapping = parse_tract_relationships(text, {"36061000101": "MN0101", "36061000102": "MN0102"})
+    assert sorted(mapping["36061000100"]) == [("MN0101", 0.75), ("MN0102", 0.25)]
+    agg = CensusAcs._aggregate({"36061000100": {"pop": 1000}}, mapping)
+    assert agg["MN0101"]["pop"] == 750 and agg["MN0102"]["pop"] == 250
+
+
+def test_duplicate_feed_ids_for_same_unit_merge(session):
+    geo = NeighborhoodIndex.load(session)
+    a = raw(ext="id-1")
+    b = raw(ext="id-2", price=990_000)
+    b.unit = "#12a"
+    stats = sync_listings(session, "src", [a, b], complete=True, geo=geo)
+    assert stats.new == 1 and session.query(Listing).count() == 1
+    assert session.query(Listing).one().price == 990_000
+    sync_listings(session, "src", [raw(ext="id-2", price=990_000)], complete=True, geo=geo)
+    assert session.query(Listing).count() == 1 and session.query(Listing).one().missed_fetches == 0
+
+
+@pytest.mark.parametrize("bbl,expected", [("1013107501", "condo"), ("1000251470", "condo"), ("1013500001", "likely_coop"),
+                                          (None, "unknown"), ("12", "unknown")])
+def test_ownership_type_from_tax_lot(bbl, expected):
+    from app.pipeline.listings import ownership_type
+
+    assert ownership_type(bbl) == expected

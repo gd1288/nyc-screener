@@ -40,10 +40,11 @@ def summary(session: Session = Depends(db)):
     counts = dict(session.query(Listing.status, func.count()).group_by(Listing.status).all())
     ctx = MarketContext.load(session)
     active = session.query(Listing).filter(Listing.status == ListingStatus.ACTIVE).all()
-    rows = [summarize(session, l, ctx) for l in active]
+    rows = [r for r in (summarize(session, l, ctx) for l in active) if r["ownership"] != "likely_coop"]
     last_run = session.query(func.max(SourceRun.finished_at)).scalar()
     return {
-        "active": counts.get(ListingStatus.ACTIVE, 0),
+        "active": len(rows),
+        "likely_coops_hidden": len(active) - len(rows),
         "off_market": counts.get(ListingStatus.OFF_MARKET, 0),
         "sold": counts.get(ListingStatus.SOLD, 0),
         "withdrawn": counts.get(ListingStatus.WITHDRAWN, 0),
@@ -71,6 +72,7 @@ def list_listings(
     max_days_on_market: int | None = None,
     price_cut: bool = False,
     new_only: bool = False,
+    include_coops: bool = False,
     session: Session = Depends(db),
 ):
     statuses = [ListingStatus.OFF_MARKET, ListingStatus.SOLD, ListingStatus.WITHDRAWN] if status == "closed" else [status]
@@ -92,7 +94,8 @@ def list_listings(
                 and (min_cap_rate is None or (r["cap_rate"] or -1) >= min_cap_rate)
                 and (max_days_on_market is None or r["days_on_market"] <= max_days_on_market)
                 and (not price_cut or r["price_cuts"] > 0)
-                and (not new_only or r["is_new"]))
+                and (not new_only or r["is_new"])
+                and (include_coops or r["ownership"] != "likely_coop"))
 
     rows = [r for r in rows if keep(r)]
     rows.sort(key=lambda r: (r["opportunity_score"] is None, -(r["opportunity_score"] or 0)))

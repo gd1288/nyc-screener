@@ -88,26 +88,30 @@ def sync_listings(
     stats = SyncStats()
     now = datetime.now()
     existing = {l.external_id: l for l in session.query(Listing).filter(Listing.source == source)}
+    # Feeds sometimes list one unit under several ids (e.g. two MLS entries); match those by address + unit.
+    by_unit = {unit_key(l.address, l.unit): l for l in existing.values() if l.status != ListingStatus.SOLD}
     seen: set[str] = set()
 
     for raw in raws:
-        seen.add(raw.external_id)
-        listing = existing.get(raw.external_id)
+        listing = existing.get(raw.external_id) or by_unit.get(unit_key(raw.address, raw.unit))
         if listing is None:
             listing = _create(session, source, raw, geo, http)
+            existing[raw.external_id] = by_unit[unit_key(raw.address, raw.unit)] = listing
+            seen.add(raw.external_id)
             stats.new += 1
-        else:
-            stats.updated += 1
-            _apply_fields(listing, raw)
-            listing.last_seen, listing.missed_fetches = now, 0
-            if listing.status in (ListingStatus.OFF_MARKET, ListingStatus.WITHDRAWN) and raw.status == ListingStatus.ACTIVE:
-                listing.status, listing.off_market_date = ListingStatus.ACTIVE, None
-                _snapshot(listing, "relisted")
-                stats.relisted += 1
-            if raw.price and abs(raw.price - listing.price) >= 1 and listing.status == ListingStatus.ACTIVE:
-                listing.price = raw.price
-                _snapshot(listing, "price_change")
-                stats.price_changes += 1
+            continue
+        seen.add(listing.external_id)
+        stats.updated += 1
+        _apply_fields(listing, raw)
+        listing.last_seen, listing.missed_fetches = now, 0
+        if listing.status in (ListingStatus.OFF_MARKET, ListingStatus.WITHDRAWN) and raw.status == ListingStatus.ACTIVE:
+            listing.status, listing.off_market_date = ListingStatus.ACTIVE, None
+            _snapshot(listing, "relisted")
+            stats.relisted += 1
+        if raw.price and abs(raw.price - listing.price) >= 1 and listing.status == ListingStatus.ACTIVE:
+            listing.price = raw.price
+            _snapshot(listing, "price_change")
+            stats.price_changes += 1
         if raw.status == ListingStatus.SOLD and listing.status != ListingStatus.SOLD:
             mark_sold(listing, raw.sold_price, raw.sold_date or date.today())
             stats.sold += 1
@@ -123,6 +127,23 @@ def sync_listings(
                 stats.off_market += 1
     session.commit()
     return stats
+
+
+def unit_key(address: str, unit: str | None) -> tuple[str, str]:
+    return " ".join(address.upper().replace(".", " ").replace(",", " ").split()), normalize_unit(unit) or ""
+
+
+CONDO_UNIT_LOTS = range(1001, 7000)  # individual condo units
+CONDO_BILLING_LOTS = range(7501, 10000)  # a condo building's billing lot (what address lookups return)
+
+
+def ownership_type(bbl: str | None) -> str:
+    """NYC assigns condo buildings special tax lots; co-ops and rentals keep an ordinary lot.
+    Returns "condo", "likely_coop" (ordinary lot, so probably a co-op mislabeled by the feed) or "unknown"."""
+    if not bbl or len(bbl) != 10 or not bbl.isdigit():
+        return "unknown"
+    lot = int(bbl[6:])
+    return "condo" if lot in CONDO_UNIT_LOTS or lot in CONDO_BILLING_LOTS else "likely_coop"
 
 
 def _create(session: Session, source: str, raw: RawListing, geo: NeighborhoodIndex, http: httpx.Client | None) -> Listing:
