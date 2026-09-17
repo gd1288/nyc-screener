@@ -13,7 +13,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from app.scoring import investment as inv
-from app.services import MarketContext
+from app.services import MarketContext, property_inputs
 from app.valuation.property import AddressLookup
 
 
@@ -64,24 +64,27 @@ def _area_for_metrics(ctx: MarketContext, profile: PropertyProfile) -> dict[str,
 
 def _estimate_appreciation(ctx: MarketContext, profile: PropertyProfile) -> FactorEstimate | None:
     m = _area_for_metrics(ctx, profile)
-    if ctx.city_value_cagr_10y is None and "zhvi_cagr_10y" not in m:
+    has_neighborhood_signal = "zhvi_cagr_10y" in m
+    if ctx.city_value_cagr_10y is None and not has_neighborhood_signal:
         return None
-    value = inv.base_appreciation(
-        inv.PropertyInputs(
-            price=profile.price,
-            neighborhood_value_cagr_10y=m.get("zhvi_cagr_10y"),
-            city_value_cagr_10y=ctx.city_value_cagr_10y,
-            growth_score=ctx.scores.get(profile.nta_code or ""),
-        )
-    )
+    # Reuse the same PropertyInputs construction the engine uses for the rest of the run (services.
+    # property_inputs), rather than building a second one here — a second, slightly different
+    # PropertyInputs is exactly how this factor's appreciation could quietly diverge from the
+    # Opportunity Score's appreciation for the same property.
+    value = inv.base_appreciation(property_inputs(profile, ctx))
     spread = inv.Assumptions().scenario_spread
+    source = (
+        "Zillow ZHVI 10y CAGR (neighborhood + citywide median), tilted by Growth Score"
+        if has_neighborhood_signal
+        else "Zillow ZHVI 10y CAGR (citywide median only — no neighborhood-specific data), tilted by Growth Score"
+    )
     return FactorEstimate(
         key="appreciation_override",
         label="Long-run appreciation",
         value=value,
         p10=round(value - spread, 4),
         p90=round(value + spread, 4),
-        source="Zillow ZHVI 10y CAGR (neighborhood + citywide median), tilted by Growth Score",
+        source=source,
         as_of="trailing 10y",
     )
 

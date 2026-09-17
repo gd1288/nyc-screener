@@ -6,11 +6,11 @@ scope) - this is the vertical slice: a saved property and a single run with over
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
-from app.models import ValuationProperty
+from app.models import Neighborhood, ValuationProperty
 from app.services import MarketContext
 from app.valuation import engine
 from app.valuation.factors import FACTOR_DEFS, PropertyProfile
@@ -53,13 +53,35 @@ class PropertyIn(BaseModel):
     property_type: str = "condo"
     address: str | None = None
     nta_code: str | None = None
-    price: float
+    price: float = Field(gt=0)
     sqft: float | None = None
     bedrooms: float | None = None
     common_charges: float | None = None
     property_taxes: float | None = None
     rent_estimate: float | None = None
     assumption_overrides: dict[str, float] = {}
+
+
+class PropertyPatch(BaseModel):
+    """Same fields as PropertyIn, all optional - PATCH only touches fields the caller actually sent
+    (`exclude_unset`), so omitting a field leaves it as-is instead of wiping it to `None`."""
+
+    label: str | None = None
+    property_type: str | None = None
+    address: str | None = None
+    nta_code: str | None = None
+    price: float | None = Field(default=None, gt=0)
+    sqft: float | None = None
+    bedrooms: float | None = None
+    common_charges: float | None = None
+    property_taxes: float | None = None
+    rent_estimate: float | None = None
+    assumption_overrides: dict[str, float] | None = None
+
+
+def _check_nta_code(session: Session, nta_code: str | None) -> None:
+    if nta_code and session.get(Neighborhood, nta_code) is None:
+        raise HTTPException(422, f"Unknown neighborhood code: {nta_code}")
 
 
 def _to_profile(row: ValuationProperty) -> PropertyProfile:
@@ -110,6 +132,7 @@ def list_properties(session: Session = Depends(db)):
 
 @router.post("/properties")
 def create_property(body: PropertyIn, session: Session = Depends(db)):
+    _check_nta_code(session, body.nta_code)
     row = ValuationProperty(**body.model_dump())
     session.add(row)
     session.commit()
@@ -122,9 +145,12 @@ def get_property(property_id: int, session: Session = Depends(db)):
 
 
 @router.patch("/properties/{property_id}")
-def update_property(property_id: int, body: PropertyIn, session: Session = Depends(db)):
+def update_property(property_id: int, body: PropertyPatch, session: Session = Depends(db)):
     row = _get(session, property_id)
-    for k, v in body.model_dump().items():
+    fields = body.model_dump(exclude_unset=True)
+    if "nta_code" in fields:
+        _check_nta_code(session, fields["nta_code"])
+    for k, v in fields.items():
         setattr(row, k, v)
     session.commit()
     return _row_dict(row)
@@ -149,11 +175,15 @@ class RunIn(BaseModel):
 
 @router.post("/properties/{property_id}/run")
 def run_property(property_id: int, body: RunIn, session: Session = Depends(db)):
+    if unknown := set(body.property_overrides) - PROFILE_OVERRIDE_FIELDS:
+        raise HTTPException(422, f"Unknown property override field(s): {sorted(unknown)}")
     row = _get(session, property_id)
     ctx = MarketContext.load(session)
     profile = _to_profile(row)
     for k, v in body.property_overrides.items():
-        if k in PROFILE_OVERRIDE_FIELDS:
-            setattr(profile, k, v)
+        setattr(profile, k, v)
     merged_overrides = {**row.assumption_overrides, **body.overrides}
-    return engine.run(profile, ctx, merged_overrides)
+    try:
+        return engine.run(profile, ctx, merged_overrides)
+    except engine.UnknownOverrideError as e:
+        raise HTTPException(422, str(e)) from e
