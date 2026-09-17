@@ -66,8 +66,8 @@ class RentCastListings(Source):
         mode = self.options.get("mode", "new")
         page_size = int(self.options.get("page_size", 500))
         max_requests = int(self.options.get("max_requests_per_run", 1))
-        monthly_limit = int(self.options.get("monthly_request_limit", 20))
-        min_gap = timedelta(hours=float(self.options.get("min_hours_between_requests", 60)))
+        monthly_limit = int(self.options.get("monthly_request_limit", 31))
+        min_gap = timedelta(hours=float(self.options.get("min_hours_between_requests", 24)))
         areas = self.options.get("areas") or DEFAULT_AREAS
 
         usage = read_usage(ctx)

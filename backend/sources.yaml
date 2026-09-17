@@ -47,15 +47,15 @@ sources:
   # --- listings ---
   rentcast_listings:
     adapter: app.sources.rentcast.RentCastListings
-    schedule: "0 8 */3 * *"        # every 3 days at 8am -> at most ~10 requests/month
+    schedule: "0 8 * * *"          # daily at 8am -> at most 31 requests/month
     options:
       max_requests_per_run: 1        # each request returns up to 500 listings
       page_size: 500
       seed_days_old: 30              # an area's first search backfills a month
       max_days_old: 30
-      min_hours_between_requests: 60 # also blocks repeated "Refresh now" clicks
-      monthly_request_limit: 20      # hard cap, well under the free plan's 50
-      # One area per run, least recently searched first (each ~every 15 days). A request returns the
+      min_hours_between_requests: 24 # also blocks repeated "Refresh now" clicks
+      monthly_request_limit: 31      # hard cap; daily cadence never exceeds this, still well under the free plan's 50
+      # One area per run, least recently searched first (each ~every 5 days with 5 areas). A request returns the
       # 500 listings nearest the center, so a citywide circle would only ever cover Manhattan.
       areas:
         - {name: manhattan, latitude: 40.7831, longitude: -73.9712, radius: 6}

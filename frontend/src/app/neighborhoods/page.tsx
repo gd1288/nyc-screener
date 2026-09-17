@@ -30,6 +30,10 @@ export default function NeighborhoodsPage() {
     return [...list].sort((a, b) => (val(b) ?? -Infinity) - (val(a) ?? -Infinity));
   }, [hoods.data, borough, query, condoOnly, sortKey]);
 
+  // The "active condo markets" filter can hide the very top of the citywide ranking (thin sales data =
+  // unreliable score), which otherwise looks like the list is missing rows at the start for no reason.
+  const hiddenAboveVisible = condoOnly && rows.length > 0 ? (rows[0].rank ?? 1) - 1 : 0;
+
   return (
     <>
       <PageHeader
@@ -49,7 +53,10 @@ export default function NeighborhoodsPage() {
             <label className="flex items-center gap-1.5 text-stone-700" title="At least 10 condo sales per year">
               <input type="checkbox" checked={condoOnly} onChange={(e) => setCondoOnly(e.target.checked)} /> Active condo markets only
             </label>
-            <span className="ml-auto text-xs text-stone-500">{rows.length} neighborhoods</span>
+            <span className="ml-auto text-xs text-stone-500">
+              {rows.length} of {hoods.data?.length ?? 0} neighborhoods
+              {hiddenAboveVisible > 0 && ` (#1–${hiddenAboveVisible} hidden: too few condo sales to score reliably)`}
+            </span>
           </div>
           <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
             <table className="w-full text-sm tabular-nums">
