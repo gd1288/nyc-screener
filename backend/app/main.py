@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
+from app.api.valuation import router as valuation_router
 from app.config import get_settings
 from app.db import init_db
 from app.sources.registry import load_sources, run_pipeline
@@ -27,8 +28,14 @@ def start_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler(timezone="America/New_York")
     for entry in load_sources():
         if entry.enabled and entry.schedule:
-            scheduler.add_job(_scheduled_run, CronTrigger.from_crontab(entry.schedule, timezone="America/New_York"),
-                              args=[entry.name], id=entry.name, misfire_grace_time=3600, coalesce=True)
+            scheduler.add_job(
+                _scheduled_run,
+                CronTrigger.from_crontab(entry.schedule, timezone="America/New_York"),
+                args=[entry.name],
+                id=entry.name,
+                misfire_grace_time=3600,
+                coalesce=True,
+            )
     scheduler.start()
     return scheduler
 
@@ -52,3 +59,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(router)
+app.include_router(valuation_router)

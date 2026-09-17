@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-09-17T19:32:05.379293+00:00",
+  "gaps": [
+    {
+      "factor": "interest_rate",
+      "label": "Mortgage rate",
+      "reason": "no live data source wired; falls back to a fixed default"
+    },
+    {
+      "factor": "rent_growth",
+      "label": "Rent growth",
+      "reason": "no live data source wired; falls back to a fixed default"
+    },
+    {
+      "factor": "vacancy_pct",
+      "label": "Vacancy rate",
+      "reason": "no live data source wired; falls back to a fixed default"
+    },
+    {
+      "factor": "expense_growth",
+      "label": "Expense growth",
+      "reason": "no live data source wired; falls back to a fixed default"
+    }
+  ]
+}

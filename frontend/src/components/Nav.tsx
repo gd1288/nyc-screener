@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/sold", label: "Sold & off-market" },
   { href: "/neighborhoods", label: "Neighborhoods" },
   { href: "/compare", label: "Compare" },
+  { href: "/valuation", label: "Valuation" },
   { href: "/add", label: "Add listings" },
   { href: "/sources", label: "Data sources" },
 ];

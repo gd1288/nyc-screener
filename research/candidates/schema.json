@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Data source candidate",
+  "description": "One candidate free data source proposed by the research-analyst subagent, written to research/candidates/<slug>.json. Approval and implementation happen outside this file (a human decision, then a normal add-data-source task) - this schema only fixes the shape of the proposal.",
+  "type": "object",
+  "required": ["name", "slug", "url", "coverage", "granularity", "update_frequency", "license", "cost", "recommendation", "proposed_at"],
+  "properties": {
+    "name": { "type": "string", "description": "Human-readable source name, e.g. 'FRED 30-Year Fixed Mortgage Rate'" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9-]+$", "description": "Matches the candidate JSON's filename stem" },
+    "url": { "type": "string", "format": "uri" },
+    "gap": { "type": "string", "description": "The research/gaps.json factor key this addresses, if any (e.g. 'interest_rate')" },
+    "coverage": { "type": "string", "enum": ["national", "state", "city", "custom"] },
+    "granularity": { "type": "string", "description": "e.g. 'tract', 'zcta', 'county', 'national', 'nyc-nta'" },
+    "update_frequency": { "type": "string", "description": "e.g. 'daily', 'monthly', 'quarterly', 'annual'" },
+    "license": { "type": "string", "description": "License/ToS summary; must confirm no login wall and no commercial-use restriction" },
+    "cost": { "type": "string", "description": "Must be free; note any rate limit" },
+    "history_available": { "type": "string", "description": "How far back data goes, if known" },
+    "correlation": {
+      "type": "object",
+      "description": "Output of app/research/evaluate_series.py against FHFA HPI growth / ZORI, once that exists. Omit if not computed.",
+      "properties": {
+        "target": { "type": "string" },
+        "correlation": { "type": "number", "minimum": -1, "maximum": 1 },
+        "lead_lag_months": { "type": "number" },
+        "regions_tested": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "recommendation": { "type": "string", "enum": ["recommend", "do-not-recommend"] },
+    "recommendation_notes": { "type": "string" },
+    "memo_path": { "type": "string", "description": "research/memos/<date>-<slug>.md" },
+    "proposed_at": { "type": "string", "format": "date" }
+  }
+}

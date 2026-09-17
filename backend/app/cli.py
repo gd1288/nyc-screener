@@ -121,6 +121,31 @@ def cmd_probe_sources() -> int:
     return 1 if failures else 0
 
 
+def cmd_research_gaps() -> int:
+    """Write research/gaps.json: valuation factors with no real data source wired, for the
+    research-analyst subagent to search against (it reads this file first, every time)."""
+    from app.services import MarketContext
+    from app.valuation.factors import FACTOR_DEFS, PropertyProfile, market_estimate
+
+    research_dir = PROJECT_ROOT / "research"
+    research_dir.mkdir(exist_ok=True)
+    with SessionLocal() as session:
+        ctx = MarketContext.load(session)
+        sample_nta = next(iter(ctx.scores), None)
+        estimates = market_estimate(ctx, PropertyProfile(price=1_000_000, nta_code=sample_nta))
+    gaps = [
+        {"factor": f.key, "label": f.label, "reason": "no live data source wired; falls back to a fixed default"}
+        for f in FACTOR_DEFS
+        if estimates.get(f.key) is None
+    ]
+    payload = {"generated_at": datetime.now(UTC).isoformat(), "gaps": gaps}
+    (research_dir / "gaps.json").write_text(json.dumps(payload, indent=2) + "\n")
+    print(f"{len(gaps)} gap(s) written to research/gaps.json")
+    for g in gaps:
+        print(f"  - {g['factor']}: {g['label']}")
+    return 0
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(prog="app.cli")
@@ -133,6 +158,7 @@ def main() -> int:
     diagnose = sub.add_parser("diagnose", help="health snapshot: source status + cached test/type result")
     diagnose.add_argument("--json", action="store_true", dest="as_json")
     sub.add_parser("probe-sources", help="ping every source's declared endpoint, write nothing")
+    sub.add_parser("research-gaps", help="write research/gaps.json: valuation factors with no real data source")
     args = parser.parse_args()
 
     if args.cmd == "probe-sources":
@@ -159,6 +185,8 @@ def main() -> int:
             print(json.dumps(run_backtest(s), indent=2))
     elif args.cmd == "diagnose":
         return cmd_diagnose(args.as_json)
+    elif args.cmd == "research-gaps":
+        return cmd_research_gaps()
     return 0
 
 

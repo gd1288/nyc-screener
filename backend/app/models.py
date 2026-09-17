@@ -146,3 +146,26 @@ class AppSetting(Base):
 
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[dict] = mapped_column(JSON)
+
+
+class ValuationProperty(Base):
+    """A saved property to run valuation scenarios against (not necessarily an active listing)."""
+
+    __tablename__ = "valuation_properties"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    label: Mapped[str] = mapped_column(String(120))
+    property_type: Mapped[str] = mapped_column(String(24), default="condo")  # condo, coop, multifamily, land, ...
+    address: Mapped[str | None] = mapped_column(String(200))
+    nta_code: Mapped[str | None] = mapped_column(ForeignKey("neighborhoods.code"), index=True)
+    price: Mapped[float] = mapped_column(Float)
+    sqft: Mapped[float | None] = mapped_column(Float)
+    bedrooms: Mapped[float | None] = mapped_column(Float)
+    common_charges: Mapped[float | None] = mapped_column(Float)  # monthly
+    property_taxes: Mapped[float | None] = mapped_column(Float)  # monthly
+    rent_estimate: Mapped[float | None] = mapped_column(Float)  # monthly
+    assumption_overrides: Mapped[dict] = mapped_column(
+        JSON, default=dict
+    )  # partial Assumptions, e.g. {"interest_rate": 0.07}
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)

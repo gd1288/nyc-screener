@@ -184,6 +184,48 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export type FactorInfo = { key: string; label: string };
+
+export type ValuationProperty = {
+  id: number;
+  label: string;
+  property_type: string;
+  address: string | null;
+  nta_code: string | null;
+  price: number;
+  sqft: number | null;
+  bedrooms: number | null;
+  common_charges: number | null;
+  property_taxes: number | null;
+  rent_estimate: number | null;
+  assumption_overrides: Record<string, number>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AddressLookupResult = {
+  address: string;
+  latitude: number;
+  longitude: number;
+  nta_code: string | null;
+  neighborhood_name: string | null;
+};
+
+export type FactorEstimate = {
+  key: string;
+  label: string;
+  value: number;
+  p10: number;
+  p90: number;
+  source: string;
+  as_of: string | null;
+};
+
+export type ValuationRun = Analysis & {
+  factors: Record<string, FactorEstimate | null>;
+  estimated_factors: string[];
+};
+
 /** Fetches `path` on mount and whenever it changes; `reload` refetches. `path: null` skips fetching. */
 export function useApi<T>(path: string | null) {
   const [data, setData] = useState<T | null>(null);
