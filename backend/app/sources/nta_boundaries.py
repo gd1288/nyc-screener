@@ -16,6 +16,7 @@ def area_km2(geom) -> float:
 class NtaBoundaries(Source):
     kind = "boundaries"
     description = "NYC 2020 Neighborhood Tabulation Areas (262 neighborhoods), NYC Open Data 9nt8-h7nd"
+    probe_socrata = ("data.cityofnewyork.us", "9nt8-h7nd")
 
     def run(self, ctx: SourceContext) -> int:
         resp = ctx.http.get(

@@ -23,6 +23,7 @@ def load_catalysts() -> list[dict]:
 class SubwayAccess(Source):
     kind = "neighborhood"
     description = "MTA subway stations (data.ny.gov 39hk-dx4f): station complexes and routes per neighborhood"
+    probe_socrata = ("data.ny.gov", "39hk-dx4f")
 
     def run(self, ctx: SourceContext) -> int:
         rows = list(socrata.nys(ctx.http, "39hk-dx4f", ctx.settings.socrata_app_token))
@@ -63,6 +64,15 @@ class SubwayAccess(Source):
 class PlannedCatalysts(Source):
     kind = "neighborhood"
     description = "Curated planned transit/infrastructure projects (edit backend/catalysts.yaml)"
+
+    def probe(self, ctx: SourceContext) -> tuple[bool | None, str]:
+        # This source reads a local file, not the network — "reachability" means "the file is
+        # there and parses", not an HTTP check.
+        try:
+            projects = load_catalysts()
+            return True, f"backend/catalysts.yaml: {len(projects)} project(s)"
+        except Exception as e:  # noqa: BLE001
+            return False, f"backend/catalysts.yaml: {type(e).__name__}: {e}"
 
     def run(self, ctx: SourceContext) -> int:
         score = defaultdict(float)

@@ -62,6 +62,12 @@ class RentCastListings(Source):
     requires = ["rentcast_api_key"]
     description = "RentCast condo sale listings, one borough per run (free tier: request budget enforced)"
 
+    def probe(self, ctx: SourceContext) -> tuple[bool | None, str]:
+        # Deliberately not probed: any authenticated hit — even a HEAD — spends against the
+        # monthly request budget this module exists to protect. `app.cli diagnose` already
+        # reports this source's last real run from source_runs; that's the health signal to use.
+        return None, "probing disabled to protect the RentCast request budget; see source_runs for its last real run"
+
     def run(self, ctx: SourceContext) -> int:
         mode = self.options.get("mode", "new")
         page_size = int(self.options.get("page_size", 500))

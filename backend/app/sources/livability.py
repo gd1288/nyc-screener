@@ -25,6 +25,7 @@ def _points(rows, lon_key="longitude", lat_key="latitude"):
 class NypdFelonies(Source):
     kind = "neighborhood"
     description = "NYPD complaint data (historic, qgea-i56i): felony counts, latest full year vs 5 years earlier"
+    probe_socrata = ("data.cityofnewyork.us", "qgea-i56i")
 
     def _count(self, ctx: SourceContext, year: int) -> dict[str, int]:
         rows = socrata.nyc(
@@ -48,6 +49,7 @@ class NypdFelonies(Source):
 class LiquorLicenses(Source):
     kind = "neighborhood"
     description = "NYS Liquor Authority active licenses (9s3h-dpkz): bars/restaurants and how many opened recently"
+    probe_socrata = ("data.ny.gov", "9s3h-dpkz")
 
     def run(self, ctx: SourceContext) -> int:
         years = int(self.options.get("recent_years", 3))
@@ -77,6 +79,7 @@ class LiquorLicenses(Source):
 class FutureFloodplain(Source):
     kind = "neighborhood"
     description = "NYC Future Floodplain 2050s, 100-year (27ya-gqtm): share of neighborhood area at risk"
+    probe_socrata = ("data.cityofnewyork.us", "27ya-gqtm")
 
     def run(self, ctx: SourceContext) -> int:
         dataset = self.options.get("dataset", "27ya-gqtm")

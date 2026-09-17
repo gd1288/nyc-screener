@@ -40,6 +40,7 @@ def repeat_sales_cagr(df: pd.DataFrame) -> pd.Series:
 class DofCondoSales(Source):
     kind = "sales"
     description = "NYC Dept. of Finance annualized sales, residential condo units (2016-present)"
+    probe_socrata = ("data.cityofnewyork.us", "w2pb-icbu")
 
     def run(self, ctx: SourceContext) -> int:
         rows = socrata.nyc(

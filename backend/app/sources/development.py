@@ -20,6 +20,7 @@ def _num(v) -> float:
 class HousingDatabase(Source):
     kind = "neighborhood"
     description = "NYC DCP Housing Database by 2020 NTA: completed units by year, filed/approved/permitted pipeline"
+    probe_socrata = ("data.cityofnewyork.us", "kyz5-72x5")
 
     def run(self, ctx: SourceContext) -> int:
         rows = list(socrata.nyc(ctx.http, "kyz5-72x5", ctx.settings.socrata_app_token))
@@ -45,6 +46,7 @@ class HousingDatabase(Source):
 class Rezonings(Source):
     kind = "neighborhood"
     description = "NYC DCP Mandatory Inclusionary Housing areas: neighborhood upzonings adopted since 2016"
+    probe_socrata = ("data.cityofnewyork.us", "m79g-k9r4")
 
     def run(self, ctx: SourceContext) -> int:
         years = int(self.options.get("lookback_years", 10))

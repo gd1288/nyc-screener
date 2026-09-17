@@ -38,6 +38,7 @@ class CensusAcs(Source):
     kind = "neighborhood"
     requires = ["census_api_key"]
     description = "US Census ACS 5-year: population, income, education, age and tenure trends by neighborhood"
+    probe_url = "https://api.census.gov/data.json"  # stable catalog endpoint, no key or year needed
 
     def run(self, ctx: SourceContext) -> int:
         latest = int(self.options.get("latest_year") or self._latest_available(ctx))

@@ -58,6 +58,7 @@ def cagr(end: pd.Series, start: pd.Series, years: float) -> pd.Series:
 class ZillowResearch(Source):
     kind = "neighborhood"
     description = "Zillow Research ZHVI (condo values) and ZORI (rents) by ZIP, 2000-present"
+    probe_url = ZHVI_URL
 
     def run(self, ctx: SourceContext) -> int:
         weights = zip_to_nta_weights(ctx)

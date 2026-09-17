@@ -22,11 +22,18 @@ MIN_DEED_AMOUNT = 10_000  # skip nominal-consideration transfers
 class AcrisSoldCheck(Source):
     kind = "sold_check"
     description = "ACRIS recorded deeds: confirms which tracked listings sold, and for how much"
+    probe_socrata = ("data.cityofnewyork.us", LEGALS)
 
     def run(self, ctx: SourceContext) -> int:
-        candidates = (ctx.session.query(Listing)
-                      .filter(Listing.status.in_([ListingStatus.ACTIVE, ListingStatus.OFF_MARKET]),
-                              Listing.bbl.is_not(None), Listing.unit.is_not(None)).all())
+        candidates = (
+            ctx.session.query(Listing)
+            .filter(
+                Listing.status.in_([ListingStatus.ACTIVE, ListingStatus.OFF_MARKET]),
+                Listing.bbl.is_not(None),
+                Listing.unit.is_not(None),
+            )
+            .all()
+        )
         sold = 0
         for listing in candidates:
             deed = find_deed(ctx, listing)
@@ -45,21 +52,34 @@ def find_deed(ctx: SourceContext, listing: Listing) -> dict | None:
     if not unit or not unit.replace("-", "").isalnum():
         return None
     # Filter by unit on the server (big condo blocks have tens of thousands of documents), then match exactly.
-    legals = socrata.nyc(ctx.http, LEGALS, token, select="document_id,unit", order="document_id desc", limit=5_000,
-                         where=f"borough='{borough}' and block='{block}' and upper(unit) like '%{unit}%'")
+    legals = socrata.nyc(
+        ctx.http,
+        LEGALS,
+        token,
+        select="document_id,unit",
+        order="document_id desc",
+        limit=5_000,
+        where=f"borough='{borough}' and block='{block}' and upper(unit) like '%{unit}%'",
+    )
     doc_ids = sorted({r["document_id"] for r in legals if normalize_unit(r.get("unit")) == unit})
     if not doc_ids:
         return None
     since = (listing.listed_date - LOOKBACK_BEFORE_LISTING).isoformat()
     ids = ",".join(f"'{d}'" for d in doc_ids[-50:])  # most recent documents; ids start with the year
     masters = socrata.nyc(
-        ctx.http, MASTER, token, select="document_id,doc_type,document_date,document_amt",
+        ctx.http,
+        MASTER,
+        token,
+        select="document_id,doc_type,document_date,document_amt",
         where=f"document_id in ({ids}) and doc_type in ('DEED','DEEDO') and document_date >= '{since}'",
         order="document_date desc",
     )
     for m in masters:
         amount = float(m.get("document_amt") or 0)
         if amount >= MIN_DEED_AMOUNT and m.get("document_date"):
-            return {"document_id": m["document_id"], "price": amount,
-                    "date": datetime.fromisoformat(m["document_date"][:10]).date()}
+            return {
+                "document_id": m["document_id"],
+                "price": amount,
+                "date": datetime.fromisoformat(m["document_date"][:10]).date(),
+            }
     return None
