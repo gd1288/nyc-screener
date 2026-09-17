@@ -1,0 +1,66 @@
+name: Source uptime
+
+on:
+  schedule:
+    - cron: "0 13 * * 1"  # weekly, Monday 13:00 UTC (~8-9am NYC depending on DST)
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync
+
+      - name: Probe every configured source
+        id: probe
+        run: |
+          set +e
+          uv run python -m app.cli probe-sources > probe_output.txt 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat probe_output.txt
+        env:
+          DATABASE_URL: sqlite:///${{ github.workspace }}/backend/data/probe.db
+
+      - name: Open or update an issue on failure
+        if: steps.probe.outputs.exit_code != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BODY_FILE=$(mktemp)
+          {
+            echo "Weekly \`app.cli probe-sources\` found at least one unreachable data source."
+            echo
+            echo '```'
+            cat backend/probe_output.txt
+            echo '```'
+            echo
+            echo "Run \`cd backend && uv run python -m app.cli probe-sources\` locally to reproduce, or use the \`debug\` skill."
+          } > "$BODY_FILE"
+
+          EXISTING=$(gh issue list --label data-source-broken --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body-file "$BODY_FILE"
+          else
+            gh issue create --title "Data source(s) failing uptime probe" \
+              --label data-source-broken --body-file "$BODY_FILE"
+          fi
+
+      - name: Close the standing issue if everything is healthy again
+        if: steps.probe.outputs.exit_code == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh issue list --label data-source-broken --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "All sources passed this week's uptime probe. Closing."
+            gh issue close "$EXISTING"
+          fi

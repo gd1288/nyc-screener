@@ -7,3 +7,5 @@ frontend/.next/
 .DS_Store
 .claude/state/
 .claude/worktrees/
+frontend/test-results/
+frontend/playwright-report/
