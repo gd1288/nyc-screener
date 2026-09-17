@@ -114,7 +114,7 @@ class RentCastListings(Source):
         # Keep only listings inside NYC neighborhoods; search circles also reach NJ, Westchester and Nassau.
         codes = ctx.geo.lookup_many([r.longitude if r.longitude is not None else float("nan") for r in raws],
                                     [r.latitude if r.latitude is not None else float("nan") for r in raws])
-        raws = [r for r, code in zip(raws, codes) if code]
+        raws = [r for r, code in zip(raws, codes, strict=True) if code]
         usage["last_result"] = {"area": area["name"], "days_old": params.get("daysOld"), "returned": returned,
                                 "total_matches": int(total) if total is not None else None, "kept_in_nyc": len(raws),
                                 "truncated": total is not None and int(total) > returned}

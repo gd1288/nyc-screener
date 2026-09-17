@@ -1,7 +1,7 @@
 """Paged queries against Socrata open data portals (NYC Open Data, data.ny.gov)."""
 
 import time
-from typing import Iterator
+from collections.abc import Iterator
 
 import httpx
 

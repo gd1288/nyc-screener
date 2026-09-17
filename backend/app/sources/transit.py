@@ -34,7 +34,7 @@ class SubwayAccess(Source):
         items = list(complexes.values())
         codes = ctx.geo.lookup_many([c["lon"] for c in items], [c["lat"] for c in items])
         stations, routes = defaultdict(int), defaultdict(set)
-        for code, c in zip(codes, items):
+        for code, c in zip(codes, items, strict=True):
             if code:
                 stations[code] += 1
                 routes[code] |= c["routes"]
@@ -43,7 +43,7 @@ class SubwayAccess(Source):
         # signal than raw counts for small neighborhoods sitting next to a hub.
         pts = shapely.points([c["lon"] for c in items], [c["lat"] for c in items])
         nearest_km = {}
-        for code, geom in zip(ctx.geo.codes, ctx.geo.geoms):
+        for code, geom in zip(ctx.geo.codes, ctx.geo.geoms, strict=True):
             centroid = geom.representative_point()
             d = shapely.distance(centroid, pts)
             i = int(np.argmin(d))

@@ -63,7 +63,7 @@ def area_share_by_nta(ctx: SourceContext, geoms: list) -> dict[str, float]:
     if not geoms:
         return shares
     tree = shapely.STRtree(geoms)
-    for code, nta in zip(geo.codes, geo.geoms):
+    for code, nta in zip(geo.codes, geo.geoms, strict=True):
         hits = tree.query(nta, predicate="intersects")
         if len(hits):
             covered = shapely.union_all([geoms[i] for i in hits]).intersection(nta)

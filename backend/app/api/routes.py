@@ -11,13 +11,26 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import SessionLocal
-from app.models import (Listing, ListingSnapshot, ListingStatus, Neighborhood, NeighborhoodMetric,
-                        NeighborhoodScore, SourceRun)
+from app.models import (
+    Listing,
+    ListingSnapshot,
+    ListingStatus,
+    Neighborhood,
+    NeighborhoodMetric,
+    NeighborhoodScore,
+    SourceRun,
+)
 from app.pipeline.listings import mark_sold, sync_listings
 from app.scoring import investment as inv
 from app.scoring.backtest import run_backtest
-from app.scoring.neighborhood import (DEFAULT_WEIGHTS, PILLARS, get_weights, load_metric_frame, recompute_scores,
-                                      set_weights)
+from app.scoring.neighborhood import (
+    DEFAULT_WEIGHTS,
+    PILLARS,
+    get_weights,
+    load_metric_frame,
+    recompute_scores,
+    set_weights,
+)
 from app.services import MarketContext, building_sales, neighborhood_sales_stats, property_inputs, summarize
 from app.sources import manual_import
 from app.sources.base import SourceContext
@@ -40,7 +53,7 @@ def summary(session: Session = Depends(db)):
     counts = dict(session.query(Listing.status, func.count()).group_by(Listing.status).all())
     ctx = MarketContext.load(session)
     active = session.query(Listing).filter(Listing.status == ListingStatus.ACTIVE).all()
-    rows = [r for r in (summarize(session, l, ctx) for l in active) if r["ownership"] != "likely_coop"]
+    rows = [r for r in (summarize(session, listing, ctx) for listing in active) if r["ownership"] != "likely_coop"]
     last_run = session.query(func.max(SourceRun.finished_at)).scalar()
     return {
         "active": len(rows),
@@ -86,7 +99,7 @@ def list_listings(
     if min_beds is not None:
         q = q.filter(Listing.bedrooms >= min_beds)
     ctx = MarketContext.load(session)
-    rows = [summarize(session, l, ctx) for l in q.all()]
+    rows = [summarize(session, listing, ctx) for listing in q.all()]
 
     def keep(r):
         return ((not borough or r["borough"] == borough)
@@ -127,7 +140,7 @@ def add_listing(body: ListingIn, session: Session = Depends(db)):
     try:
         raw = manual_import.raw_from_dict(body.model_dump())
     except ValueError as e:
-        raise HTTPException(422, str(e))
+        raise HTTPException(422, str(e)) from e
     with httpx.Client(follow_redirects=True) as http:
         ctx = _source_ctx(session, http)
         sync_listings(session, manual_import.SOURCE_NAME, [raw], complete=False, geo=ctx.geo, http=http)

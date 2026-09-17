@@ -70,8 +70,8 @@ def building_sales(session: Session, listing: Listing, years: int = COMPS_YEARS)
 
 def price_history_stats(listing: Listing) -> dict:
     prices = [s.price for s in listing.snapshots if s.event in ("listed", "price_change", "relisted") and s.price]
-    cuts = sum(1 for a, b in zip(prices, prices[1:]) if b < a)
-    increases = sum(1 for a, b in zip(prices, prices[1:]) if b > a)
+    cuts = sum(1 for a, b in zip(prices, prices[1:]) if b < a)  # noqa: B905 - deliberately offset pairwise zip
+    increases = sum(1 for a, b in zip(prices, prices[1:]) if b > a)  # noqa: B905 - deliberately offset pairwise zip
     last_change = max((s.observed_at for s in listing.snapshots if s.event == "price_change"), default=None)
     return {
         "price_cuts": cuts,

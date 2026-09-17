@@ -91,7 +91,7 @@ class CensusAcs(Source):
             r.raise_for_status()
             header, *rows = r.json()
             for row in rows:
-                rec = dict(zip(header, row))
+                rec = dict(zip(header, row, strict=True))
                 geoid = rec["state"] + rec["county"] + rec["tract"]
                 out[geoid] = {k: max(float(rec[v] or 0), 0.0) for k, v in VARS.items()}  # negatives = suppressed
         return out

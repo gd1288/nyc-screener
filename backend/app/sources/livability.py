@@ -59,7 +59,7 @@ class LiquorLicenses(Source):
         pts = [(r["georeference"]["coordinates"], r.get("originalissuedate", "")) for r in rows if r.get("georeference")]
         codes = ctx.geo.lookup_many([p[0][0] for p in pts], [p[0][1] for p in pts])
         total, recent = {}, {}
-        for code, (_, issued) in zip(codes, pts):
+        for code, (_, issued) in zip(codes, pts, strict=True):
             if code:
                 total[code] = total.get(code, 0) + 1
                 if issued >= cutoff:

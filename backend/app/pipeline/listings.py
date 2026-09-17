@@ -87,9 +87,9 @@ def sync_listings(
     not seen count as a missed fetch and eventually move to off_market."""
     stats = SyncStats()
     now = datetime.now()
-    existing = {l.external_id: l for l in session.query(Listing).filter(Listing.source == source)}
+    existing = {row.external_id: row for row in session.query(Listing).filter(Listing.source == source)}
     # Feeds sometimes list one unit under several ids (e.g. two MLS entries); match those by address + unit.
-    by_unit = {unit_key(l.address, l.unit): l for l in existing.values() if l.status != ListingStatus.SOLD}
+    by_unit = {unit_key(row.address, row.unit): row for row in existing.values() if row.status != ListingStatus.SOLD}
     seen: set[str] = set()
 
     for raw in raws:

@@ -37,7 +37,7 @@ class NeighborhoodIndex:
             return result
         points = shapely.points(lons[idx], lats[idx])
         point_i, geom_i = self.tree.query(points, predicate="within")
-        for p, g in zip(point_i, geom_i):
+        for p, g in zip(point_i, geom_i, strict=True):
             result[idx[p]] = self.codes[g]
         return result
 
