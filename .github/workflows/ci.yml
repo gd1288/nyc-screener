@@ -33,9 +33,12 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
-      - run: npx tsc --noEmit
       - run: npm run lint
       - run: npm run build
+      # Next.js 16's typed routes generate an ambient .d.ts (e.g. LayoutProps) only once a build
+      # has run; a standalone `tsc --noEmit` before the first build can't see it yet, so this runs
+      # after `build` (which already type-checks, but this keeps a clear, separate signal).
+      - run: npx tsc --noEmit
 
   e2e:
     runs-on: ubuntu-latest
