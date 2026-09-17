@@ -10,7 +10,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
-from app.models import Neighborhood, ValuationProperty
+from app.models import Listing, ListingStatus, Neighborhood, ValuationProperty
+from app.pipeline.listings import ownership_type
 from app.services import MarketContext
 from app.valuation import engine
 from app.valuation import scenarios as scenarios_mod
@@ -99,7 +100,7 @@ def _to_profile(row: ValuationProperty) -> PropertyProfile:
     )
 
 
-def _row_dict(row: ValuationProperty) -> dict:
+def _row_dict(row: ValuationProperty, listing: Listing | None = None) -> dict:
     return {
         "id": row.id,
         "label": row.label,
@@ -113,9 +114,30 @@ def _row_dict(row: ValuationProperty) -> dict:
         "property_taxes": row.property_taxes,
         "rent_estimate": row.rent_estimate,
         "assumption_overrides": row.assumption_overrides,
+        "listing_id": row.listing_id,
+        # Live state of the screener listing this came from, so a saved valuation can say "the ask
+        # has dropped 4% since you imported this" rather than quietly analysing a stale price.
+        "listing": (
+            {
+                "id": listing.id,
+                "status": listing.status,
+                "price": listing.price,
+                "url": listing.url,
+                "price_drift_pct": (listing.price / row.price - 1) if row.price else None,
+            }
+            if listing is not None
+            else None
+        ),
         "created_at": row.created_at.isoformat(),
         "updated_at": row.updated_at.isoformat(),
     }
+
+
+def _listings_for(session: Session, rows: list[ValuationProperty]) -> dict[int, Listing]:
+    ids = {r.listing_id for r in rows if r.listing_id}
+    if not ids:
+        return {}
+    return {listing.id: listing for listing in session.query(Listing).filter(Listing.id.in_(ids))}
 
 
 def _get(session: Session, property_id: int) -> ValuationProperty:
@@ -128,7 +150,91 @@ def _get(session: Session, property_id: int) -> ValuationProperty:
 @router.get("/properties")
 def list_properties(session: Session = Depends(db)):
     rows = session.query(ValuationProperty).order_by(ValuationProperty.updated_at.desc()).all()
-    return [_row_dict(r) for r in rows]
+    listings = _listings_for(session, rows)
+    return [_row_dict(r, listings.get(r.listing_id) if r.listing_id else None) for r in rows]
+
+
+@router.get("/importable-listings")
+def importable_listings(q: str | None = None, limit: int = 25, session: Session = Depends(db)):
+    """Active screener listings that can be pulled into the valuation tab, newest first.
+
+    Co-ops are included here (unlike the screener's default view, which hides them): if you've
+    gone to the trouble of opening the import picker, you're choosing a specific property to
+    analyse, and the engine handles a co-op's economics the same way.
+    """
+    query = session.query(Listing).filter(Listing.status == ListingStatus.ACTIVE)
+    if q:
+        like = f"%{q.strip()}%"
+        query = query.filter(Listing.address.ilike(like))
+    rows = query.order_by(Listing.first_seen.desc()).limit(min(max(limit, 1), 100)).all()
+    imported = {
+        listing_id
+        for (listing_id,) in session.query(ValuationProperty.listing_id).filter(
+            ValuationProperty.listing_id.isnot(None)
+        )
+    }
+    return [
+        {
+            "id": listing.id,
+            "address": listing.address,
+            "unit": listing.unit,
+            "neighborhood_code": listing.nta_code,
+            "price": listing.price,
+            "bedrooms": listing.bedrooms,
+            "sqft": listing.sqft,
+            "ownership": ownership_type(listing.bbl),
+            "already_imported": listing.id in imported,
+        }
+        for listing in rows
+    ]
+
+
+@router.post("/properties/from-listing/{listing_id}")
+def create_from_listing(listing_id: int, session: Session = Depends(db)):
+    """Create a valuation property from a screener listing, carrying over everything the engine
+    can use. Keeps `listing_id` so the valuation stays linked to the live listing."""
+    listing = session.get(Listing, listing_id)
+    if listing is None:
+        raise HTTPException(404, "No such listing")
+    label = f"{listing.address}{f' #{listing.unit}' if listing.unit else ''}"
+    row = ValuationProperty(
+        label=label[:120],
+        property_type="coop" if ownership_type(listing.bbl) == "likely_coop" else "condo",
+        listing_id=listing.id,
+        address=listing.address,
+        nta_code=listing.nta_code,
+        price=listing.price,
+        sqft=listing.sqft,
+        bedrooms=listing.bedrooms,
+        common_charges=listing.common_charges,
+        property_taxes=listing.property_taxes,
+        rent_estimate=listing.rent_estimate,
+        assumption_overrides={},
+    )
+    session.add(row)
+    session.commit()
+    return _row_dict(row, listing)
+
+
+@router.post("/properties/{property_id}/resync-from-listing")
+def resync_from_listing(property_id: int, session: Session = Depends(db)):
+    """Pull the linked listing's current facts back onto the saved property. Only refreshes the
+    property's own facts - assumption overrides (your scenario work) are left alone."""
+    row = _get(session, property_id)
+    if not row.listing_id:
+        raise HTTPException(422, "This valuation isn't linked to a screener listing")
+    listing = session.get(Listing, row.listing_id)
+    if listing is None:
+        raise HTTPException(404, "The linked listing no longer exists")
+    row.price = listing.price
+    row.sqft = listing.sqft
+    row.bedrooms = listing.bedrooms
+    row.common_charges = listing.common_charges
+    row.property_taxes = listing.property_taxes
+    row.rent_estimate = listing.rent_estimate
+    row.nta_code = listing.nta_code
+    session.commit()
+    return _row_dict(row, listing)
 
 
 @router.post("/properties")
@@ -142,7 +248,8 @@ def create_property(body: PropertyIn, session: Session = Depends(db)):
 
 @router.get("/properties/{property_id}")
 def get_property(property_id: int, session: Session = Depends(db)):
-    return _row_dict(_get(session, property_id))
+    row = _get(session, property_id)
+    return _row_dict(row, session.get(Listing, row.listing_id) if row.listing_id else None)
 
 
 @router.patch("/properties/{property_id}")
@@ -154,7 +261,7 @@ def update_property(property_id: int, body: PropertyPatch, session: Session = De
     for k, v in fields.items():
         setattr(row, k, v)
     session.commit()
-    return _row_dict(row)
+    return _row_dict(row, session.get(Listing, row.listing_id) if row.listing_id else None)
 
 
 @router.delete("/properties/{property_id}")

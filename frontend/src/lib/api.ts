@@ -215,8 +215,23 @@ export type ValuationProperty = {
   property_taxes: number | null;
   rent_estimate: number | null;
   assumption_overrides: Record<string, number>;
+  listing_id: number | null;
+  /** Live state of the linked screener listing, if this was imported from one. */
+  listing: { id: number; status: string; price: number; url: string | null; price_drift_pct: number | null } | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ImportableListing = {
+  id: number;
+  address: string;
+  unit: string | null;
+  neighborhood_code: string | null;
+  price: number;
+  bedrooms: number | null;
+  sqft: number | null;
+  ownership: "condo" | "likely_coop" | "unknown";
+  already_imported: boolean;
 };
 
 export type AddressLookupResult = {

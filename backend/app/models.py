@@ -156,6 +156,10 @@ class ValuationProperty(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     label: Mapped[str] = mapped_column(String(120))
     property_type: Mapped[str] = mapped_column(String(24), default="condo")  # condo, coop, multifamily, land, ...
+    # Set when this was imported from a screener listing, so the valuation can show how the live
+    # list price has moved since. SET NULL (not CASCADE): a listing going away shouldn't delete
+    # analysis work, it just stops being live.
+    listing_id: Mapped[int | None] = mapped_column(ForeignKey("listings.id", ondelete="SET NULL"), index=True)
     address: Mapped[str | None] = mapped_column(String(200))
     nta_code: Mapped[str | None] = mapped_column(ForeignKey("neighborhoods.code"), index=True)
     price: Mapped[float] = mapped_column(Float)

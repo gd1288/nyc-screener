@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   api,
   useApi,
   type AddressLookupResult,
   type DataTableResult,
+  type ImportableListing,
   type MonteCarloResult,
   type ScenarioResult,
   type SensitivityRow,
@@ -51,9 +54,35 @@ const QUICK_FIELDS = ["interest_rate", "appreciation_override"];
 // ---------------------------------------------------------------- page shell (property list + create)
 
 export default function ValuationPage() {
+  // useSearchParams needs a Suspense boundary or it opts the whole route out of prerendering.
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-sm text-stone-500">Loading…</div>}>
+      <ValuationWorkspacePage />
+    </Suspense>
+  );
+}
+
+function ValuationWorkspacePage() {
   const { data: properties, error, loading, reload } = useApi<ValuationProperty[]>("/valuation/properties");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  // Deep link from a listing page: /valuation?import=<listingId> imports it once on arrival.
+  const searchParams = useSearchParams();
+  const importParam = searchParams.get("import");
+  const autoImported = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!importParam || autoImported.current === importParam) return;
+    autoImported.current = importParam;
+    api<ValuationProperty>(`/valuation/properties/from-listing/${importParam}`, { method: "POST" })
+      .then((p) => {
+        setSelectedId(p.id);
+        reload();
+      })
+      .catch(() => setImporting(true)); // fall back to the picker if that listing can't be imported
+  }, [importParam, reload]);
 
   const effectiveSelectedId = selectedId ?? properties?.[0]?.id ?? null;
   const selected = properties?.find((p) => p.id === effectiveSelectedId) ?? null;
@@ -71,12 +100,29 @@ export default function ValuationPage() {
         title="Valuation"
         subtitle="Run cash-flow scenarios for any property — saved listings or hypothetical ones."
         action={
-          <button className={buttonCls} onClick={() => setCreating(true)}>
-            + New property
-          </button>
+          <div className="flex gap-2">
+            <button className={ghostButtonCls} onClick={() => setImporting(true)}>
+              Import from screener
+            </button>
+            <button className={buttonCls} onClick={() => setCreating(true)}>
+              + New property
+            </button>
+          </div>
         }
       />
       <ErrorNote error={error} />
+      {importing && (
+        <div className="mb-4">
+          <ImportFromScreener
+            onImported={(p) => {
+              setImporting(false);
+              setSelectedId(p.id);
+              reload();
+            }}
+            onCancel={() => setImporting(false)}
+          />
+        </div>
+      )}
       {creating && (
         <div className="mb-4">
           <NewPropertyForm
@@ -112,6 +158,80 @@ export default function ValuationPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function ImportFromScreener({ onImported, onCancel }: { onImported: (p: ValuationProperty) => void; onCancel: () => void }) {
+  const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQ(q), 250);
+    return () => clearTimeout(timer);
+  }, [q]);
+
+  const { data: listings, error } = useApi<ImportableListing[]>(
+    `/valuation/importable-listings?limit=25${debouncedQ.trim() ? `&q=${encodeURIComponent(debouncedQ.trim())}` : ""}`,
+  );
+
+  async function importListing(id: number) {
+    setBusyId(id);
+    setErr(null);
+    try {
+      onImported(await api<ValuationProperty>(`/valuation/properties/from-listing/${id}`, { method: "POST" }));
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <Card
+      title="Import from screener"
+      action={
+        <button className={ghostButtonCls} onClick={onCancel}>
+          Cancel
+        </button>
+      }
+    >
+      <input className={inputCls} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by address…" />
+      <ErrorNote error={err ?? error} />
+      {listings && listings.length === 0 && <p className="mt-3 text-sm text-stone-500">No active listings match.</p>}
+      {listings && listings.length > 0 && (
+        <ul className="mt-3 divide-y divide-stone-100">
+          {listings.map((l) => (
+            <li key={l.id} className="flex items-center justify-between gap-3 py-2">
+              <div className="min-w-0">
+                <div className="truncate text-sm text-stone-800">
+                  {l.address}
+                  {l.unit && <span className="text-stone-500"> #{l.unit}</span>}
+                  {l.ownership === "likely_coop" && (
+                    <span className="ml-2">
+                      <Tag tone="warn">likely co-op</Tag>
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-stone-500">
+                  {money(l.price, true)}
+                  {l.bedrooms != null && ` · ${l.bedrooms} bd`}
+                  {l.sqft && ` · ${num(l.sqft)} sqft`}
+                </div>
+              </div>
+              <button
+                className={ghostButtonCls}
+                onClick={() => importListing(l.id)}
+                disabled={busyId === l.id}
+              >
+                {busyId === l.id ? "Importing…" : l.already_imported ? "Import again" : "Import"}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
 
@@ -297,7 +417,8 @@ function PropertyWorkspace({ property, onDelete }: { property: ValuationProperty
           </button>
         }
       >
-        {property.address && <p className="mb-3 text-sm text-stone-600">{property.address}</p>}
+        {property.address && <p className="mb-1 text-sm text-stone-600">{property.address}</p>}
+        {property.listing && <LinkedListingNote property={property} />}
         <div className="flex flex-wrap gap-1 border-b border-stone-100 pb-3">
           {TABS.map((t) => (
             <button
@@ -341,6 +462,42 @@ function PropertyWorkspace({ property, onDelete }: { property: ValuationProperty
 }
 
 // ---------------------------------------------------------------- Quick Mode
+
+function LinkedListingNote({ property }: { property: ValuationProperty }) {
+  const listing = property.listing!;
+  const drift = listing.price_drift_pct ?? 0;
+  const moved = Math.abs(drift) > 0.0001;
+  const [resyncing, setResyncing] = useState(false);
+
+  async function resync() {
+    setResyncing(true);
+    try {
+      await api(`/valuation/properties/${property.id}/resync-from-listing`, { method: "POST" });
+      window.location.reload();
+    } finally {
+      setResyncing(false);
+    }
+  }
+
+  return (
+    <p className="mb-3 flex flex-wrap items-center gap-2 text-xs text-stone-500">
+      <Link href={`/listing/${listing.id}`} className="underline hover:text-stone-800">
+        From screener listing #{listing.id}
+      </Link>
+      {listing.status !== "active" && <Tag tone="sold">{listing.status.replace("_", " ")}</Tag>}
+      {moved && (
+        <>
+          <span className={drift < 0 ? "text-emerald-700" : "text-rose-700"}>
+            Ask has moved {pct(drift, 1, true)} since import ({money(listing.price, true)} now vs {money(property.price, true)} analysed)
+          </span>
+          <button className="underline hover:text-stone-800" onClick={resync} disabled={resyncing}>
+            {resyncing ? "Updating…" : "Update to current"}
+          </button>
+        </>
+      )}
+    </p>
+  );
+}
 
 function QuickModePanel({
   price, setPrice, rent, setRent, assumptionOverrides, setField, run,
