@@ -66,6 +66,19 @@ export type PillarDetail = {
   metrics?: Record<string, MetricDetail>;
 };
 
+export type CashFlowYear = {
+  year: number;
+  noi: number;
+  mortgage: number;
+  cash_flow: number;
+  cumulative_cash_flow: number;
+  dscr: number | null;
+  property_value: number;
+  loan_balance: number;
+  equity: number;
+  sale_proceeds_if_exit_now: number;
+};
+
 export type Projection = {
   value: number;
   equity_at_exit: number;
@@ -73,6 +86,9 @@ export type Projection = {
   profit: number;
   equity_multiple: number | null;
   irr: number | null;
+  cash_flow_positive_year: number | null;
+  payback_year: number | null;
+  path: CashFlowYear[];
 };
 
 export type Assumptions = {
@@ -224,6 +240,54 @@ export type FactorEstimate = {
 export type ValuationRun = Analysis & {
   factors: Record<string, FactorEstimate | null>;
   estimated_factors: string[];
+};
+
+export type ScenarioResult = {
+  name: string;
+  assumptions: Assumptions;
+  cap_rate: number | null;
+  cash_on_cash: number | null;
+  monthly_cash_flow: number;
+  irr_10: number | null;
+  irr_20: number | null;
+  equity_multiple_10: number | null;
+  equity_multiple_20: number | null;
+  payback_year_10: number | null;
+  estimated_factors: string[];
+};
+
+export type SensitivityRow = {
+  factor: string;
+  label: string;
+  low_value: number;
+  high_value: number;
+  /** null when the IRR is unsolvable at that end of the range — the row is still returned, not dropped. */
+  low_irr: number | null;
+  high_irr: number | null;
+  base_irr: number | null;
+  backed_by_source: boolean;
+  undefined: boolean;
+  swing: number | null;
+};
+
+export type DataTableResult = {
+  x_factor: string;
+  y_factor: string;
+  x_values: number[];
+  y_values: number[];
+  irr_grid: (number | null)[][];
+};
+
+export type MonteCarloResult = {
+  n: number;
+  valid_n: number;
+  randomized_factors: string[];
+  held_at_default: string[];
+  p10: number | null;
+  p50: number | null;
+  p90: number | null;
+  prob_loss: number | null;
+  histogram: { bin_start: number; bin_end: number; count: number }[];
 };
 
 /** Fetches `path` on mount and whenever it changes; `reload` refetches. `path: null` skips fetching. */

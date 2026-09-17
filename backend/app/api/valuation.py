@@ -1,8 +1,8 @@
-"""Valuation API: save a property, look up an address, and run the cash-flow engine against it.
-
-Scenarios, sensitivity, Monte Carlo, and the Excel export aren't here yet (see the plan's Phase 2a
-scope) - this is the vertical slice: a saved property and a single run with overridable factors.
+"""Valuation API: save a property, look up an address, run the cash-flow engine, and explore
+scenarios/sensitivity/a two-factor data table/Monte Carlo against it. The Excel export isn't here yet.
 """
+
+from dataclasses import asdict
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,6 +13,7 @@ from app.db import SessionLocal
 from app.models import Neighborhood, ValuationProperty
 from app.services import MarketContext
 from app.valuation import engine
+from app.valuation import scenarios as scenarios_mod
 from app.valuation.factors import FACTOR_DEFS, PropertyProfile
 from app.valuation.property import lookup_address
 
@@ -173,17 +174,102 @@ class RunIn(BaseModel):
     ] = {}  # PropertyProfile fields, e.g. price, rent_estimate - "what if" only, not saved
 
 
-@router.post("/properties/{property_id}/run")
-def run_property(property_id: int, body: RunIn, session: Session = Depends(db)):
-    if unknown := set(body.property_overrides) - PROFILE_OVERRIDE_FIELDS:
+def _resolve_run_inputs(
+    session: Session, property_id: int, overrides: dict[str, float], property_overrides: dict[str, float]
+) -> tuple[PropertyProfile, MarketContext, dict[str, float]]:
+    if unknown := set(property_overrides) - PROFILE_OVERRIDE_FIELDS:
         raise HTTPException(422, f"Unknown property override field(s): {sorted(unknown)}")
     row = _get(session, property_id)
     ctx = MarketContext.load(session)
     profile = _to_profile(row)
-    for k, v in body.property_overrides.items():
+    for k, v in property_overrides.items():
         setattr(profile, k, v)
-    merged_overrides = {**row.assumption_overrides, **body.overrides}
+    merged_overrides = {**row.assumption_overrides, **overrides}
+    return profile, ctx, merged_overrides
+
+
+@router.post("/properties/{property_id}/run")
+def run_property(property_id: int, body: RunIn, session: Session = Depends(db)):
+    profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, body.overrides, body.property_overrides)
     try:
         return engine.run(profile, ctx, merged_overrides)
     except engine.UnknownOverrideError as e:
         raise HTTPException(422, str(e)) from e
+
+
+class ScenarioIn(BaseModel):
+    name: str
+    deltas: dict[str, float] = {}
+
+
+class CompareIn(BaseModel):
+    overrides: dict[str, float] = {}
+    property_overrides: dict[str, float] = {}
+    scenarios: list[ScenarioIn] | None = (
+        None  # omit to use the built-in presets (Bear/Base/Bull/Higher rates/Recession)
+    )
+
+
+@router.post("/properties/{property_id}/scenarios/compare")
+def compare_scenarios(property_id: int, body: CompareIn, session: Session = Depends(db)):
+    profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, body.overrides, body.property_overrides)
+    scenario_dicts = [s.model_dump() for s in body.scenarios] if body.scenarios is not None else None
+    try:
+        results = scenarios_mod.compare(profile, ctx, merged_overrides, scenario_dicts)
+    except engine.UnknownOverrideError as e:
+        raise HTTPException(422, str(e)) from e
+    return [asdict(r) for r in results]
+
+
+class SensitivityIn(BaseModel):
+    overrides: dict[str, float] = {}
+    property_overrides: dict[str, float] = {}
+    horizon: str = "10"
+
+
+@router.post("/properties/{property_id}/sensitivity")
+def sensitivity(property_id: int, body: SensitivityIn, session: Session = Depends(db)):
+    if body.horizon not in ("10", "20"):
+        raise HTTPException(422, "horizon must be '10' or '20'")
+    profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, body.overrides, body.property_overrides)
+    return scenarios_mod.sensitivity(profile, ctx, merged_overrides, body.horizon)
+
+
+class DataTableIn(BaseModel):
+    overrides: dict[str, float] = {}
+    property_overrides: dict[str, float] = {}
+    x_factor: str = "interest_rate"
+    y_factor: str = "appreciation_override"
+    steps: int = 5
+    horizon: str = "10"
+
+
+@router.post("/properties/{property_id}/data-table")
+def data_table(property_id: int, body: DataTableIn, session: Session = Depends(db)):
+    if body.horizon not in ("10", "20"):
+        raise HTTPException(422, "horizon must be '10' or '20'")
+    if unknown := {body.x_factor, body.y_factor} - engine.ASSUMPTION_FIELDS:
+        raise HTTPException(422, f"Unknown Assumptions field(s): {sorted(unknown)}")
+    steps = min(max(body.steps, 3), 9)
+    profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, body.overrides, body.property_overrides)
+    x_values = scenarios_mod.default_data_table_axis(profile, ctx, merged_overrides, body.x_factor, steps)
+    y_values = scenarios_mod.default_data_table_axis(profile, ctx, merged_overrides, body.y_factor, steps)
+    return scenarios_mod.data_table(
+        profile, ctx, merged_overrides, body.x_factor, body.y_factor, x_values, y_values, body.horizon
+    )
+
+
+class MonteCarloIn(BaseModel):
+    overrides: dict[str, float] = {}
+    property_overrides: dict[str, float] = {}
+    n: int = 1000
+    seed: int | None = None
+    horizon: str = "10"
+
+
+@router.post("/properties/{property_id}/monte-carlo")
+def run_monte_carlo(property_id: int, body: MonteCarloIn, session: Session = Depends(db)):
+    if body.horizon not in ("10", "20"):
+        raise HTTPException(422, "horizon must be '10' or '20'")
+    profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, body.overrides, body.property_overrides)
+    return scenarios_mod.monte_carlo(profile, ctx, merged_overrides, body.n, body.seed, body.horizon)
