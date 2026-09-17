@@ -13,8 +13,13 @@ cd backend && uv run alembic upgrade head
 cd backend && uv run python -m app.cli refresh [source ...]     # run data sources
 cd backend && uv run python -m app.cli diagnose                 # health report
 cd frontend && npx tsc --noEmit && npm run lint && npm run build
-./start.sh                               # run both servers (see .claude/launch.json for dev)
+./start.sh                               # run both servers in this terminal (see .claude/launch.json)
+./scripts/dev-open.sh                    # start both in the background (if not already up) + open the browser
+./scripts/dev-stop.sh                    # stop both
 ```
+Easiest way to just look at the site: double-click **"Open NYC Screener"** on the Desktop (runs
+`dev-open.sh` and opens http://localhost:3000; safe to double-click again, it reuses whatever's
+already running). **"Stop NYC Screener"** on the Desktop shuts both servers down.
 
 ## Architecture
 - `backend/app/sources/`: one plug-in per data source (`base.py` defines the contract), wired
