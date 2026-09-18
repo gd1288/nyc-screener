@@ -2,7 +2,7 @@
 
 One row per source: what the terms say, what we do about it, and where the terms were read. Reviewed
 2026-09-18 by reading each provider's own terms pages (links below), not summaries. **This is a personal,
-single-user tool.** Several sources below change status if the app is ever shared or made public;
+single-user tool, and the GitHub repo was PUBLIC on 2026-09-18: do not push embedded third-party data (RentCast listings, FRED series) to it.** Several sources below change status if the app is ever shared or made public;
 revisit this file before that happens. Not legal advice.
 
 Rule for every new source: read the terms first, add a row here, and use only documented APIs or

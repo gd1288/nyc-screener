@@ -55,8 +55,10 @@ reads current disk. (This rule exists because Phase 2a was twice described as co
 `export_xlsx.py` and `eval.py` had never been written.) Adding a deliverable means adding its check
 to `docs/phases.yaml` in the same commit.
 
-## Session start
-Read `docs/NEXT.md` (current goal, open work, UI lock) before starting. Update it when direction changes.
+## Session start and end
+Read `docs/NEXT.md` (current goal, open work, UI lock) before starting. Update it when direction changes. How work is saved
+automatically, how to resume in a new window, and how to restore anything: `docs/SESSIONS.md`. Before ending a session:
+update NEXT.md/DECISIONS.md, commit with explicit paths, and never push without the user's OK (the GitHub repo is PUBLIC).
 
 ## Keeping memory current
 When a session changes the plan, structure, rules, or adds an agent: update `docs/NEXT.md`, add a

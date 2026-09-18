@@ -38,7 +38,7 @@ phases:
     manual:
       - "Remote Control enabled (Desktop Settings) and the Claude mobile app installed"
       - "Plugins installed: pyright-lsp, typescript-lsp, context7, duckdb-skills"
-      - "Branch protection — blocked: needs a paid plan or a public repo (repo is private, free plan)"
+      - "Branch protection — blocked: needs a paid plan or a public repo (repo was PUBLIC on 2026-09-18)"
 
   - id: "1"
     name: Neighborhood research, US-ready
@@ -210,3 +210,7 @@ phases:
         contains: "function purchasePlan"
       - path: docs/artifact/staging.html
         contains: "function svRender"
+      - path: docs/SESSIONS.md
+      - path: .claude/hooks/autosave.sh
+        contains: "refs/autosave"
+      - path: .claude/autosave.json

@@ -68,6 +68,14 @@
             "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/stop-gate.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/autosave.sh"
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -76,6 +84,16 @@
           {
             "type": "command",
             "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-health.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/autosave.sh"
           }
         ]
       }

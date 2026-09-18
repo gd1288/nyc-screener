@@ -47,6 +47,9 @@ only colors/spacing tokens.
 Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion` (with a validator test).
 
 ## Other open work
+- **DECISION NEEDED: the GitHub repo is PUBLIC** (gd1288/nyc-screener). 34+ commits and all restore tags are only local. Pushing
+  would publish the RentCast listings snapshot in `staging.html` and FRED figures (personal-use terms). Options: make the repo
+  private and turn on autosave pushing (`.claude/autosave.json`), or strip the embedded data first. Nothing was pushed.
 - **Stale-listing checks (applied 2026-09-18).** ACRIS fix done: the sold check now skips likely co-ops and only accepts a
   deed dated on or after the listing date; listing 55 (121 W 17th St #3B, a false "sold") was restored to active. RentCast
   finding: the Manhattan circle has 8,472 active condo listings, so a full sweep would need 17 requests. Instead a

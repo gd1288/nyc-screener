@@ -5,6 +5,11 @@ Add an entry (and update `docs/NEXT.md`) in the same session any such change is 
 what is built are NOT recorded here; run `app.cli status`.
 
 ## 2026-09-18
+- **Autosave and handoff.** A hook (`.claude/hooks/autosave.sh`, on Stop and SessionEnd) snapshots uncommitted work and a copy
+  of Claude's memory notes to a separate local ref (`refs/autosave/<branch>`) without touching the working tree, and refuses to
+  snapshot anything that looks like a secret. Pushing is OFF by default because the GitHub repo turned out to be PUBLIC and
+  `staging.html` embeds RentCast and FRED data (personal-use terms); it needs the user's decision. Session start now prints one
+  line only when there is uncommitted work, commits not on GitHub, or an autosave problem. See `docs/SESSIONS.md`.
 - **Purchase plan built (option 1 of docs/plans/purchase-analysis.md), driven by how the property is used.** Every scenario is one
   calculation with `phases` (from year N, a share of the property is rented: 0 live in all of it, 1 all rented, one bedroom of
   three = 0.33, or live-then-rent). The backend (`app/valuation/purchase.py`) is the source of truth; the artifact carries a
