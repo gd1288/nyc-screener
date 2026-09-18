@@ -22,12 +22,26 @@ live artifact before every republish; never regenerate over it from a template.
 - Methodology reasoning: `research/memos/`. Approved UI copy: `docs/artifact/real-estate-tool.html`.
 - Your preferences: auto-memory. Facts about the code live in git, not in memory.
 
-## Open work (as of 2026-09-18)
-1. Decide on `backend/app/valuation/proforma.py`: it does not exist on disk (only `taxes.py` does).
-   Write it with tests and a `phases.yaml` check, or drop it.
-2. Feed the artifact from backend scenarios (`scenarios.py`) instead of fixed 421 Harris numbers.
-3. Stress test polish (proposed, not started): sticky result bar, grouped scenarios, reset button,
-   risk colors, tornado chart, URL-shareable scenario, Excel export hook.
-4. `scripts/valuation-spike/` is untracked: commit or delete.
-5. Review and merge branch `valuation-phase-2a` (Phases 2a-4) to main via PR.
-6. Manual: Phase 0 items, value 2-3 real properties, confirm research routine allowlist, pick a second metro.
+## Direction (decided 2026-09-18) - see docs/ARCHITECTURE.md
+Staging artifact = design lab. Main artifact = signed-off design spec. The app (existing Next.js
+frontend, run locally, audience: the user only) is built from main's design but uses the backend as
+the ONLY calculation engine. Hosting is out of scope for now. Fonts: keep Geist in the app; port
+only colors/spacing tokens.
+
+## Ordered plan (work top to bottom; steps marked || can run in a second window)
+1. Baseline: resolve `scripts/valuation-spike/` (commit or delete), tag `artifact-main-1`.
+2. Backend single engine (Window B, Opus): plan first, then scenario worlds/dials/events as backend
+   data + API, one response schema, tax parity with the artifact's model(). Gate: parity test passes.
+3. || Staging polish (Window A, Sonnet): one feature at a time, incl. a "sample deal" label. Then
+   promote to main, tag `artifact-main-2`, write the design-freeze note (docs/design-freeze.md).
+4. Design tokens: extract colors/spacing to one file feeding Tailwind (after step 3's freeze).
+5. Port to Next.js one section at a time: Overview, Cash flow, Assumptions, then Stress test. Each
+   checked with /verify-viewports (1280px and 400px) against main. Needs steps 2 and 3 done.
+6. || Research (Window C, Sonnet): /propose-criteria, then source the four gap factors, mortgage rate first.
+7. Viable-product check (all must pass): pick a property -> backend values it -> Stress test on real
+   numbers -> Excel matches the screen -> save and reopen by link. Add each as a phases.yaml check.
+Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion` (with a validator test).
+
+## Other open work
+- Review and merge branch `valuation-phase-2a` (Phases 2a-4) to main via PR.
+- Manual: Phase 0 items, value 2-3 real properties, confirm research routine allowlist, pick a second metro.

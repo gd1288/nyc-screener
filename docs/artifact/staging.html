@@ -251,6 +251,13 @@ svg.ch{display:block;width:100%;height:auto;overflow:visible}
 .res > div:last-child{border-right:0}
 .res .v{font-family:"IBM Plex Mono",monospace;font-size:var(--t-base);font-weight:500;margin-top:var(--s1);font-variant-numeric:tabular-nums}
 .res .d{font-size:var(--t-micro);margin-top:2px;font-family:"IBM Plex Mono",monospace}
+.rbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--s2) var(--s5);
+  background:var(--surface);border:1px solid var(--hair-2);border-radius:var(--r2);box-shadow:var(--card);padding:var(--s3) var(--s4);margin-bottom:var(--s5)}
+.rbar .rn{flex:1 1 140px;min-width:0}.rbar .rn b{display:block;font-family:Fraunces,serif;font-size:var(--t-md);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rbar .k{font-size:var(--t-micro);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.rbar .m{font-family:"IBM Plex Mono",monospace;font-size:var(--t-md);font-weight:500}
+.rbar .m em{font-style:normal;font-size:var(--t-xs);margin-left:var(--s2)}
+.rbar>div:not(.rn){min-width:0}
 .rng{position:relative;height:40px;background:linear-gradient(90deg,var(--risk-tint),var(--sunk) 45%,var(--sunk) 55%,var(--up-tint));border-radius:var(--r1);margin-top:var(--s5)}
 .rm{position:absolute;top:-6px;bottom:-6px;width:2px}
 .rm::after{content:attr(data-l);position:absolute;top:-18px;left:50%;transform:translateX(-50%);
@@ -359,6 +366,7 @@ footer{margin-top:var(--s7);padding-top:var(--s4);border-top:1px solid var(--hai
 </section>
 
 <section class="panel" id="p-st" hidden>
+  <div class="rbar" id="rbar" role="status" aria-live="polite" aria-label="Selected scenario result"></div>
   <div class="sec"><div class="sech"><h2>Pick a world</h2>
     <div class="d">Eighteen scenarios, each showing the return it produces. Hover for exactly what it changes.</div></div>
     <div class="wor" id="wor"></div></div>
@@ -810,6 +818,14 @@ function resolved(){
     .map(([k,n,g])=>{const dv=(m[k]||0)-S[k],c=Math.abs(dv)<1e-9?'var(--ink-4)':(dv*g>0?'var(--up)':'var(--risk)');
       return `<div><div class="lbl">${n}</div><div class="v">${pc(m[k])}</div>
         <div class="d" style="color:${c}">${Math.abs(dv)<1e-9?'unchanged':pp(dv)}</div></div>`;}).join('');
+  const bar=(()=>{const nm=NSEL?NARR.find(x=>x.id===NSEL).n:'Custom mix',em=x=>x.eq?(1+x.profit/x.eq):null,
+    dI=SC.irr==null||B.irr==null?null:SC.irr-B.irr,c=v=>v==null||Math.abs(v)<.0005?'var(--ink-4)':v>0?'var(--up)':'var(--risk)',
+    x=em(SC),dc=SC.minDscr<1?'var(--risk)':SC.minDscr<1.25?'var(--warn)':'var(--ink)';
+    return `<div class="rn"><div class="k">Scenario</div><b>${nm}</b></div>
+      <div><div class="k">Levered IRR</div><div class="m">${pc(SC.irr)}<em style="color:${c(dI)}">${dI==null||Math.abs(dI)<.0005?'= base':(dI>0?'+':'')+(dI*100).toFixed(1)+'pp vs base'}</em></div></div>
+      <div><div class="k">Equity multiple</div><div class="m">${x==null?'—':x.toFixed(2)+'×'}<em style="color:${c(x==null?null:x-em(B))}">${x==null||Math.abs(x-em(B))<.005?'= base':(x>em(B)?'+':'')+(x-em(B)).toFixed(2)+'× vs base'}</em></div></div>
+      <div><div class="k">Min DSCR</div><div class="m" style="color:${dc}">${SC.minDscr.toFixed(2)}×<em style="color:${c(SC.minDscr-B.minDscr)}">${Math.abs(SC.minDscr-B.minDscr)<.005?'= base':(SC.minDscr>B.minDscr?'+':'')+(SC.minDscr-B.minDscr).toFixed(2)+'× vs base'}</em></div></div>`;})();
+  $('#rbar').innerHTML=bar;
   const wo=model(wdelta('hard')).irr,bo=model(wdelta('breakout')).irr,ba=B.irr,st=SC.irr;
   const all=[wo,bo,ba,st].filter(v=>v!=null),lo=Math.min(...all),hi=Math.max(...all),sp=(hi-lo)||.01;
   const P=v=>cl((v-lo)/sp*100,1,99).toFixed(1);

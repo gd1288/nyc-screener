@@ -5,6 +5,13 @@ Add an entry (and update `docs/NEXT.md`) in the same session any such change is 
 what is built are NOT recorded here; run `app.cli status`.
 
 ## 2026-09-18
+- **Backend is the only calculation engine.** The artifact's in-page `model()` is a prototype (it also
+  uses flat 25%/23.8% sale-tax rates, unlike `taxes.py`); the app calls the backend. A parity test
+  will compare them. Why: two engines silently diverge.
+- **Product form: extend the existing Next.js app, local only, audience is the user.** No hosting,
+  auth or database migration for now. Artifacts (staging -> main) are design references for it.
+- **Fonts: keep Geist in the app;** port only colors and spacing as tokens. Why: simplest, fewest tokens.
+- **Ordered plan recorded in docs/NEXT.md;** viable-product definition is its step 7.
 - **claude-mem disabled** (user-level `~/.claude/settings.json`). Memory is now CLAUDE.md, NEXT.md,
   this log, `research/criteria.yaml`, `app.cli status`, and auto-memory. Why: it recorded claims
   that later proved false (it reported `proforma.py` as built) and stalled on quota.
