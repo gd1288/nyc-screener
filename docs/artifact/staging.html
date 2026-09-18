@@ -258,6 +258,16 @@ svg.ch{display:block;width:100%;height:auto;overflow:visible}
 .rbar .m{font-family:"IBM Plex Mono",monospace;font-size:var(--t-md);font-weight:500}
 .rbar .m em{font-style:normal;font-size:var(--t-xs);margin-left:var(--s2)}
 .rbar>div:not(.rn){min-width:0}
+.tk{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:var(--s2)}
+.tki{border-radius:var(--r1);padding:var(--s3) var(--s4);background:var(--sunk);border-left:3px solid var(--ink-4)}
+.tki.g{background:var(--up-tint);border-color:var(--up)}.tki.w{background:var(--warn-tint);border-color:var(--warn)}.tki.r{background:var(--risk-tint);border-color:var(--risk)}
+.tki b{display:block;font-size:var(--t-base);margin-bottom:2px}.tki span{font-size:var(--t-sm);color:var(--ink-2);line-height:1.5}
+.tor{display:grid;grid-template-columns:minmax(96px,168px) 1fr minmax(84px,auto);gap:var(--s3);align-items:center;font-size:var(--t-sm);margin-bottom:var(--s2)}
+.tor .tt{position:relative;height:16px;background:var(--sunk);border-radius:var(--r1)}
+.tor .tb2{position:absolute;top:2px;bottom:2px;border-radius:2px}
+.tor .tv2{text-align:right;font-size:var(--t-xs);color:var(--ink-2);white-space:nowrap}
+.wc .dq{font-size:var(--t-micro);font-family:"IBM Plex Mono",monospace;margin-top:2px;color:var(--ink-4)}
+@media(max-width:600px){.rbar{gap:var(--s1) var(--s3);padding:var(--s2) var(--s3)}.rbar .m{font-size:var(--t-base)}.rbar .rn{flex-basis:100%}}
 .rng{position:relative;height:40px;background:linear-gradient(90deg,var(--risk-tint),var(--sunk) 45%,var(--sunk) 55%,var(--up-tint));border-radius:var(--r1);margin-top:var(--s5)}
 .rm{position:absolute;top:-6px;bottom:-6px;width:2px}
 .rm::after{content:attr(data-l);position:absolute;top:-18px;left:50%;transform:translateX(-50%);
@@ -328,8 +338,12 @@ footer{margin-top:var(--s7);padding-top:var(--s4);border-top:1px solid var(--hai
   <button role="tab" aria-selected="false" data-t="st">Stress test</button>
   <button role="tab" aria-selected="false" data-t="as">Assumptions</button>
 </nav>
+<div class="rbar" id="rbar" role="status" aria-live="polite" aria-label="Result summary for this tab"></div>
 
 <section class="panel" id="p-ov">
+  <div class="sec"><div class="sech"><h2>Read this first</h2>
+    <div class="d">A plain-language read of the numbers below. Recomputed live.</div></div>
+    <div class="tk" id="tk"></div></div>
   <div class="sec"><div class="sech"><h2>What you are actually buying</h2>
     <div class="d">Every dollar of profit traced to its source.</div></div>
     <div class="ga">
@@ -353,7 +367,8 @@ footer{margin-top:var(--s7);padding-top:var(--s4);border-top:1px solid var(--hai
       <button data-v="unit" aria-pressed="false">Per unit</button>
       <button data-v="sqft" aria-pressed="false">Per sq ft</button>
       <button data-v="pct" aria-pressed="false">% of EGI</button></div></div>
-    <div class="card"><div id="cfc"></div><div class="leg" id="cfl"></div></div></div>
+    <div class="card"><div id="cfc"></div><div class="leg" id="cfl"></div></div>
+    <div class="say" id="cfi"></div></div>
   <div class="sec"><div class="sech"><h2>Year <span id="cfy">1</span> bridge</h2>
     <div class="d">Gross rent down to what reaches you. Click a bar above to move years.</div></div>
     <div class="ga"><div class="card"><div class="br" id="brg"></div></div>
@@ -366,9 +381,10 @@ footer{margin-top:var(--s7);padding-top:var(--s4);border-top:1px solid var(--hai
 </section>
 
 <section class="panel" id="p-st" hidden>
-  <div class="rbar" id="rbar" role="status" aria-live="polite" aria-label="Selected scenario result"></div>
   <div class="sec"><div class="sech"><h2>Pick a world</h2>
-    <div class="d">Eighteen scenarios, each showing the return it produces. Hover for exactly what it changes.</div></div>
+    <div class="d">Eighteen scenarios, each showing the return it produces. Hover for exactly what it changes.</div>
+    <button class="link" id="wreset" hidden>Reset to base</button></div>
+    <div class="say" id="wsum" style="margin:0 0 var(--s4)"></div>
     <div class="wor" id="wor"></div></div>
   <div class="sec"><div class="sech"><h2>Conditions</h2>
     <div class="d">Continuous pressures, always on at some level.</div></div>
@@ -376,6 +392,9 @@ footer{margin-top:var(--s7);padding-top:var(--s4);border-top:1px solid var(--hai
   <div class="sec"><div class="sech"><h2>Events</h2>
     <div class="d">Discrete things that either happen or don't.</div></div>
     <div class="evg" id="evs"></div></div>
+  <div class="sec"><div class="sech"><h2>What moves the return most</h2>
+    <div class="d">Each input pushed to its plausible low and high, alone. The centre line is your base IRR.</div></div>
+    <div class="card" id="tor"></div></div>
   <div class="sec"><div class="sech"><h2>Where that lands</h2></div>
     <div class="lbl" style="margin-bottom:var(--s2)">Resolved assumptions</div>
     <div class="res" id="res"></div>
@@ -559,8 +578,8 @@ function sdelta(){const d={};
 function wdelta(id){const n=NARR.find(x=>x.id===id),a=DIAL,b=EVS;
   DIAL={...n.dials};EVS=new Set(n.ev);const d=sdelta();DIAL=a;EVS=b;return d;}
 
-let B;
-function go(){B=model({});terms();hero();wf();gauges();flags();hold();lev();cf();worlds();dials();events();resolved();fac();attr();goal();}
+let B,SCS=[],TOR=[],UNB=0,SCN=null,TAB='ov';
+function go(){B=model({});SCS=NARR.map(n=>({n,m:model(wdelta(n.id))}));terms();hero();wf();gauges();flags();hold();lev();cf();worlds();wsummary();dials();events();resolved();fac();attr();tornado();takeaways();goal();}
 
 function terms(){
   const host=$('#terms');host.innerHTML='';
@@ -586,6 +605,47 @@ function terms(){
   $('#reset').hidden=AMD.size===0;}
 $('#reset').onclick=()=>{S={...D};AMD.clear();go();};
 
+function takeaways(){
+  const ap=B.apprec/B.profit,inc=1-ap,br=SCS.filter(x=>x.m.minDscr<1.25).length,
+    w=SCS.reduce((a,x)=>(x.m.irr??-9)<(a.m.irr??-9)?x:a),top=TOR[0],un=TOR.find(x=>x.s==='u'&&!AMD.has(x.k));
+  const it=[[ap>.55?'w':'g','Where the return comes from',ap>.55
+      ?`${(ap*100).toFixed(0)}% of profit is appreciation, so this rides on your ${pc(S.exitCap)} exit cap. Income and paydown supply ${(inc*100).toFixed(0)}%.`
+      :`${(inc*100).toFixed(0)}% of profit is cash flow and paydown: income you control, not a resale bet.`],
+    [br?'r':'g','How it holds up under stress',`${br?br+' of '+SCS.length+' scenarios push':'No scenario pushes'} coverage below the 1.25× lender floor. Worst is ${w.n.n}: ${pc(w.m.irr)} IRR, ${w.m.minDscr.toFixed(2)}× DSCR.`],
+    [un?'w':'g','What to firm up first',un?`${un.n} swings IRR by ${(un.span*100).toFixed(1)}pp across its plausible range and has no data source behind it.`
+      :`The biggest swing factor is ${top.n} at ${(top.span*100).toFixed(1)}pp of IRR.`]];
+  $('#tk').innerHTML=it.map(([c,t,d])=>`<div class="tki ${c}"><b>${t}</b><span>${d}</span></div>`).join('');}
+function tornado(){
+  const base=B.irr;if(base==null||!TOR.length){$('#tor').textContent='Not available for these inputs.';return;}
+  const rows=TOR.slice(0,8),dv=v=>(v??base)-base,mx=Math.max(...rows.map(x=>Math.max(Math.abs(dv(x.lo)),Math.abs(dv(x.hi)))))||.01,
+    seg=v=>{const d=dv(v);return `<div class="tb2" style="${d<0?'right':'left'}:50%;width:${(Math.abs(d)/mx*50).toFixed(1)}%;background:${d<0?'var(--risk)':'var(--up)'}"></div>`;};
+  $('#tor').innerHTML=rows.map(x=>`<div class="tor"><div>${x.n}${x.s==='u'&&!AMD.has(x.k)?' <span class="chip c-u">unbacked</span>':''}</div>
+    <div class="tt">${seg(x.lo)}${seg(x.hi)}<div class="wfz" style="left:50%"></div></div><div class="mono tv2">${pc(x.lo)} · ${pc(x.hi)}</div></div>`).join('')+
+    `<div class="say">Base IRR is <b>${pc(base)}</b>. The top bar, <b>${rows[0].n.toLowerCase()}</b>, alone moves it by ${(rows[0].span*100).toFixed(1)}pp; red is worse than base, green better.</div>`;}
+function bar(){
+  const el=$('#rbar');if(!el||!B)return;
+  const c=v=>v==null||Math.abs(v)<1e-9?'var(--ink-4)':v>0?'var(--up)':'var(--risk)',
+    dt=(d,f,u,t)=>d==null||Math.abs(d)<u?`<em style="color:var(--ink-4)">= ${t}</em>`:`<em style="color:${c(d)}">${d>0?'+':''}${f(d)} vs ${t}</em>`,
+    cell=(k,v,x,col)=>`<div><div class="k">${k}</div><div class="m"${col?` style="color:${col}"`:''}>${v}${x||''}</div></div>`,
+    nm=(t,s)=>`<div class="rn"><div class="k">${t}</div><b>${s}</b></div>`,
+    em=x=>1+x.profit/x.eq,dc=v=>v<1?'var(--risk)':v<1.25?'var(--warn)':'',
+    pq=d=>(d*100).toFixed(1)+'pp',xq=d=>d.toFixed(2)+'×',df=(a,b)=>a==null||b==null?null:a-b;
+  let h='';
+  if(TAB==='st'&&SCN){const SC=SCN;
+    h=nm('Scenario',NSEL?NARR.find(x=>x.id===NSEL).n:'Custom mix')+cell('Levered IRR',pc(SC.irr),dt(df(SC.irr,B.irr),pq,.0005,'base'))
+     +cell('Equity multiple',xq(em(SC)),dt(em(SC)-em(B),xq,.005,'base'))+cell('Min DSCR',xq(SC.minDscr),dt(SC.minDscr-B.minDscr,xq,.005,'base'),dc(SC.minDscr));}
+  else if(TAB==='cf'){const v=B.ys[CY-1],cum=B.ys.slice(0,CY).reduce((a,x)=>a+x.btcf,0);
+    h=nm('Year '+CY,`of ${S.hold} · click a bar to change`)+cell('NOI',money(v.noi))+cell('Cash flow to you',money(v.btcf),'',v.btcf<0?'var(--risk)':'')
+     +cell('DSCR',xq(v.dscr),'',dc(v.dscr))+cell('Equity returned as cash',pc(cum/B.eq,0),`<em style="color:var(--ink-4)">cumulative</em>`);}
+  else if(TAB==='as'){const O=model({...D}),t=+$('#tgt').value/100,g=df(B.irr,t);
+    h=nm('Assumptions',AMD.size?AMD.size+' amended by you':'All at defaults')+cell('Levered IRR',pc(B.irr),dt(df(B.irr,O.irr),pq,.0005,'original inputs'))
+     +cell('Target',pc(t),g==null?'':`<em style="color:${c(g)}">IRR ${g>=0?pq(g)+' above':pq(-g)+' short'}</em>`)
+     +cell('Uncertainty unbacked',(UNB*100).toFixed(0)+'%',`<em style="color:var(--ink-4)">of IRR spread</em>`);}
+  else{const ap=B.apprec/B.profit,v=B.minDscr<1.25?['c-u','Coverage risk']:ap>.55?['c-d','Market bet']:['c-b','Income deal'];
+    h=nm('Your deal',`Base case · ${S.hold}-year hold`)+cell('Levered IRR',pc(B.irr),`<em style="color:var(--ink-4)">${pc(B.unlev)} unlevered</em>`)
+     +cell('Equity multiple',xq(em(B)))+cell('Min DSCR',xq(B.minDscr),'',dc(B.minDscr))+cell('Break-even occupancy',pc(B.beOcc,0))
+     +`<div><div class="k">Verdict</div><div class="m"><span class="chip ${v[0]}">${v[1]}</span></div></div>`;}
+  el.innerHTML=h;}
 function hero(){
   $('#hy').textContent=S.hold;$('#hn').textContent=pc(B.irr);
   const ap=B.apprec/B.profit;
@@ -712,9 +772,13 @@ function cf(){
       <div class="r"><span>Cash flow</span><b>${cf$(v.btcf,v.y)}</b></div>
       <div class="r"><span>DSCR</span><b>${v.dscr.toFixed(2)}×</b></div>`);
     g.onmousemove=e=>moveTip(e,g); g.onmouseleave=hideTip;});
+  const tr=ys.reduce((a,v)=>v.dscr<a.dscr?v:a),cumT=ys.reduce((a,v)=>a+v.btcf,0);
+  $('#cfi').innerHTML=`Coverage is tightest in <b>year ${tr.y}</b> at <b>${tr.dscr.toFixed(2)}×</b>${tr.dscr<1.25?', below the lender floor':''}. `+
+    (cross?`Principal overtakes interest in <b>year ${cross.y}</b>. `:'Interest outweighs principal for the whole hold. ')+
+    `Cash alone returns <b>${pc(cumT/B.eq,0)}</b> of your equity by year ${S.hold}; the rest comes from the sale.`;
   bridge();pf();}
 function bridge(){
-  const v=B.ys[CY-1];$('#cfy').textContent=CY;
+  const v=B.ys[CY-1];bar();$('#cfy').textContent=CY;
   const rows=[['Potential gross rent',v.pgr,0],['Vacancy allowance',-v.vd,0],['Other income',v.oi,0],
     ['Effective gross income',v.egi,1],['Management fee',-v.mg,0],['Operating expenses',-v.ops,0],
     ['Property taxes',-v.tx,0],['Net operating income',v.noi,1],['Interest',-v.int,0],
@@ -779,12 +843,13 @@ function worlds(){
   const base=B.irr;
   $('#wor').innerHTML=WG.map(([g,lab,col])=>{const it=NARR.filter(n=>n.g===g);
     return `<div><div class="wgl"><span class="t" style="color:${col}">${lab}</span><span class="l"></span><span class="c">${it.length}</span></div>
-      <div class="wg">${it.map(n=>{const r=model(wdelta(n.id)).irr,d=r==null?null:r-base;
+      <div class="wg">${it.map(n=>{const mm=model(wdelta(n.id)),r=mm.irr,d=r==null?null:r-base;
         const dc=d==null||Math.abs(d)<.0005?'var(--ink-4)':d>0?'var(--up)':'var(--risk)';
         return `<button class="wc" data-n="${n.id}" aria-pressed="${NSEL===n.id}" style="--wc:${col}">
           <div class="n">${n.n}${n.id==='base'?'<em>now</em>':''}</div><div class="s">${n.sub}</div>
           <div class="r"><span class="i">${pc(r)}</span>
           <span class="d" style="color:${dc}">${d==null||Math.abs(d)<.0005?'—':(d>0?'+':'')+(d*100).toFixed(1)+'pp'}</span></div>
+          <div class="dq"${mm.minDscr<1.25?' style="color:var(--risk)"':''}>DSCR ${mm.minDscr.toFixed(2)}×${mm.minDscr<1.25?' · below floor':''}</div>
         </button>`;}).join('')}</div></div>`;}).join('');
   document.querySelectorAll('.wc').forEach(b=>{const n=NARR.find(x=>x.id===b.dataset.n);
     b.onclick=()=>{NSEL=n.id;DIAL={...n.dials};EVS=new Set(n.ev);worlds();dials();events();resolved();};
@@ -797,6 +862,11 @@ function worlds(){
         ${!dr&&!er?'<div class="k">No changes — your current deal</div>':''}`);};
     b.onmousemove=e=>moveTip(e,b); b.onmouseleave=hideTip;
     b.onfocus=e=>b.onmouseenter(e); b.onblur=hideTip;});}
+function wsummary(){
+  const t=+$('#tgt').value/100,br=SCS.filter(x=>x.m.minDscr<1.25).length,lo=SCS.filter(x=>(x.m.irr??-9)<t).length,
+    w=SCS.reduce((a,x)=>(x.m.irr??-9)<(a.m.irr??-9)?x:a);
+  $('#wsum').innerHTML=`<b>${br} of ${SCS.length}</b> scenarios push coverage below the 1.25× lender floor and <b>${lo}</b> miss your ${pc(t,0)} target. Worst case: <b>${w.n.n}</b> at ${pc(w.m.irr)} IRR and ${w.m.minDscr.toFixed(2)}× DSCR.`;}
+$('#wreset').onclick=()=>{NSEL='base';DIAL={fin:0,dem:0,reg:0,phy:0,nbh:0};EVS=new Set();worlds();dials();events();resolved();};
 function dials(){
   $('#dials').innerHTML=DIALS.map(d=>`<div class="dl">
     <div><div class="n">${d.n}</div><div class="s">${d.s}</div></div>
@@ -818,14 +888,7 @@ function resolved(){
     .map(([k,n,g])=>{const dv=(m[k]||0)-S[k],c=Math.abs(dv)<1e-9?'var(--ink-4)':(dv*g>0?'var(--up)':'var(--risk)');
       return `<div><div class="lbl">${n}</div><div class="v">${pc(m[k])}</div>
         <div class="d" style="color:${c}">${Math.abs(dv)<1e-9?'unchanged':pp(dv)}</div></div>`;}).join('');
-  const bar=(()=>{const nm=NSEL?NARR.find(x=>x.id===NSEL).n:'Custom mix',em=x=>x.eq?(1+x.profit/x.eq):null,
-    dI=SC.irr==null||B.irr==null?null:SC.irr-B.irr,c=v=>v==null||Math.abs(v)<.0005?'var(--ink-4)':v>0?'var(--up)':'var(--risk)',
-    x=em(SC),dc=SC.minDscr<1?'var(--risk)':SC.minDscr<1.25?'var(--warn)':'var(--ink)';
-    return `<div class="rn"><div class="k">Scenario</div><b>${nm}</b></div>
-      <div><div class="k">Levered IRR</div><div class="m">${pc(SC.irr)}<em style="color:${c(dI)}">${dI==null||Math.abs(dI)<.0005?'= base':(dI>0?'+':'')+(dI*100).toFixed(1)+'pp vs base'}</em></div></div>
-      <div><div class="k">Equity multiple</div><div class="m">${x==null?'—':x.toFixed(2)+'×'}<em style="color:${c(x==null?null:x-em(B))}">${x==null||Math.abs(x-em(B))<.005?'= base':(x>em(B)?'+':'')+(x-em(B)).toFixed(2)+'× vs base'}</em></div></div>
-      <div><div class="k">Min DSCR</div><div class="m" style="color:${dc}">${SC.minDscr.toFixed(2)}×<em style="color:${c(SC.minDscr-B.minDscr)}">${Math.abs(SC.minDscr-B.minDscr)<.005?'= base':(SC.minDscr>B.minDscr?'+':'')+(SC.minDscr-B.minDscr).toFixed(2)+'× vs base'}</em></div></div>`;})();
-  $('#rbar').innerHTML=bar;
+  SCN=SC;$('#wreset').hidden=NSEL==='base';bar();
   const wo=model(wdelta('hard')).irr,bo=model(wdelta('breakout')).irr,ba=B.irr,st=SC.irr;
   const all=[wo,bo,ba,st].filter(v=>v!=null),lo=Math.min(...all),hi=Math.max(...all),sp=(hi-lo)||.01;
   const P=v=>cl((v-lo)/sp*100,1,99).toFixed(1);
@@ -859,14 +922,14 @@ $('#og').onchange=fac;
 function attr(){
   const c=FAC.map(f=>{const[lo,hi]=SW[f.k],p=f.k==='price';
     const a=model({[f.k]:S[f.k]*(p?1+lo:1)+(p?0:lo)}).irr,b=model({[f.k]:S[f.k]*(p?1+hi:1)+(p?0:hi)}).irr;
-    return{...f,span:Math.abs((b??0)-(a??0))};}).sort((x,y)=>y.span-x.span);
+    return{...f,lo:a,hi:b,span:Math.abs((b??0)-(a??0))};}).sort((x,y)=>y.span-x.span);TOR=c;
   const t=c.reduce((s,x)=>s+x.span,0)||1;
   $('#att').innerHTML=c.slice(0,7).map(x=>{
     const col=AMD.has(x.k)?'var(--warn)':x.s==='u'?'var(--risk)':x.s==='d'?'var(--warn)':'var(--up)';
     return `<div class="ab"><div>${x.n}</div><div class="abt"><div class="abf" style="width:${(x.span/(c[0].span||1)*100).toFixed(1)}%;background:${col}"></div></div>
       <div class="mono" style="text-align:right;font-size:var(--t-xs)">${(x.span/t*100).toFixed(0)}%</div></div>`;}).join('');
   const un=c.filter(x=>x.s==='u'&&!AMD.has(x.k)).reduce((s,x)=>s+x.span,0)/t;
-  $('#atts').innerHTML=`<b>${(un*100).toFixed(0)}% of the spread</b> in this IRR traces to inputs with no data source behind them — led by <b>${c[0].n.toLowerCase()}</b>. That is the research backlog, in priority order.`;}
+  UNB=un;$('#atts').innerHTML=`<b>${(un*100).toFixed(0)}% of the spread</b> in this IRR traces to inputs with no data source behind them — led by <b>${c[0].n.toLowerCase()}</b>. That is the research backlog, in priority order.`;}
 function seek(k,t){let lo=k==='price'?3e5:-.5,hi=k==='price'?6e6:.9;
   if(k==='exitCap'){lo=.015;hi=.2}if(k==='rate'){lo=.001;hi=.3}if(k==='vac'){lo=0;hi=.75}
   const f=x=>{const v=model({[k]:x}).irr;return v==null?-9:v-t;};
@@ -877,6 +940,7 @@ function ptile(k,v){const h=HIS[k];if(!h)return null;const[a,b,c]=h;
   if(v<=c)return 50+(v-b)/(c-b)*40;return Math.min(99,90+(v-c)/(c-b||1)*9);}
 let LS=null;
 function goal(){
+  bar();
   const t=+$('#tgt').value/100,k=$('#slv').value,f=FAC.find(x=>x.k===k),need=seek(k,t);
   $('#tgv').textContent=(t*100).toFixed(1)+'%';LS=need==null?null:{k,need};
   if(need==null){$('#vd').innerHTML=`<div class="lbl">${f.n} required</div><div class="big">Unreachable</div>
@@ -893,6 +957,7 @@ function goal(){
 $('#tgt').oninput=goal;$('#slv').onchange=goal;
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  TAB=b.dataset.t;bar();
   ['ov','cf','st','as'].forEach(t=>$('#p-'+t).hidden=(t!==b.dataset.t));});
 go();
 </script>

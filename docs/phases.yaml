@@ -163,6 +163,9 @@ phases:
       - path: .claude/artifacts.json
       - path: .claude/hooks/artifact-guard.sh
       - path: docs/artifact/staging.html
+        contains: "function bar()"
+      - path: docs/UI.md
+        contains: "Components"
       - path: scripts/promote_artifact.py
       - path: docs/DECISIONS.md
       - path: .claude/agent-boundaries.json

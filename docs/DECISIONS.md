@@ -5,6 +5,12 @@ Add an entry (and update `docs/NEXT.md`) in the same session any such change is 
 what is built are NOT recorded here; run `app.cli status`.
 
 ## 2026-09-18
+- **UI knowledge lives in `docs/UI.md`.** Structure, components, checklist and changelog for the
+  artifact; CLAUDE.md points to it. Why: UI facts were spread over a memory note, NEXT.md and this log,
+  and auto-memory is per-machine, so a new session could miss them. Git-tracked docs reach every
+  session and worktree.
+- **Result bar is one sticky element for all four tabs,** content chosen by `TAB` in `bar()`. Added to
+  staging with Read this first, cash flow insight, scenario summary, reset, per-card DSCR, tornado.
 - **Backend is the only calculation engine.** The artifact's in-page `model()` is a prototype (it also
   uses flat 25%/23.8% sale-tax rates, unlike `taxes.py`); the app calls the backend. A parity test
   will compare them. Why: two engines silently diverge.

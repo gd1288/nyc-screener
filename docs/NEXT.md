@@ -18,7 +18,7 @@ live artifact before every republish; never regenerate over it from a template.
 - Registry: `.claude/artifacts.json`. Promote with `scripts/promote_artifact.py`, then ask before publishing to main.
 
 ## Where things are remembered
-- Rules: `CLAUDE.md`. Progress: `app.cli status`. Criteria and decisions: `research/criteria.yaml`.
+- UI: `docs/UI.md`. Rules: `CLAUDE.md`. Progress: `app.cli status`. Criteria and decisions: `research/criteria.yaml`.
 - Methodology reasoning: `research/memos/`. Approved UI copy: `docs/artifact/real-estate-tool.html`.
 - Your preferences: auto-memory. Facts about the code live in git, not in memory.
 

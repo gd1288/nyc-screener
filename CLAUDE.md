@@ -75,6 +75,9 @@ feature goes first, with additive changes only.
 - Never reuse an old scratch file path for publishing; publish only `docs/artifact/staging.html`
   (staging) or pass the URL explicitly.
 
+**UI changes:** read `docs/UI.md` first (structure, components, checklist) and update it in the same
+commit. It is the single home for UI knowledge, shared by every session and worktree via git.
+
 ## Definition of done
 Tests pass (`pytest`), types check (`tsc --noEmit`), ruff is clean, and you've shown evidence (test
 output, or a screenshot/`/verify` for UI changes) — not just a claim that it works.
