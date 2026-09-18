@@ -105,3 +105,4 @@ diff table on Stress test. Additions only. The screener is a drawer, not a fifth
 - 2026-09-18: found listing pages for the top 10 properties (7 unit, 3 building) via search, stored in `app_settings` `listing_urls` and embedded by `embed_screener.py`.
 - 2026-09-18: Sold & off market view in the screener drawer (mirrors the Next.js Sold page), fed by a `SOLD` block. Empty until the backend marks listings sold, off market or withdrawn.
 - 2026-09-18: "not in last check" chip on screener rows whose listing missed the last complete feed check (`ms` field from `missed_fetches`); it moves to Sold & off market after a second miss.
+- 2026-09-18: deal-header actions now wrap inside the card at narrow widths (the "Click a figure to amend" label was being squeezed into a column of letters and pushed outside the card). Found by viewing the page in the browser pane.

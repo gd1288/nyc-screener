@@ -335,6 +335,11 @@ footer{margin-top:var(--s7);padding-top:var(--s4);border-top:1px solid var(--hai
 .lk:hover{border-color:var(--ink-4);background:var(--sunk)}
 .lk em{font-style:normal;font-weight:400;font-size:var(--t-xs);color:var(--ink-3)}
 .lks{margin:var(--s4) 0 var(--s2)}
+
+/* header actions must wrap instead of squeezing the label into a column of letters at narrow widths */
+.deal-h .r{flex-wrap:wrap;justify-content:flex-end}
+.deal-h .r .lbl,.deal-h .r .link,.deal-h .r .sbtn{white-space:nowrap}
+@media(max-width:600px){.deal-h .r{margin-left:0;width:100%;justify-content:flex-start}}
 </style>
 
 <!--STAGING-BANNER--><div style="background:#96690F;color:#fff;text-align:center;font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:6px">Staging copy &mdash; not the approved tool</div><!--/STAGING-BANNER-->

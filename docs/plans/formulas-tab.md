@@ -57,6 +57,19 @@ So:
 6. **Only real formulas.** Where the artifact's prototype differs from the backend engine (for example flat sale-tax
    rates vs `taxes.py`), the inspector says so, with a "differs from backend" flag, instead of hiding it.
 
+## Deep dive pages (added 2026-09-18 at the user's request)
+The user wants to press the info marker for a quick answer, and also **click through to the Formulas tab for a deeper dive on
+any value**. So the inspector panel gets an "Open deep dive" link, and the Formulas tab has one page per formula:
+- **Formula and derivation:** the formula in words and symbols, and why it has that shape.
+- **With your numbers:** live substitution, one step per line, using the property currently loaded.
+- **Where it sits:** the valuation chain with this step highlighted, what feeds it (each input clickable) and what it feeds.
+- **Sensitivity:** how far this value, and the return, move when each input changes by 10%: a small tornado for this formula.
+- **Provenance and caveats:** market-backed / derived / unbacked chips, edge cases (for example a negative NOI, or an IRR that
+  cannot be computed), and whether the artifact's prototype differs from the backend.
+- **Code reference:** the backend function that owns it.
+The list view stays searchable and grouped by stage; the deep dive is reached from a row, from the inspector, or from any
+number's info marker. The Purchase page (`docs/plans/purchase-analysis.md`) reuses the same markers.
+
 ## Formula inventory (start here; verify each against `model()` in staging.html and the backend)
 - Acquisition: price, transaction costs (txnPct x price), loan (price x (1 - down %)), equity invested (down
   payment + costs).
