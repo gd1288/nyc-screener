@@ -197,3 +197,4 @@ phases:
       - path: backend/app/pipeline/listing_urls.py
         contains: "ALLOWED_DOMAINS"
       - path: backend/tests/test_listing_urls.py
+      - path: docs/plans/formulas-tab.md

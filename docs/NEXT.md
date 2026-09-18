@@ -47,6 +47,8 @@ only colors/spacing tokens.
 Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion` (with a validator test).
 
 ## Other open work
+- **Formulas feature (planned, not started):** `docs/plans/formulas-tab.md` has the design, the phases and a paste-ready
+  prompt for a new window (info marker on every number, formula inspector panel, Formulas tab, backend-authored registry).
 - FRED is live (mortgage rate, 10-year Treasury, FHFA New York price index). Rotate the FRED key at some point: it appeared
   in a transcript before log redaction was added. Key lives in the project-root `.env`.
 - Data-source follow-ups (see docs/DATA_LICENSES.md): read HUD's API terms, then build it; email Apartment List for
