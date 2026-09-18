@@ -267,6 +267,7 @@ def main() -> int:
     status = sub.add_parser("status", help="what each phase has actually delivered (checked against disk)")
     status.add_argument("--json", action="store_true", dest="as_json")
     sub.add_parser("research-gaps", help="write research/gaps.json: valuation factors with no real data source")
+    sub.add_parser("rescore-areas", help="recompute area Growth Scores within each comparison set")
     add_region = sub.add_parser("add-region", help="load a metro's census tracts into areas")
     add_region.add_argument("name", help="metro nickname, e.g. austin")
     add_region.add_argument("--watch", action="store_true", help="refresh this region on schedule")
@@ -304,6 +305,11 @@ def main() -> int:
         return cmd_diagnose(args.as_json)
     elif args.cmd == "research-gaps":
         return cmd_research_gaps()
+    elif args.cmd == "rescore-areas":
+        from app.scoring.area import recompute_area_scores
+
+        with SessionLocal() as s:
+            print(f"scored {recompute_area_scores(s)} areas")
     elif args.cmd == "add-region":
         return cmd_add_region(args.name, args.watch)
     elif args.cmd == "valuation-eval":

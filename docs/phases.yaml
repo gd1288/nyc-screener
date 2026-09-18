@@ -63,6 +63,11 @@ phases:
       - path: backend/tests/test_areas.py
         contains: "def test_known_region_counties_are_real_counties_with_the_expected_names"
       - path: backend/app/sources/fhfa_hpi.py
+      # Percentiles must be ranked inside a comparison set, never across the whole table — ranking
+      # a Manhattan tract against a rural one measures two housing markets, not two neighbourhoods.
+      - path: backend/app/scoring/area.py
+        contains: "def recompute_area_scores"
+      - path: backend/app/api/areas.py
       - path: frontend/src/app/areas
 
   - id: 2a

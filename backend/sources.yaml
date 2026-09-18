@@ -8,6 +8,11 @@ sources:
     adapter: app.sources.nta_boundaries.NtaBoundaries
     schedule: "0 3 1 1 *"          # yearly
 
+  # --- national signals (any loaded region, keyed by census tract) ---
+  fhfa_tract_hpi:
+    adapter: app.sources.fhfa_hpi.FhfaTractHpi
+    schedule: "0 6 15 3 *"         # yearly - FHFA publishes this index once a year
+
   # --- closed sales & price history ---
   dof_condo_sales:
     adapter: app.sources.dof_sales.DofCondoSales

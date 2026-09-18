@@ -332,3 +332,32 @@ export function useApi<T>(path: string | null) {
   const reload = useCallback(() => setVersion((v) => v + 1), []);
   return { data, error, loading: requestKey !== null && settled !== requestKey, reload, setData };
 }
+
+export type AreaRow = {
+  id: number;
+  kind: string;
+  code: string;
+  name: string;
+  state_fips: string | null;
+  county_fips: string | null;
+  cbsa: string | null;
+  area_km2: number | null;
+  comparison_set: string;
+  score: number | null;
+  rank: number | null;
+  /** Share of scoring weight actually backed by data. A score of 50 at 0.07 coverage means
+   *  "we don't know", not "average" - never render the score without it. */
+  coverage: number | null;
+};
+
+export type AreaDetail = AreaRow & {
+  geometry: unknown | null;
+  pillars: Record<string, PillarDetail & { source?: string }>;
+  peers_in_comparison_set: number;
+  pillars_without_data: string[];
+};
+
+export type RegionsResponse = {
+  loaded: { id: number; kind: string; code: string; name: string; watched: boolean; tracts: number; comparison_set: string }[];
+  available: { key: string; code: string; name: string; loaded: boolean }[];
+};
