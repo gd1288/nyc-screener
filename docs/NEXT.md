@@ -21,17 +21,16 @@ only, all work on **staging**, main only by promotion with the user's explicit O
 ## Latest saved state (2026-09-18)
 - Staging = **version 11**, tag `staging-v11-2026-09-18` (earlier tags `staging-v5` to `staging-v10`, same date). Published with the
   platform `db` capability (Saved tab): leave `capabilities` out when republishing. How to change it: `docs/UI.md`, "Picking this up in a new window".
-- **NOT yet on GitHub.** The user asked (2026-09-18) for everything to be pushed, but the push was blocked by the permission system
-  because the repo (gd1288/nyc-screener) is **PUBLIC**, and `staging.html` embeds a RentCast listings snapshot and FRED figures. All work
-  is committed locally with restore tags. To push, the user runs `git push origin valuation-phase-2a` and `git push origin --tags`
-  from the project folder (after deciding about privacy). Autosave pushing stays OFF (`.claude/autosave.json`).
+- **On GitHub as of 2026-09-18:** branch `valuation-phase-2a` (through commit `03cf532`) and all 8 restore tags were pushed by the user. The repo
+  (gd1288/nyc-screener) is **PUBLIC**, so `staging.html` (RentCast listings snapshot, FRED figures) is now publicly visible. Commits made after
+  that are local until pushed (`git log origin/valuation-phase-2a..HEAD`). Autosave pushing stays OFF (`.claude/autosave.json`) until the user
+  approves automatic pushes to a public repo.
 - Tests, lint and `app.cli status` were clean at the last commit. Memory: `docs/SESSIONS.md`, Claude's notes are backed up in
   `.claude/memory-backup/`.
 
 ## Needs the user's decision
-0. **Push to GitHub** (see above): 36 commits and 8 tags are local only.
-1. **GitHub repo is public.** Make it private (recommended) and set `"push": true` in `.claude/autosave.json`, or strip the
-   embedded third-party data from `staging.html` (and history). Until decided, autosave does not push.
+1. **GitHub repo is public and now holds the embedded RentCast/FRED data.** Decide: make it private (recommended; old commits stay in
+   history, so private is the only real fix), then set `"push": true` in `.claude/autosave.json` so future windows sync automatically.
 2. **Promote staging to main?** Staging bundles the result bar, screener drawer, market strip, links menu, sold view, Purchase and
    Saved tabs, and a fix for a scenario bug main still has (downside scenarios could beat base). Promoting changes all 18 scenario cards.
 3. **`scripts/valuation-spike/`** (untracked leftover of the old proforma spike): keep or delete. Never `git add` the `scripts/` folder wholesale.
