@@ -164,3 +164,12 @@ phases:
       - path: .claude/hooks/artifact-guard.sh
       - path: docs/artifact/staging.html
       - path: scripts/promote_artifact.py
+      - path: docs/DECISIONS.md
+      - path: .claude/agent-boundaries.json
+      - path: .claude/agents/README.md
+      - path: .claude/agents/criteria-proposer.md
+      - path: .claude/skills/propose-criteria
+      - path: backend/app/research/criteria.py
+        contains: "def validate"
+      - path: backend/app/cli.py
+        contains: "def cmd_criteria"

@@ -58,6 +58,12 @@ to `docs/phases.yaml` in the same commit.
 ## Session start
 Read `docs/NEXT.md` (current goal, open work, UI lock) before starting. Update it when direction changes.
 
+## Keeping memory current
+When a session changes the plan, structure, rules, or adds an agent: update `docs/NEXT.md`, add a
+dated entry to `docs/DECISIONS.md`, and add the deliverable's check to `docs/phases.yaml`, all in the
+same commit. New agents follow `.claude/agents/README.md`. The user is building this in layers on a
+baseline; design every addition so the next layer is easy to add.
+
 ## Real Estate Tool artifact: main is locked, work happens in staging
 Two artifacts, registered in `.claude/artifacts.json`. **Main** is the approved UI (Overview / Cash
 flow / Stress test / Assumptions). **Staging** (`docs/artifact/staging.html`) is where every new

@@ -189,3 +189,46 @@ def test_precision_is_none_before_anything_is_decided():
 def test_the_shipped_registry_file_is_valid():
     """The repo's own registry.json must stay loadable — the skill reads it before every run."""
     assert isinstance(reg.load(), list)
+
+
+# ------------------------------------------------------------------ criteria ledger
+
+from app.research import criteria as crit  # noqa: E402
+
+FACTORS = {"rent_growth", "vacancy_pct"}
+
+
+def _crit(**kw):
+    return {"id": "x", "label": "X", "status": "idea", **kw}
+
+
+def test_the_committed_ledger_is_valid():
+    from app.valuation.factors import FACTOR_DEFS
+
+    assert crit.validate(crit.load(), {f.key for f in FACTOR_DEFS}) == []
+
+
+def test_ledger_rejects_unknown_status_duplicates_and_undated_decisions():
+    problems = crit.validate(
+        [_crit(status="maybe"), _crit(), _crit(id="y", status="approved"), _crit(id="z", status="rejected", decided="2026-09-18")],
+        FACTORS,
+    )
+    text = " | ".join(problems)
+    assert "unknown status 'maybe'" in text
+    assert "duplicate id" in text
+    assert "approved' needs a 'decided'" in text
+    assert "rejected needs a 'reason'" in text
+
+
+def test_live_entry_must_point_at_a_real_factor():
+    bad = crit.validate([_crit(status="live", decided="2026-09-18", factor="nope")], FACTORS)
+    ok = crit.validate([_crit(status="live", decided="2026-09-18", factor="rent_growth")], FACTORS)
+    assert any("not in valuation/factors.py" in p for p in bad)
+    assert ok == []
+
+
+def test_ui_suggestions_may_only_target_staging():
+    good = _crit(ui_suggestion={"target": "staging", "description": "add a dial"})
+    bad_target = _crit(ui_suggestion={"target": "main", "description": "add a dial"})
+    assert crit.validate([good], FACTORS) == []
+    assert crit.validate([bad_target], FACTORS)

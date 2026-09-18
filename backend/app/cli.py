@@ -215,6 +215,25 @@ def cmd_research_precision(as_json: bool) -> int:
     return 0
 
 
+def cmd_criteria(as_json: bool) -> int:
+    """Validate research/criteria.yaml and count entries by status. Non-zero exit on problems so an
+    agent that just edited the ledger finds out immediately."""
+    from app.research import criteria
+    from app.valuation.factors import FACTOR_DEFS
+
+    entries = criteria.load()
+    problems = criteria.validate(entries, {f.key for f in FACTOR_DEFS})
+    counts = criteria.summary(entries)
+    if as_json:
+        print(json.dumps({"counts": counts, "problems": problems}, indent=2))
+        return 1 if problems else 0
+    print(", ".join(f"{n} {s}" for s, n in counts.items()))
+    for p in problems:
+        print(f"  problem  {p}")
+    print("ledger ok" if not problems else f"{len(problems)} problem(s)")
+    return 1 if problems else 0
+
+
 def cmd_add_region(name: str, watch: bool) -> int:
     """Load a metro's census tracts into `areas` so it can be scored like NYC."""
     import httpx
@@ -288,6 +307,8 @@ def main() -> int:
     sub.add_parser("research-gaps", help="write research/gaps.json: valuation factors with no real data source")
     research_precision = sub.add_parser("research-precision", help="approved/decided ratio for proposed data sources")
     research_precision.add_argument("--json", action="store_true", dest="as_json")
+    criteria_cmd = sub.add_parser("criteria", help="validate research/criteria.yaml and count entries by status")
+    criteria_cmd.add_argument("--json", action="store_true", dest="as_json")
     sub.add_parser("rescore-areas", help="recompute area Growth Scores within each comparison set")
     add_region = sub.add_parser("add-region", help="load a metro's census tracts into areas")
     add_region.add_argument("name", help="metro nickname, e.g. austin")
@@ -328,6 +349,8 @@ def main() -> int:
         return cmd_research_gaps()
     elif args.cmd == "research-precision":
         return cmd_research_precision(args.as_json)
+    elif args.cmd == "criteria":
+        return cmd_criteria(args.as_json)
     elif args.cmd == "rescore-areas":
         from app.scoring.area import recompute_area_scores
 

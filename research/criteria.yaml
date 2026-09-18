@@ -11,6 +11,9 @@
 #         live      built and shown in the valuation (fill `factor` and `ui`)
 #         rejected  the user declined it (fill `decided` and `reason`; registry.json runs the cooldown)
 #
+# Optional `ui_suggestion: {target: staging, description: ...}`: a proposed UI change. Target is always
+# staging; main is only changed by promotion with the user's approval.
+#
 # Rules: never move an entry to `live` without the `factor` name existing in
 # backend/app/valuation/factors.py and (if user-facing) the `ui` element existing. Update
 # `status`, `decided` and `evidence` in the same session the decision is made.
