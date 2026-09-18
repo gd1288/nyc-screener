@@ -47,7 +47,7 @@ unbacked share of uncertainty.
 ## Picking this up in a new window (read this first)
 Everything needed is in git (branch `valuation-phase-2a`; nothing is pushed, so the folder on this machine is the copy).
 Restore points: tags `artifact-main-1` (approved main), `staging-v5-2026-09-18` (screener drawer, market strip, reality
-check, links menu; published as staging version 5) and `staging-v6-2026-09-18` (adds found listing pages; version 6).
+check, links menu; published as staging version 5) `staging-v6-2026-09-18` (adds the found-listing UI; version 6) and `staging-v7-2026-09-18` (found links for the top 10 properties; version 7).
 Move a tag only on purpose: never re-tag with `-f` to a newer commit.
 
 To change staging:
@@ -101,3 +101,4 @@ diff table on Stress test. Additions only. The screener is a drawer, not a fifth
   reality check on scenario severity; links menu; FRED attribution in the footer. The mortgage rate now shows two
   decimals. Backend numbers in the parity note are re-run at the same mortgage rate via `/analyze`.
 - 2026-09-18: found listing pages: "Listing ↗" on rows and a labeled section in the links menu, fed by `app.cli find-listing-urls` and `embed_screener.py` (dormant until a Perplexity key is set).
+- 2026-09-18: found listing pages for the top 10 properties (7 unit, 3 building) via search, stored in `app_settings` `listing_urls` and embedded by `embed_screener.py`.

@@ -53,6 +53,26 @@ def is_allowed_url(url: str) -> bool:
     return u.scheme == "https" and any(host == d or host.endswith("." + d) for d in ALLOWED_DOMAINS)
 
 
+def _is_building_page(url: str) -> bool:
+    """True for URL shapes that are a building's page rather than one unit's. Deliberately narrow: an unknown shape is
+    refused, because a link to a different unit (or a rental) labelled 'the building' would mislead."""
+    u = urlparse(url)
+    host = (u.hostname or "").lower()
+    segs = [x for x in u.path.split("/") if x]
+    path = [t for t in _tokens(u.path)]
+    if "unit" in path or "apt" in path or "ste" in path:
+        return False
+    if host.endswith("streeteasy.com"):
+        return len(segs) == 2 and segs[0] == "building"
+    if host.endswith("zillow.com"):
+        return bool(segs) and segs[0] == "b"
+    if host.endswith("compass.com") or host.endswith("corcoran.com"):
+        return "building" in segs
+    if host.endswith("redfin.com"):
+        return "home" in segs
+    return False
+
+
 def match_level(address: str, unit: str | None, url: str) -> str | None:
     """'unit' when the URL names this unit, 'building' when it names this street address, else None."""
     if not is_allowed_url(url):
@@ -70,7 +90,8 @@ def match_level(address: str, unit: str | None, url: str) -> str | None:
             u = re.sub(r"^(apt|unit|ste|no)", "", u)
             if len(u) >= 2 and u in "".join(path):
                 return "unit"
-            return "building"
+            # Not this unit. Only a real building page may stand in for it; another unit's page must not.
+            return "building" if _is_building_page(url) else None
     return None
 
 
@@ -155,3 +176,19 @@ def find_urls(session, http: httpx.Client, api_key: str, listings, *, limit: int
         session.merge(AppSetting(key=URLS_KEY, value=urls))
         session.commit()
     return stats
+
+
+def record_found(session, listing_id: int, address: str, unit: str | None, candidates: list[str], source: str) -> tuple[str, str] | None:
+    """Store the best acceptable URL among `candidates` for one listing (used for URLs found by hand or by a search
+    tool rather than the Perplexity call). Same validation as `find_urls`: allowed https domain, and the street
+    number and name must appear in the URL. Returns (url, level) or None when nothing passes."""
+    picked = pick_url(address, unit, [{"url": u} for u in candidates])
+    row = session.get(AppSetting, URLS_KEY)
+    urls = dict(row.value) if row else {}
+    if picked is None:
+        return None
+    url, level = picked
+    urls[str(listing_id)] = {"url": url, "level": level, "found_at": date.today().isoformat(), "source": source}
+    session.merge(AppSetting(key=URLS_KEY, value=urls))
+    session.commit()
+    return picked

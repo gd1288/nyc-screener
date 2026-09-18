@@ -23,7 +23,7 @@ live artifact before every republish; never regenerate over it from a template.
 - Your preferences: auto-memory. Facts about the code live in git, not in memory.
 
 ## Latest saved state
-Staging = version 6 (tag `staging-v6-2026-09-18`; version 5 is `staging-v5-2026-09-18`; file `docs/artifact/staging.html`). How to change it from a new window:
+Staging = version 7 (tag `staging-v7-2026-09-18`; earlier: `staging-v6-2026-09-18`, `staging-v5-2026-09-18`; file `docs/artifact/staging.html`). How to change it from a new window:
 `docs/UI.md`, section "Picking this up in a new window". Main = `artifact-main-1`, unchanged, promotion pending your decision.
 
 ## Direction (decided 2026-09-18) - see docs/ARCHITECTURE.md
@@ -51,7 +51,12 @@ Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion`
   in a transcript before log redaction was added. Key lives in the project-root `.env`.
 - Data-source follow-ups (see docs/DATA_LICENSES.md): read HUD's API terms, then build it; email Apartment List for
   terms; the RGB operating-cost table needs PDF extraction.
-- **To turn on found listing pages:** sign up for Perplexity's API (paid, about $5 per 1,000 requests), read the Search
+- **Data-quality flag from the link search:** search summaries suggest 5 of the 10 highest-scored screener listings
+  may not be for sale now (141 E 55th St 1A, 315 7th Ave 16C shows as a rental, 280 Rector Pl 9H, 2 S End Ave 3W,
+  303 W 149th St 5F). Unverified (pages were not opened); open the links to check. RentCast's feed can go stale, so
+  consider a freshness check (last seen, ACRIS sold) before trusting the top of the ranking.
+- Perplexity finder is PAUSED by the user (code kept). Found links so far were added by hand with the search tool
+  (`listing_urls.record_found`), for the top 10 only. To turn Perplexity on later: sign up for Perplexity's API (paid, about $5 per 1,000 requests), read the Search
   Service terms, put `PERPLEXITY_API_KEY=` in the project-root `.env`, then run
   `cd backend && uv run python -m app.cli find-listing-urls --limit 10` and check the results by hand before running the
   rest, then `uv run python ../scripts/embed_screener.py` and republish staging.

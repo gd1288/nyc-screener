@@ -53,8 +53,35 @@ def test_wrong_property_or_site_is_refused(url):
 
 
 def test_short_units_do_not_claim_a_unit_match():
-    """Unit '5' would match almost any URL, so it can only ever produce a building-level link."""
-    assert lu.match_level("141 E 55th St", "5", "https://streeteasy.com/building/141-east-55-street-new-york/15b") == "building"
+    """Unit '5' would match almost any URL, so it never yields a unit link; another unit's page is refused."""
+    assert lu.match_level("141 E 55th St", "5", "https://streeteasy.com/building/141-east-55-street-new-york/15b") is None
+    assert lu.match_level("141 E 55th St", "5", "https://streeteasy.com/building/141-east-55-street-new-york") == "building"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://www.redfin.com/NY/New-York/155-E-34th-St-10016/unit-16C/home/45253972",  # unit 16C is not 16S
+        "https://www.compass.com/listing/155-east-34th-street-unit-16mn-manhattan-ny-10016/1695208345717077697/",
+        "https://www.zillow.com/homedetails/155-E-34th-St-APT-16J-New-York-NY-10016/31507169_zpid/",
+        "https://streeteasy.com/property/844640-155-east-34-street-phb",
+        "https://www.elliman.com/newyorkcity/sales/detail/527-l-551-01_4340378/155-east-34th-st-midtown-east-new-york-ny",
+    ],
+)
+def test_another_units_page_is_never_labelled_as_this_unit_or_the_building(url):
+    assert lu.match_level("155 E 34th St", "16S", url) is None
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://streeteasy.com/building/155-east-34-street-new_york",
+        "https://www.zillow.com/b/155-e-34th-st-new-york-ny-4Nwq/",
+        "https://www.compass.com/building/warren-house-155-e-34th-st-manhattan-ny/281937762834239941/",
+    ],
+)
+def test_genuine_building_pages_are_accepted_as_building_level(url):
+    assert lu.match_level("155 E 34th St", "16S", url) == "building"
 
 
 def test_suite_style_units_are_normalised():

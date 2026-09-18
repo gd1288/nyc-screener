@@ -5,6 +5,10 @@ Add an entry (and update `docs/NEXT.md`) in the same session any such change is 
 what is built are NOT recorded here; run `app.cli status`.
 
 ## 2026-09-18
+- **Perplexity paused by the user; code kept.** Listing pages for the top 10 properties were found instead with the
+  assistant's web search tool (URLs only, same validation, never fetching listing sites). Building-level links must be
+  a recognised building-page shape: a search returned another unit's page for 155 E 34th St, which the first, looser rule
+  had labelled 'building'; it is now refused and covered by tests.
 - **Listing pages found through Perplexity's Search API, links only.** The only automated caller is Perplexity (our own
   key); we never fetch listing sites (their terms forbid it), keep only validated https URLs from a domain allowlist
   that contain the street number and name, discard all result text, and cap spend at 300 requests a month (about
