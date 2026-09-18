@@ -12,6 +12,11 @@ Tabs: Overview, Cash flow, Stress test, Assumptions. The Stress test tab (18 sce
 Events, resolved assumptions, IRR range, diff table) stays as is. Only additive changes; read the
 live artifact before every republish; never regenerate over it from a template.
 
+## Artifacts
+- Main (approved, locked): https://claude.ai/artifact/NsoGmcY54cCHhXCYy2HSvQ
+- Staging (all new work): https://claude.ai/artifact/R7JtVjrZr6uPdW77WCzLm2, file `docs/artifact/staging.html`
+- Registry: `.claude/artifacts.json`. Promote with `scripts/promote_artifact.py`, then ask before publishing to main.
+
 ## Where things are remembered
 - Rules: `CLAUDE.md`. Progress: `app.cli status`. Criteria and decisions: `research/criteria.yaml`.
 - Methodology reasoning: `research/memos/`. Approved UI copy: `docs/artifact/real-estate-tool.html`.

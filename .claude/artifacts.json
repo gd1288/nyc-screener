@@ -1,0 +1,13 @@
+{
+  "_doc": "Registry of published artifacts for this project. artifact-guard.sh reads it. Only `staging` may be changed without asking; `main` requires the user's explicit approval (the hook forces a permission prompt). Add new artifacts here with a role.",
+  "main": {
+    "id": "NsoGmcY54cCHhXCYy2HSvQ",
+    "url": "https://claude.ai/artifact/NsoGmcY54cCHhXCYy2HSvQ",
+    "approved_copy": "docs/artifact/real-estate-tool.html"
+  },
+  "staging": {
+    "id": "R7JtVjrZr6uPdW77WCzLm2",
+    "url": "https://claude.ai/artifact/R7JtVjrZr6uPdW77WCzLm2",
+    "working_copy": "docs/artifact/staging.html"
+  }
+}

@@ -159,4 +159,8 @@ phases:
       - path: docs/artifact/real-estate-tool.html
         contains: "Glass Box Underwriting"
       - path: CLAUDE.md
-        contains: "Real Estate Tool artifact is locked"
+        contains: "main is locked, work happens in staging"
+      - path: .claude/artifacts.json
+      - path: .claude/hooks/artifact-guard.sh
+      - path: docs/artifact/staging.html
+      - path: scripts/promote_artifact.py

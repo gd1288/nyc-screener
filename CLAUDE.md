@@ -58,10 +58,16 @@ to `docs/phases.yaml` in the same commit.
 ## Session start
 Read `docs/NEXT.md` (current goal, open work, UI lock) before starting. Update it when direction changes.
 
-## Real Estate Tool artifact is locked
-The published "Real Estate Tool" artifact (Glass Box Underwriting; Overview / Cash flow / Stress test /
-Assumptions) is the approved UI. Read the live artifact first and make additive changes only; never
-republish a regenerated version over it. Restore point: its Stress test tab with 18 scenarios.
+## Real Estate Tool artifact: main is locked, work happens in staging
+Two artifacts, registered in `.claude/artifacts.json`. **Main** is the approved UI (Overview / Cash
+flow / Stress test / Assumptions). **Staging** (`docs/artifact/staging.html`) is where every new
+feature goes first, with additive changes only.
+- **Never publish, edit, delete or otherwise change main without the user's explicit approval in
+  chat.** `.claude/hooks/artifact-guard.sh` also forces a permission prompt on any main change.
+- Promotion = `python3 scripts/promote_artifact.py` (checks the layout survived), review the diff,
+  commit, then publish to the main URL once the user says so.
+- Never reuse an old scratch file path for publishing; publish only `docs/artifact/staging.html`
+  (staging) or pass the URL explicitly.
 
 ## Definition of done
 Tests pass (`pytest`), types check (`tsc --noEmit`), ruff is clean, and you've shown evidence (test
