@@ -22,6 +22,10 @@ live artifact before every republish; never regenerate over it from a template.
 - Methodology reasoning: `research/memos/`. Approved UI copy: `docs/artifact/real-estate-tool.html`.
 - Your preferences: auto-memory. Facts about the code live in git, not in memory.
 
+## Latest saved state
+Staging = version 5 (tag `staging-v5-2026-09-18`, file `docs/artifact/staging.html`). How to change it from a new window:
+`docs/UI.md`, section "Picking this up in a new window". Main = `artifact-main-1`, unchanged, promotion pending your decision.
+
 ## Direction (decided 2026-09-18) - see docs/ARCHITECTURE.md
 Staging artifact = design lab. Main artifact = signed-off design spec. The app (existing Next.js
 frontend, run locally, audience: the user only) is built from main's design but uses the backend as

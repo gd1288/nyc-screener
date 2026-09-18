@@ -192,3 +192,5 @@ phases:
         contains: "function openLinks"
       - path: docs/artifact/staging.html
         contains: "function wreal"
+      - path: docs/artifact/checks/staging_sweep.js
+        contains: "orderViolations"

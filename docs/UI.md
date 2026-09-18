@@ -43,6 +43,26 @@ Cash flow = selected year NOI, cash flow, DSCR, cumulative cash as % of equity. 
 IRR, equity multiple, min DSCR, each vs base. Assumptions = IRR vs original inputs, target gap,
 unbacked share of uncertainty.
 
+## Picking this up in a new window (read this first)
+Everything needed is in git (branch `valuation-phase-2a`; nothing is pushed, so the folder on this machine is the copy).
+Restore points: tags `artifact-main-1` (approved main) and `staging-v5-2026-09-18` (staging as of the screener drawer,
+market strip, reality check and links menu, published as staging version 5).
+
+To change staging:
+1. Read `CLAUDE.md`, `docs/NEXT.md` and this file. Main is locked; only staging changes.
+2. Edit `docs/artifact/staging.html` (one file: CSS, HTML, JS). Reuse tokens and existing classes.
+3. Data blocks are generated, not hand-edited: run `cd backend && uv run python ../scripts/embed_screener.py` to refresh
+   the `LISTINGS` and `MARKET` blocks (needs the FRED series loaded: `app.cli refresh fred_series`). Never edit inside
+   `/*LISTINGS-START*/ ... /*LISTINGS-END*/` or `/*MARKET-START*/ ... /*MARKET-END*/` by hand.
+4. Test: open `file:///Users/bobjoe/Desktop/nyc-screener/docs/artifact/staging.html` in the browser pane, check the
+   console for errors, and run `docs/artifact/checks/staging_sweep.js` (expect exc 0, nanCases 0, orderViolations 0,
+   badLinks 0, sample restored to 13.0%). For phone width, test inside a 400px iframe: the pane's resize preset does not
+   change layout width reliably.
+5. Publish to staging only: the Artifact tool with the URL in `.claude/artifacts.json`. If it refuses because a newer
+   version exists, read the saved live copy fully, merge, and publish again; never force.
+6. Update the Components table and Changelog below in the same commit, run `pytest`, `ruff`, `app.cli status` and
+   `python3 scripts/promote_artifact.py`, then commit.
+
 ## Locked (never change without the user's approval)
 Four tabs and their order; the 18 scenarios; Conditions, Events, resolved assumptions, IRR range and
 diff table on Stress test. Additions only. The screener is a drawer, not a fifth tab, so the four tabs stay as they were.
