@@ -23,7 +23,7 @@ live artifact before every republish; never regenerate over it from a template.
 - Your preferences: auto-memory. Facts about the code live in git, not in memory.
 
 ## Latest saved state
-Staging = version 7 (tag `staging-v7-2026-09-18`; earlier: `staging-v6-2026-09-18`, `staging-v5-2026-09-18`; file `docs/artifact/staging.html`). How to change it from a new window:
+Staging = version 8 (tag `staging-v8-2026-09-18`; earlier: `staging-v7-2026-09-18`, `staging-v6-2026-09-18`, `staging-v5-2026-09-18`; file `docs/artifact/staging.html`). How to change it from a new window:
 `docs/UI.md`, section "Picking this up in a new window". Main = `artifact-main-1`, unchanged, promotion pending your decision.
 
 ## Direction (decided 2026-09-18) - see docs/ARCHITECTURE.md
@@ -47,6 +47,11 @@ only colors/spacing tokens.
 Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion` (with a validator test).
 
 ## Other open work
+- **Stale-listing check (in progress 2026-09-18):** the ACRIS sold check was re-run (free, slow: two lookups per listing).
+  RentCast alone cannot flag delisted properties today: the daily job only fetches listings from the last 30 days, and
+  a listing goes off market only after TWO complete sweeps both miss it (`MISSED_FETCHES_BEFORE_OFF_MARKET = 2`, and the
+  adapter enforces 24 hours between requests). Decisions needed from the user are listed in the chat of 2026-09-18:
+  budget, whether to keep only the current 438 or expand to all active Manhattan condos, and single-sweep flagging.
 - **Formulas feature (planned, not started):** `docs/plans/formulas-tab.md` has the design, the phases and a paste-ready
   prompt for a new window (info marker on every number, formula inspector panel, Formulas tab, backend-authored registry).
 - FRED is live (mortgage rate, 10-year Treasury, FHFA New York price index). Rotate the FRED key at some point: it appeared

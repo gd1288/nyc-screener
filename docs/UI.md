@@ -35,6 +35,7 @@ Backend and agent changes are recorded elsewhere (see "Where each kind of change
 | Screener drawer `#scr` / `scrOpen()` | opened by "Browse screener" in the deal header | Filters, sort, and a table of 246 embedded listings (snapshot; the artifact cannot call the backend). "Value this" runs `loadListing()`. Refresh with `scripts/embed_screener.py`. |
 | Market strip `#mkt` / `mkt()` | deal card, always (when `MARKET` is embedded) | Live 30-yr mortgage, 10-yr Treasury, spread, 5-yr range; "Use market rate" button. Data from FRED via `embed_screener.py`. |
 | Reality check `#wreal` / `wreal()` | Stress test, under the scenario summary | Harshest scenario's exit-value cut vs New York's worst real price fall since 1975 (FHFA via FRED). Compares severity, not the same measure. |
+| Sold & off market view `#soldBar` / `soldRender()` | screener drawer, "Sold & off market" switch | Mirrors the Next.js /sold page: All / Sold / Off market / Withdrawn tabs, stats (confirmed sales, median sale vs last ask, median days on market), table with status chip, last ask, sold price, vs ask, date, Links. Data: `SOLD` block from `embed_screener.py` (the backend's closed listings). |
 | Found listing page (row "Listing ↗" and top of the links menu) | screener rows, links menu | From `listing_urls` (Perplexity search, validated); shown only when found. Fields `lu` (URL) and `ll` (unit/building) in `LISTINGS`. Labeled as a search result that may be stale. |
 | Links menu `#lkm` / `openLinks()` | "Links" on every screener row, and in the deal header for a pulled listing | Official records (ZoLa, ACRIS), maps, listing-site search links; save your own listing URL (session memory plus localStorage when allowed). Links are built, never fetched. |
 | Input provenance row `#dsrc` and model comparison `#pnote` | under the deal terms, only for a pulled listing | Price, rent, property tax, common charges marked listed or estimated; backend IRR/cap/cash-on-cash shown beside this tool's. `loadSample()` restores 421 Harris. |
@@ -55,7 +56,7 @@ To change staging:
 2. Edit `docs/artifact/staging.html` (one file: CSS, HTML, JS). Reuse tokens and existing classes.
 3. Data blocks are generated, not hand-edited: run `cd backend && uv run python ../scripts/embed_screener.py` to refresh
    the `LISTINGS` and `MARKET` blocks (needs the FRED series loaded: `app.cli refresh fred_series`). Never edit inside
-   `/*LISTINGS-START*/ ... /*LISTINGS-END*/` or `/*MARKET-START*/ ... /*MARKET-END*/` by hand.
+   `/*LISTINGS-START*/ ... /*LISTINGS-END*/` or `/*MARKET-START*/ ... /*MARKET-END*/` or `/*SOLD-START*/ ... /*SOLD-END*/` by hand.
 4. Test: open `file:///Users/bobjoe/Desktop/nyc-screener/docs/artifact/staging.html` in the browser pane, check the
    console for errors, and run `docs/artifact/checks/staging_sweep.js` (expect exc 0, nanCases 0, orderViolations 0,
    badLinks 0, sample restored to 13.0%). For phone width, test inside a 400px iframe: the pane's resize preset does not
@@ -102,3 +103,4 @@ diff table on Stress test. Additions only. The screener is a drawer, not a fifth
   decimals. Backend numbers in the parity note are re-run at the same mortgage rate via `/analyze`.
 - 2026-09-18: found listing pages: "Listing ↗" on rows and a labeled section in the links menu, fed by `app.cli find-listing-urls` and `embed_screener.py` (dormant until a Perplexity key is set).
 - 2026-09-18: found listing pages for the top 10 properties (7 unit, 3 building) via search, stored in `app_settings` `listing_urls` and embedded by `embed_screener.py`.
+- 2026-09-18: Sold & off market view in the screener drawer (mirrors the Next.js Sold page), fed by a `SOLD` block. Empty until the backend marks listings sold, off market or withdrawn.

@@ -48,6 +48,25 @@ def market_block() -> dict | None:
     return summary
 
 
+def closed_rows(client: TestClient) -> list[dict]:
+    """Listings that left the market (sold, off market, withdrawn), from the backend's own lifecycle fields."""
+    with SessionLocal() as session:
+        loc = {i: (b, lat, lon) for i, b, lat, lon in session.query(Listing.id, Listing.bbl, Listing.latitude, Listing.longitude)}
+        found = session.get(AppSetting, URLS_KEY).value if session.get(AppSetting, URLS_KEY) else {}
+    rows = []
+    for s in client.get("/api/listings", params={"status": "closed", "include_coops": "false"}).json():
+        bbl, lat, lon = loc.get(s["id"], (None, None, None))
+        f = found.get(str(s["id"])) or {}
+        rows.append({
+            "id": s["id"], "a": s["address"], "u": s["unit"], "h": s["neighborhood"], "b": s["borough"], "st": s["status"],
+            "p": s["price"], "op": s["original_price"], "sp": s["sold_price"], "sd": s["sold_date"], "od": s["off_market_date"],
+            "vl": s["sold_vs_list_pct"], "dom": s["days_on_market"], "bd": s["bedrooms"], "sf": s["sqft"],
+            "bbl": bbl, "lat": lat, "lon": lon,
+            "lu": f.get("url") if is_allowed_url(f.get("url") or "") else None, "ll": f.get("level"),
+        })
+    return rows
+
+
 def trimmed(client: TestClient, rate: float | None) -> tuple[list[dict], dict]:
     """One row per screener listing. When `rate` is given, the backend's own analysis is re-run at that
     mortgage rate (POST /analyze), so its IRR/cap/cash-on-cash are comparable to the artifact's tool."""
@@ -88,6 +107,8 @@ def main() -> int:
     rows = [r for r in rows if r["own"] != "likely_coop"]
     payload = {"as_of": date.today().isoformat(), "assump": assump, "rows": rows}
     mblob = json.dumps(market, separators=(",", ":"))
+    sold = {"as_of": date.today().isoformat(), "rows": closed_rows(TestClient(app))}
+    sblob = json.dumps(sold, separators=(",", ":"))
     (ROOT / "docs/artifact/listings.json").write_text(json.dumps(payload, separators=(",", ":")))
     blob = json.dumps(payload, separators=(",", ":"))
     html = html_path.read_text()
@@ -100,8 +121,14 @@ def main() -> int:
     if not mpat.search(html):
         print("markers /*MARKET-START*/ .. /*MARKET-END*/ not found in", html_path)
         return 1
-    html_path.write_text(mpat.sub(lambda _: f"/*MARKET-START*/const MARKET={mblob};/*MARKET-END*/", html))
+    html = mpat.sub(lambda _: f"/*MARKET-START*/const MARKET={mblob};/*MARKET-END*/", html)
+    spat = re.compile(r"/\*SOLD-START\*/.*?/\*SOLD-END\*/", re.S)
+    if not spat.search(html):
+        print("markers /*SOLD-START*/ .. /*SOLD-END*/ not found in", html_path)
+        return 1
+    html_path.write_text(spat.sub(lambda _: f"/*SOLD-START*/const SOLD={sblob};/*SOLD-END*/", html))
     print(f"market context: {'live rate ' + str(market['mortgage30']['rate']) if market else 'none (macro sources have not run)'}")
+    print(f"closed listings: {len(sold['rows'])}")
     print(f"embedded {len(rows)} listings ({len(blob) // 1024} KB) as of {payload['as_of']} into {html_path.name}")
     return 0
 
