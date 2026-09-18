@@ -196,6 +196,29 @@ def cmd_research_gaps() -> int:
     return 0
 
 
+def cmd_valuation_eval(write_baseline: bool, as_json: bool) -> int:
+    """Walk-forward accuracy of the comparable-sales value estimate, gated on the stored baseline."""
+    from app.valuation import eval as valuation_eval
+
+    with SessionLocal() as session:
+        result = valuation_eval.run_eval(session)
+    baseline = valuation_eval.load_baseline()
+    ok, message = valuation_eval.check_against_baseline(result, baseline)
+
+    if write_baseline:
+        valuation_eval.write_baseline(result)
+        message = f"Baseline written to research/evals/baseline.json. {message}"
+        ok = True
+    if as_json:
+        print(json.dumps({**result.to_json(), "ok": ok, "message": message}, indent=2))
+    else:
+        error = result.median_abs_pct_error
+        print(f"median absolute % error: {f'{error:.2%}' if error is not None else 'n/a'}")
+        print(f"scored {result.n_scored} of {result.n_candidates} sales (coverage {result.coverage:.1%})")
+        print(message)
+    return 0 if ok else 1
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(prog="app.cli")
@@ -211,6 +234,9 @@ def main() -> int:
     status = sub.add_parser("status", help="what each phase has actually delivered (checked against disk)")
     status.add_argument("--json", action="store_true", dest="as_json")
     sub.add_parser("research-gaps", help="write research/gaps.json: valuation factors with no real data source")
+    valuation_eval = sub.add_parser("valuation-eval", help="walk-forward accuracy of the comps value estimate")
+    valuation_eval.add_argument("--write-baseline", action="store_true", dest="write_baseline")
+    valuation_eval.add_argument("--json", action="store_true", dest="as_json")
     args = parser.parse_args()
 
     if args.cmd == "status":
@@ -242,6 +268,8 @@ def main() -> int:
         return cmd_diagnose(args.as_json)
     elif args.cmd == "research-gaps":
         return cmd_research_gaps()
+    elif args.cmd == "valuation-eval":
+        return cmd_valuation_eval(args.write_baseline, args.as_json)
     return 0
 
 

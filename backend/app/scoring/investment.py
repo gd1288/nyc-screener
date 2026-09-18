@@ -164,6 +164,19 @@ def analyze(p: PropertyInputs, a: Assumptions | None = None) -> dict:
         "assumptions": asdict(a),
         "estimated_fields": sorted(set(estimated)),
         "rent_basis": rent_basis,
+        # Unrounded resolved inputs. `monthly` below is rounded for display, which is fine on screen
+        # but not as a basis for rebuilding this projection elsewhere: the Excel export drives its
+        # live formulas off these, and rounding rent to the dollar first puts year-20 NOI ~$10 out.
+        # Exposed rather than recomputed so the workbook can't quietly disagree with the engine.
+        "exact": {
+            "rent": rent,
+            "common_charges": common,
+            "property_taxes": taxes,
+            "opex_monthly": opex,
+            "loan_amount": loan,
+            "cash_invested": cash_invested,
+            "monthly_payment": mortgage,
+        },
         "purchase_costs": {k: round(v) for k, v in costs.items()},
         "cash_invested": round(cash_invested),
         "loan_amount": round(loan),

@@ -1,11 +1,12 @@
-"""Valuation API: save a property, look up an address, run the cash-flow engine, and explore
-scenarios/sensitivity/a two-factor data table/Monte Carlo against it. The Excel export isn't here yet.
+"""Valuation API: save a property, look up an address, run the cash-flow engine, explore
+scenarios/sensitivity/a two-factor data table/Monte Carlo against it, and export it as a live
+Excel model.
 """
 
 from dataclasses import asdict
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -363,6 +364,34 @@ def data_table(property_id: int, body: DataTableIn, session: Session = Depends(d
     y_values = scenarios_mod.default_data_table_axis(profile, ctx, merged_overrides, body.y_factor, steps)
     return scenarios_mod.data_table(
         profile, ctx, merged_overrides, body.x_factor, body.y_factor, x_values, y_values, body.horizon
+    )
+
+
+XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+def _safe_filename(label: str) -> str:
+    """ASCII, no quotes or separators - a label goes into a Content-Disposition header, and labels
+    are free text the user typed."""
+    cleaned = "".join(c if c.isalnum() or c in " -_" else "_" for c in label).strip() or "valuation"
+    return f"{cleaned[:60].replace(' ', '-')}.xlsx"
+
+
+@router.get("/properties/{property_id}/export.xlsx")
+def export_property_xlsx(property_id: int, session: Session = Depends(db)):
+    """The saved scenario as a live Excel model - formulas, not a snapshot of the numbers."""
+    from app.valuation import export_xlsx
+
+    row = _get(session, property_id)
+    profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, {}, {})
+    try:
+        workbook = export_xlsx.build_workbook(profile, ctx, merged_overrides, label=row.label)
+    except engine.UnknownOverrideError as e:
+        raise HTTPException(422, str(e)) from e
+    return Response(
+        content=export_xlsx.to_bytes(workbook),
+        media_type=XLSX_MEDIA_TYPE,
+        headers={"Content-Disposition": f'attachment; filename="{_safe_filename(row.label)}"'},
     )
 
 

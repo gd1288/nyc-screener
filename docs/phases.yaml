@@ -60,11 +60,21 @@ phases:
       - path: backend/app/valuation/factors.py
       - path: backend/app/valuation/property.py
       - path: backend/app/valuation/scenarios.py
+      - path: backend/app/valuation/comps.py
       - path: backend/app/valuation/export_xlsx.py
       - path: backend/app/valuation/eval.py
       - path: research/evals/baseline.json
       - path: backend/app/api/valuation.py
         contains: "export.xlsx"
+      - path: backend/app/cli.py
+        contains: "def cmd_valuation_eval"
+      # The eval is only worth its baseline if the comp set can't see the future; that guarantee
+      # lives in a test, so the test itself is a deliverable.
+      - path: backend/tests/test_valuation_eval.py
+        contains: "def test_comp_set_never_includes_the_target_sale_or_later"
+      # Likewise the export: "it has formulas" is not the same claim as "the formulas are right".
+      - path: backend/tests/test_export_xlsx.py
+        contains: "def test_cash_flow_rows_match_the_engine_to_the_dollar"
 
   - id: 2b
     name: Workbench
