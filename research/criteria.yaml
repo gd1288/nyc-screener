@@ -1,0 +1,89 @@
+# Criteria ledger: the chain research -> approval -> valuation factor -> UI.
+#
+# One entry per criterion (a thing that might refine the valuation). It exists so no session has to
+# remember what was proposed, approved or wired. Facts about the code are checked by
+# `app.cli status`; this file records the *decisions and links* that no command can derive.
+#
+# status: gap       a valuation factor has no live data source (from research/gaps.json)
+#         idea      a methodology idea, not yet researched or approved
+#         proposed  a candidate source/method exists (research/candidates/*.json or a memo)
+#         approved  the user approved it; not yet built
+#         live      built and shown in the valuation (fill `factor` and `ui`)
+#         rejected  the user declined it (fill `decided` and `reason`; registry.json runs the cooldown)
+#
+# Rules: never move an entry to `live` without the `factor` name existing in
+# backend/app/valuation/factors.py and (if user-facing) the `ui` element existing. Update
+# `status`, `decided` and `evidence` in the same session the decision is made.
+
+criteria:
+  - id: interest_rate
+    label: Mortgage rate
+    status: gap
+    factor: interest_rate
+    evidence: "gaps.json: falls back to a fixed default. PLAN.md names FRED MORTGAGE30US (keyless) as the source; not yet wired."
+    memo: research/memos/2026-09-17-valuation-methodology.md
+    ui: "Stress test: Rates dial"
+    decided: null
+
+  - id: rent_growth
+    label: Rent growth
+    status: gap
+    factor: rent_growth
+    evidence: "gaps.json: fixed default (0.03). Memo section 3 idea 1: predict it from neighborhood metrics already collected."
+    memo: research/memos/2026-09-17-valuation-methodology.md
+    ui: "Stress test: rent growth condition"
+    decided: null
+
+  - id: vacancy_pct
+    label: Vacancy rate
+    status: gap
+    factor: vacancy_pct
+    evidence: "gaps.json: fixed default."
+    memo: null
+    ui: "Stress test: vacancy condition"
+    decided: null
+
+  - id: expense_growth
+    label: Expense growth
+    status: gap
+    factor: expense_growth
+    evidence: "gaps.json: fixed default."
+    memo: null
+    ui: "Stress test: expense condition"
+    decided: null
+
+  - id: area_driven_growth
+    label: Growth predicted from neighborhood metrics
+    status: idea
+    factor: null
+    evidence: "Memo section 3 idea 1: neighborhood_metrics behind the Growth Score never reach the valuation."
+    memo: research/memos/2026-09-17-valuation-methodology.md
+    ui: null
+    decided: null
+
+  - id: entry_exit_cap_rate
+    label: Entry vs exit cap rate
+    status: idea
+    factor: null
+    evidence: "Memo section 3 idea 4: cap-rate movement is one of the largest return drivers; belongs in the tornado."
+    memo: research/memos/2026-09-17-valuation-methodology.md
+    ui: "Stress test: exit cap condition (check the live artifact before changing)"
+    decided: null
+
+  - id: volatility_scaled_spread
+    label: Scenario spread from factor volatility
+    status: idea
+    factor: null
+    evidence: "Memo section 3 idea 5: replaces the hardcoded +/-2pp Assumptions.scenario_spread."
+    memo: research/memos/2026-09-17-valuation-methodology.md
+    ui: null
+    decided: null
+
+  - id: implied_rent_check
+    label: Implied rent from cap rate (sanity flag)
+    status: idea
+    factor: null
+    evidence: "Memo section 3 idea 7: flag when market rent diverges from cap-rate-implied rent."
+    memo: research/memos/2026-09-17-valuation-methodology.md
+    ui: "Overview: engine flags"
+    decided: null

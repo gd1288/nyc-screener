@@ -147,3 +147,16 @@ phases:
       - path: backend/tests/test_research.py
         contains: "def test_two_rising_series_are_not_reported_as_correlated_just_for_rising"
       - path: .claude/skills/research-sources
+
+  # Not a product phase: the memory structure that lets a new session pick up the work without
+  # re-explaining it. Keep these files current; stale notes are worse than none.
+  - id: "M"
+    name: Memory and continuity
+    checks:
+      - path: docs/NEXT.md
+      - path: research/criteria.yaml
+        contains: "criteria:"
+      - path: docs/artifact/real-estate-tool.html
+        contains: "Glass Box Underwriting"
+      - path: CLAUDE.md
+        contains: "Real Estate Tool artifact is locked"

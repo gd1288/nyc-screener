@@ -12,6 +12,9 @@
   - A **rejected** source is skipped for 90 days, then allowed back — a source rejected for thin
     data may be worth another look later, so a rejection is a cooldown, not a tombstone.
   - Approval is still a conversation with you; the Workbench approval UI is Phase 2b.
+- `criteria.yaml` — the ledger linking each criterion to its status, memo, valuation factor and UI
+  element (gap → idea → proposed → approved → live, or rejected). Update it in the same session a
+  decision is made.
 - `evals/baseline.json` — the valuation accuracy gate (`app.cli valuation-eval`), not research.
 
 ## Judging a candidate
