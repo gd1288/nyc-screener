@@ -46,8 +46,9 @@ unbacked share of uncertainty.
 
 ## Picking this up in a new window (read this first)
 Everything needed is in git (branch `valuation-phase-2a`; nothing is pushed, so the folder on this machine is the copy).
-Restore points: tags `artifact-main-1` (approved main) and `staging-v5-2026-09-18` (staging as of the screener drawer,
-market strip, reality check and links menu, published as staging version 5).
+Restore points: tags `artifact-main-1` (approved main), `staging-v5-2026-09-18` (screener drawer, market strip, reality
+check, links menu; published as staging version 5) and `staging-v6-2026-09-18` (adds found listing pages; version 6).
+Move a tag only on purpose: never re-tag with `-f` to a newer commit.
 
 To change staging:
 1. Read `CLAUDE.md`, `docs/NEXT.md` and this file. Main is locked; only staging changes.

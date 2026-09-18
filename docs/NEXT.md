@@ -23,7 +23,7 @@ live artifact before every republish; never regenerate over it from a template.
 - Your preferences: auto-memory. Facts about the code live in git, not in memory.
 
 ## Latest saved state
-Staging = version 5 (tag `staging-v5-2026-09-18`, file `docs/artifact/staging.html`). How to change it from a new window:
+Staging = version 6 (tag `staging-v6-2026-09-18`; version 5 is `staging-v5-2026-09-18`; file `docs/artifact/staging.html`). How to change it from a new window:
 `docs/UI.md`, section "Picking this up in a new window". Main = `artifact-main-1`, unchanged, promotion pending your decision.
 
 ## Direction (decided 2026-09-18) - see docs/ARCHITECTURE.md
