@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     sources_file: Path = BACKEND_DIR / "sources.yaml"
     scheduler_enabled: bool = True
     cors_origins: str = "http://localhost:3000"
+    # Local developer tooling (app/dev/: run checks, read gh, drive headless Claude runs). Off
+    # unless explicitly enabled, and gated at router-registration time in main.py rather than
+    # per-request — an unregistered router cannot be reached, cannot appear in /docs, and cannot be
+    # switched on by a refactor that forgets a guard.
+    dev_tools: bool = False
 
 
 @lru_cache

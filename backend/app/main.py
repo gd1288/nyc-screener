@@ -62,3 +62,12 @@ app.add_middleware(
 app.include_router(router)
 app.include_router(valuation_router)
 app.include_router(areas_router)
+
+# Local developer tooling is registered only when explicitly enabled. Gating at registration (not
+# per-request) means the endpoints don't exist at all by default — not reachable, not in /docs, and
+# not one forgotten guard away from live.
+if get_settings().dev_tools:
+    from app.api.dev import router as dev_router
+
+    app.include_router(dev_router)
+    log.warning("DEV_TOOLS enabled: Workbench routes are live at /api/dev (localhost only)")

@@ -15,6 +15,7 @@ const LINKS = [
   { href: "/valuation", label: "Valuation" },
   { href: "/add", label: "Add listings" },
   { href: "/sources", label: "Data sources" },
+  { href: "/workbench", label: "Workbench" },
 ];
 
 export default function Nav() {

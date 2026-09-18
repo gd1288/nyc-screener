@@ -119,6 +119,32 @@ class AreaScore(Base):
     computed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
+class AgentRun(Base):
+    """One headless `claude -p` run started from the Workbench.
+
+    Exists to make unattended runs accountable: what was asked, what it cost, where the work landed,
+    and whether it finished. Without a durable row, a run that spends its budget and dies leaves no
+    evidence it happened — which is exactly when you most want to know.
+    """
+
+    __tablename__ = "agent_runs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16), index=True)  # plan | implement | debug | research
+    issue_number: Mapped[int | None] = mapped_column(Integer, index=True)
+    prompt: Mapped[str] = mapped_column(Text)
+    branch: Mapped[str | None] = mapped_column(String(120))
+    worktree_path: Mapped[str | None] = mapped_column(String(400))
+    budget_usd: Mapped[float] = mapped_column(Float)
+    cost_usd: Mapped[float | None] = mapped_column(Float)
+    turns: Mapped[int | None] = mapped_column(Integer)
+    duration_seconds: Mapped[float | None] = mapped_column(Float)
+    status: Mapped[str] = mapped_column(String(16), index=True)  # running | ok | error | timeout
+    result: Mapped[str | None] = mapped_column(Text)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
 class Sale(Base):
     """Closed condo sales (DOF annualized/rolling sales)."""
 

@@ -186,7 +186,14 @@ export type SourceInfo = {
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     ...init,
-    headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+    headers: {
+      "content-type": "application/json",
+      // Identifies this page as the API's own client. The Workbench routes require it: a
+      // cross-origin page can't set a custom header on a simple request without a preflight, and
+      // Origin alone can't carry that check because browsers omit it on same-origin GETs.
+      "x-requested-with": "nyc-screener-workbench",
+      ...(init?.headers ?? {}),
+    },
     cache: "no-store",
   });
   if (!res.ok) {
@@ -360,4 +367,47 @@ export type AreaDetail = AreaRow & {
 export type RegionsResponse = {
   loaded: { id: number; kind: string; code: string; name: string; watched: boolean; tracts: number; comparison_set: string }[];
   available: { key: string; code: string; name: string; loaded: boolean }[];
+};
+
+export type CheckInfo = { key: string; label: string; description: string; cwd: string; command: string[] };
+export type CheckResult = {
+  key: string;
+  label: string;
+  ok: boolean;
+  exit_code: number | null;
+  duration_seconds: number;
+  output: string;
+  truncated: boolean;
+  command: string[];
+};
+
+export type GhIssue = {
+  number: number;
+  title: string;
+  state: string;
+  url: string;
+  updatedAt: string;
+  labels: { name: string }[];
+};
+export type IssueBoard = { issues: GhIssue[]; board: Record<string, GhIssue[]> };
+
+export type AgentRunRow = {
+  id: number;
+  kind: string;
+  issue_number: number | null;
+  branch: string | null;
+  worktree_path: string | null;
+  budget_usd: number;
+  cost_usd: number | null;
+  turns: number | null;
+  duration_seconds: number | null;
+  status: string;
+  result: string;
+  started_at: string;
+  finished_at: string | null;
+};
+export type RunsResponse = {
+  runs: AgentRunRow[];
+  usage: { runs: number; total_cost_usd: number; by_kind: Record<string, { runs: number; cost_usd: number }>; max_budget_usd: number };
+  claude_available: boolean;
 };

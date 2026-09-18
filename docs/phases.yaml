@@ -99,6 +99,20 @@ phases:
       - path: backend/app/dev/checks.py
       - path: backend/app/dev/github.py
       - path: backend/app/dev/runner.py
+      - path: backend/app/api/dev.py
+        contains: "def guard"
+      # Registration, not a per-request check, is the gate: an unregistered router can't be reached
+      # and can't appear in /docs.
+      - path: backend/app/main.py
+        contains: "if get_settings().dev_tools:"
+      # The ceiling is refused, not clamped — clamping makes a run stop halfway and look like the
+      # model gave up. Unattended runs never touch the main working tree.
+      - path: backend/app/dev/runner.py
+        contains: "MAX_BUDGET_USD"
+      - path: backend/tests/test_dev_tools.py
+        contains: "def test_a_budget_above_the_ceiling_is_refused_not_clamped"
+      - path: backend/tests/test_dev_tools.py
+        contains: "def test_the_runner_never_grants_a_shell_tool"
       - path: frontend/src/app/workbench
 
   - id: "3"

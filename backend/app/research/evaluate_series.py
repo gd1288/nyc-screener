@@ -198,6 +198,11 @@ def metro_hpi_index(session, http, cbsa: str, years: int = 25) -> dict[int, floa
     Median rather than mean: a few tracts with extreme indexes would otherwise swing the whole
     metro's series. Only years where enough tracts report are kept, so the series isn't anchored by
     a single early tract.
+
+    **Streams the full ~90MB file on every call.** Comparing several metros through this function
+    downloads it once per metro. To compare many, collect once for the union of their tracts with
+    `fhfa_hpi.collect_index` and split the result by CBSA yourself — and never wire this directly to
+    a user-facing button without that, or each click costs a 90MB download.
     """
     from app.models import Area
     from app.sources import fhfa_hpi
