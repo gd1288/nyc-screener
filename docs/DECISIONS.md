@@ -5,6 +5,16 @@ Add an entry (and update `docs/NEXT.md`) in the same session any such change is 
 what is built are NOT recorded here; run `app.cli status`.
 
 ## 2026-09-18
+- **Screener drawer in the artifact.** A "Browse screener" drawer opens from the deal header (the four
+  tabs are unchanged). The artifact cannot call the backend, so listings are an embedded snapshot written by
+  `scripts/embed_screener.py` from the backend's own analysis; rent and property tax are estimates for all
+  246 listings and stay flagged unbacked once pulled. The screener's own IRR/cap are shown beside this tool's
+  because the two models differ by design (see the parity item in NEXT.md).
+- **Bug found in the approved main artifact, fixed in staging only:** scenario dials and events are
+  adjustments but were passed to `model()` as absolute inputs (a "+1.0 pt rate" ran as a 1.0% rate). On the
+  sample deal "Higher for longer" showed 21.3% against a 13.0% base; corrected it is 5.1%, and "Hard landing"
+  goes from 7.1% to no computable IRR. Main still shows the old numbers until staging is promoted, which
+  will change all 18 scenario cards. Regression check: downside worlds never beat base, upside never below.
 - **UI knowledge lives in `docs/UI.md`.** Structure, components, checklist and changelog for the
   artifact; CLAUDE.md points to it. Why: UI facts were spread over a memory note, NEXT.md and this log,
   and auto-memory is per-machine, so a new session could miss them. Git-tracked docs reach every

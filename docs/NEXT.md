@@ -43,5 +43,10 @@ only colors/spacing tokens.
 Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion` (with a validator test).
 
 ## Other open work
+- **Decide on promoting staging to main** (deferred by the user). Staging now has the result bar, the screener
+  drawer, and a fix for a scenario bug that main still has (downside worlds could show HIGHER returns than base).
+  Promoting will change the numbers on all 18 scenario cards. Run `scripts/promote_artifact.py` first.
+- Screener drawer follow-ups: refresh the snapshot with `scripts/embed_screener.py`; the live Next.js version
+  should use `/api/valuation/importable-listings` and `/properties/from-listing/{id}` (already exist).
 - Review and merge branch `valuation-phase-2a` (Phases 2a-4) to main via PR.
 - Manual: Phase 0 items, value 2-3 real properties, confirm research routine allowlist, pick a second metro.

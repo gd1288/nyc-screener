@@ -32,6 +32,8 @@ Backend and agent changes are recorded elsewhere (see "Where each kind of change
 | Reset to base `#wreset` | Stress test header | Visible only when not on Base case. |
 | Scenario card DSCR line `.dq` | each of the 18 cards | Red below 1.25x. |
 | Tornado `#tor` / `tornado()` | Stress test | Top 8 inputs, low/high IRR vs base, "unbacked" chips. |
+| Screener drawer `#scr` / `scrOpen()` | opened by "Browse screener" in the deal header | Filters, sort, and a table of 246 embedded listings (snapshot; the artifact cannot call the backend). "Value this" runs `loadListing()`. Refresh with `scripts/embed_screener.py`. |
+| Input provenance row `#dsrc` and model comparison `#pnote` | under the deal terms, only for a pulled listing | Price, rent, property tax, common charges marked listed or estimated; backend IRR/cap/cash-on-cash shown beside this tool's. `loadSample()` restores 421 Harris. |
 
 Bar contents per tab: Overview = IRR, equity multiple, min DSCR, break-even occupancy, verdict chip.
 Cash flow = selected year NOI, cash flow, DSCR, cumulative cash as % of equity. Stress = scenario name,
@@ -40,7 +42,7 @@ unbacked share of uncertainty.
 
 ## Locked (never change without the user's approval)
 Four tabs and their order; the 18 scenarios; Conditions, Events, resolved assumptions, IRR range and
-diff table on Stress test. Additions only.
+diff table on Stress test. Additions only. The screener is a drawer, not a fifth tab, so the four tabs stay as they were.
 
 ## How to add a UI feature (checklist)
 1. Build it in staging only, additively. Reuse tokens and existing classes.
@@ -66,3 +68,7 @@ diff table on Stress test. Additions only.
 - 2026-09-18: sticky result bar (Stress test), then extended to all four tabs; Read this first,
   cash flow insight line, scenario summary, reset to base, per-card DSCR, tornado chart.
   Proposed, not built: grouped scenarios, risk colours on dials, URL-shareable scenario, Excel export hook.
+- 2026-09-18: screener drawer (pull a listing into the tool; listing inputs mapped in `loadListing()`, rent and
+  property tax flagged unbacked). Fixes found while testing 246 listings: scenario adjustments were being run as
+  absolute inputs (see DECISIONS), hold chart and cash-flow bridge broke on deals that lose money, per-unit and
+  per-sq-ft views used the sample's 7 units / 6,200 sf.

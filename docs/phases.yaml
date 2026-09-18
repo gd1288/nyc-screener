@@ -176,3 +176,7 @@ phases:
         contains: "def validate"
       - path: backend/app/cli.py
         contains: "def cmd_criteria"
+      - path: docs/artifact/staging.html
+        contains: "function loadListing"
+      - path: scripts/embed_screener.py
+        contains: "LISTINGS-START"
