@@ -67,10 +67,10 @@ def test_run_stores_series_with_attribution(session):
     http = _Http(_payload())
     n = FredSeries("fred_series").run(_ctx(session, http))
     stored = session.get(AppSetting, "macro:MORTGAGE30US").value
-    assert n == len(stored["points"]) == 30
+    assert len(stored["points"]) == 30 and n == 30 * 3  # three series, the fake returns 30 points for each
     assert "not endorsed or certified by the Federal Reserve Bank of St. Louis" in stored["notice"]
     assert "Freddie Mac" in stored["citation"]
-    assert len(http.calls) == 1  # one request per series per run
+    assert len(http.calls) == 3  # exactly one request per series per run
 
 
 def test_http_errors_never_leak_the_api_key(session):
@@ -124,3 +124,37 @@ def test_request_logging_never_prints_the_api_key(caplog):
         logging.getLogger("httpx").info('HTTP Request: %s %s "%s"', "GET", f"https://api.stlouisfed.org/x?api_key={KEY}&file_type=json", "HTTP/1.1 200 OK")
     text = " ".join(r.getMessage() for r in caplog.records)
     assert KEY not in text and "api_key=REDACTED" in text and "file_type=json" in text
+
+
+# ------------------------------------------------------------------ macro summaries
+
+from app.valuation import macro as mac  # noqa: E402
+
+
+def test_max_drawdown_finds_peak_trough_and_recovery():
+    pts = [["q1", 100], ["q2", 120], ["q3", 96], ["q4", 90], ["q5", 110], ["q6", 121]]
+    dd = mac.max_drawdown(pts)
+    assert dd["drawdown"] == round(90 / 120 - 1, 4)
+    assert (dd["peak_date"], dd["trough_date"], dd["recovery_date"]) == ("q2", "q4", "q6")
+    assert dd["periods_peak_to_trough"] == 2 and dd["periods_trough_to_recovery"] == 2
+
+
+def test_drawdown_that_never_recovers_says_so():
+    dd = mac.max_drawdown([["a", 100], ["b", 80], ["c", 85]])
+    assert dd["recovery_date"] is None and dd["periods_trough_to_recovery"] is None
+
+
+def test_a_series_that_only_rises_has_no_drawdown():
+    assert mac.max_drawdown([["a", 1], ["b", 2], ["c", 3]]) is None and mac.max_drawdown([["a", 1]]) is None
+
+
+def test_summary_reports_rates_spread_and_citations_without_inventing_missing_series():
+    macro = {
+        "MORTGAGE30US": {"points": [["2026-09-10", 6.90], ["2026-09-17", 6.95]], "citation": "Freddie Mac..."},
+        "DGS10": {"points": [["2026-09-16", 5.01]], "citation": "Board of Governors..."},
+    }
+    s = mac.summary(macro)
+    assert s["mortgage30"] == {"date": "2026-09-17", "rate": 0.0695}
+    assert s["treasury10"]["rate"] == 0.0501 and s["mortgage_spread"] == 0.0194
+    assert "nyc_drawdown" not in s and set(s["citations"]) == {"MORTGAGE30US", "DGS10"}
+    assert mac.summary({}) == {"citations": {}}

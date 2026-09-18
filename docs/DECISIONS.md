@@ -5,6 +5,14 @@ Add an entry (and update `docs/NEXT.md`) in the same session any such change is 
 what is built are NOT recorded here; run `app.cli status`.
 
 ## 2026-09-18
+- **FRED series expanded** to the 10-year Treasury and the FHFA New York metro price index (both public domain,
+  citation requested), stored as macro series. `app/valuation/macro.py` reports plain numbers from them (rates,
+  spread, worst real price drawdown); no modelling. Case-Shiller rejected on license.
+- **Artifact shows market context and a scenario reality check.** New York's worst price fall since 1975 was
+  -18.2% (Q1 2007 to Q2 2012); on the sample deal 9 of 17 scenarios cut exit value by more than that, a sign
+  the scenario magnitudes are harsh (though exit value there is NOI / cap rate, not a price index).
+- **Listing links are built, never fetched.** Official NYC records, maps and search links; the user can save the
+  real listing URL. No listing has a URL in the database, so this is the only route to it without scraping.
 - **Free data sources: legal review before ingestion** (docs/DATA_LICENSES.md). Built FRED mortgage rate (Freddie
   Mac, attribution, personal use). Rejected Redfin (terms forbid automated access) and Walk Score (free tier is
   consumer-facing only). Held Apartment List (no published terms). HUD and the NYC RGB operating-cost index are

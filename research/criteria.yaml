@@ -93,22 +93,22 @@ criteria:
 
   - id: exit_cap_from_treasury_spread
     label: Exit cap rate and discount rate anchored to the 10-year Treasury
-    status: idea
+    status: approved
     factor: null
     evidence: "FRED DGS10 (Federal Reserve Board; public domain, citation requested; 5.01% on 2026-09-16). Exit cap and NPV discount rate are fixed assumptions today; anchoring them to Treasury plus a spread ties them to rates. Verified 2026-09-18."
     memo: research/memos/2026-09-18-data-source-landscape.md
     ui: "Stress test: Financing climate dial (exit cap moves with rates)"
     ui_suggestion: {target: staging, description: "Show 10-year Treasury and the mortgage spread beside the Rates dial"}
-    decided: null
+    decided: 2026-09-18
 
   - id: scenario_calibration_from_history
     label: Calibrate stress scenarios to real NYC price history
-    status: idea
+    status: approved
     factor: null
-    evidence: "FRED ATNHPIUS35614Q (FHFA All-Transactions HPI, New York-Jersey City-White Plains MSAD, quarterly Q4 1975 to Q1 2026; US government). Peak-to-trough and recovery times would replace the artifact's 'directionally realistic but illustrative' magnitudes. Series ID verified 2026-09-18. Avoid Case-Shiller NYXRSA: S&P prohibits reproduction without written permission."
+    evidence: "FRED ATNHPIUS35614Q (FHFA All-Transactions HPI, New York-Jersey City-White Plains MSAD, quarterly Q4 1975 to Q1 2026; US government). Peak-to-trough and recovery times would replace the artifact's 'directionally realistic but illustrative' magnitudes. Series ID verified 2026-09-18; history since 1975; worst drawdown -18.2% (Q1 2007 to Q2 2012). Reality check shown in staging; scenario magnitudes themselves not yet re-scaled. Avoid Case-Shiller NYXRSA: S&P prohibits reproduction without written permission."
     memo: research/memos/2026-09-18-data-source-landscape.md
     ui: "Stress test: scenario cards"
-    decided: null
+    decided: 2026-09-18
 
   - id: rental_vacancy_context
     label: National rental vacancy as market context

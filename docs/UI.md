@@ -33,6 +33,9 @@ Backend and agent changes are recorded elsewhere (see "Where each kind of change
 | Scenario card DSCR line `.dq` | each of the 18 cards | Red below 1.25x. |
 | Tornado `#tor` / `tornado()` | Stress test | Top 8 inputs, low/high IRR vs base, "unbacked" chips. |
 | Screener drawer `#scr` / `scrOpen()` | opened by "Browse screener" in the deal header | Filters, sort, and a table of 246 embedded listings (snapshot; the artifact cannot call the backend). "Value this" runs `loadListing()`. Refresh with `scripts/embed_screener.py`. |
+| Market strip `#mkt` / `mkt()` | deal card, always (when `MARKET` is embedded) | Live 30-yr mortgage, 10-yr Treasury, spread, 5-yr range; "Use market rate" button. Data from FRED via `embed_screener.py`. |
+| Reality check `#wreal` / `wreal()` | Stress test, under the scenario summary | Harshest scenario's exit-value cut vs New York's worst real price fall since 1975 (FHFA via FRED). Compares severity, not the same measure. |
+| Links menu `#lkm` / `openLinks()` | "Links" on every screener row, and in the deal header for a pulled listing | Official records (ZoLa, ACRIS), maps, listing-site search links; save your own listing URL (session memory plus localStorage when allowed). Links are built, never fetched. |
 | Input provenance row `#dsrc` and model comparison `#pnote` | under the deal terms, only for a pulled listing | Price, rent, property tax, common charges marked listed or estimated; backend IRR/cap/cash-on-cash shown beside this tool's. `loadSample()` restores 421 Harris. |
 
 Bar contents per tab: Overview = IRR, equity multiple, min DSCR, break-even occupancy, verdict chip.
@@ -72,3 +75,6 @@ diff table on Stress test. Additions only. The screener is a drawer, not a fifth
   property tax flagged unbacked). Fixes found while testing 246 listings: scenario adjustments were being run as
   absolute inputs (see DECISIONS), hold chart and cash-flow bridge broke on deals that lose money, per-unit and
   per-sq-ft views used the sample's 7 units / 6,200 sf.
+- 2026-09-18: market strip and "Use market rate"; pulled listings use the live Freddie Mac rate (marked market-backed);
+  reality check on scenario severity; links menu; FRED attribution in the footer. The mortgage rate now shows two
+  decimals. Backend numbers in the parity note are re-run at the same mortgage rate via `/analyze`.

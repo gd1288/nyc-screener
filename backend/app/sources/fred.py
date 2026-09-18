@@ -1,7 +1,8 @@
 """FRED time series (Federal Reserve Bank of St. Louis), used for macro inputs to the valuation.
 
-Today: `MORTGAGE30US`, Freddie Mac's weekly 30-year fixed mortgage rate, which backs the
-`interest_rate` factor.
+Today: `MORTGAGE30US` (Freddie Mac weekly 30-year rate, backs the `interest_rate` factor), `DGS10` (10-year
+Treasury, a rate benchmark for context) and `ATNHPIUS35614Q` (FHFA New York metro price index, used to
+calibrate how severe the stress scenarios are).
 
 Terms and licensing (reviewed 2026-09-18, see docs/DATA_LICENSES.md):
   - FRED API terms: https://fred.stlouisfed.org/docs/api/terms_of_use.html. Requires a free API key.
@@ -53,11 +54,33 @@ FRED_NOTICE = "This product uses the FRED(R) API but is not endorsed or certifie
 DEFAULT_SERIES = [
     {
         "id": "MORTGAGE30US",
+        "years": 5,
         "citation": (
             "Freddie Mac, 30-Year Fixed Rate Mortgage Average in the United States [MORTGAGE30US], retrieved from "
             "FRED, Federal Reserve Bank of St. Louis; https://fred.stlouisfed.org/series/MORTGAGE30US"
         ),
-    }
+    },
+    {
+        # Public domain, citation requested (checked on FRED 2026-09-18).
+        "id": "DGS10",
+        "years": 5,
+        "citation": (
+            "Board of Governors of the Federal Reserve System (US), Market Yield on U.S. Treasury Securities at "
+            "10-Year Constant Maturity, Quoted on an Investment Basis [DGS10], retrieved from FRED, Federal Reserve "
+            "Bank of St. Louis; https://fred.stlouisfed.org/series/DGS10"
+        ),
+    },
+    {
+        # FHFA data, tagged "Public Domain: Citation Requested" on FRED; history starts 1995:Q1, so the whole
+        # series is stored (it covers the 2007-2012 downturn that the stress scenarios are calibrated against).
+        "id": "ATNHPIUS35614Q",
+        "years": 60,
+        "citation": (
+            "U.S. Federal Housing Finance Agency, All-Transactions House Price Index for New York-Jersey City-White "
+            "Plains, NY-NJ (MSAD) [ATNHPIUS35614Q], retrieved from FRED, Federal Reserve Bank of St. Louis; "
+            "https://fred.stlouisfed.org/series/ATNHPIUS35614Q"
+        ),
+    },
 ]
 
 
@@ -109,10 +132,10 @@ class FredSeries(Source):
 
     def run(self, ctx: SourceContext) -> int:
         series = self.options.get("series") or DEFAULT_SERIES
-        years = int(self.options.get("history_years", 5))
-        start = date.today() - timedelta(days=365 * years)
+        default_years = int(self.options.get("history_years", 5))
         written = 0
         for spec in series:
+            start = date.today() - timedelta(days=365 * int(spec.get("years", default_years)))
             points = parse_observations(self._fetch(ctx, spec["id"], start))
             if not points:
                 raise RuntimeError(f"FRED {spec['id']}: no observations returned")

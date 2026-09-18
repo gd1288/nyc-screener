@@ -186,3 +186,9 @@ phases:
       - path: backend/tests/test_fred.py
       - path: backend/app/valuation/factors.py
         contains: "def _estimate_interest_rate"
+      - path: backend/app/valuation/macro.py
+        contains: "def max_drawdown"
+      - path: docs/artifact/staging.html
+        contains: "function openLinks"
+      - path: docs/artifact/staging.html
+        contains: "function wreal"

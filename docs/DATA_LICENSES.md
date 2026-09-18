@@ -14,6 +14,9 @@ terms forbid automated access.
 |---|---|---|
 | **FRED API** (mortgage rate, series MORTGAGE30US) | **Built** (`app/sources/fred.py`); runs once a free key is set | [FRED API terms](https://fred.stlouisfed.org/docs/api/terms_of_use.html): free key; must display "This product uses the FRED(R) API but is not endorsed or certified by the Federal Reserve Bank of St. Louis."; may not imply endorsement or replicate FRED's own site. Caching is not addressed in the terms; we keep only a rolling ~5 years of one series. Documented API only, one request per series per run. |
 | **Freddie Mac PMMS** (the data behind MORTGAGE30US) | Used, with attribution, personal use only | [Freddie Mac PMMS](https://www.freddiemac.com/pmms): "may be used with proper attribution. Alteration ... is strictly prohibited." FRED's terms add that third-party series used beyond your own personal use need the owner's permission. **Ask Freddie Mac before sharing or publishing the app.** Citation is stored with the data: "Freddie Mac, 30-Year Fixed Rate Mortgage Average in the United States [MORTGAGE30US], retrieved from FRED, Federal Reserve Bank of St. Louis; https://fred.stlouisfed.org/series/MORTGAGE30US". It is an owner-occupied rate; investor loans price higher (the factor's source text says so). |
+| **FRED: 10-year Treasury (DGS10)** | **Built** (same adapter) | Board of Governors of the Federal Reserve System; FRED tags it "Public Domain: Citation Requested". Citation stored with the data. |
+| **FRED: FHFA New York metro price index (ATNHPIUS35614Q)** | **Built** (same adapter) | U.S. Federal Housing Finance Agency data; the series' own notes carry no copyright statement and it is tagged "Public Domain: Citation Requested" (one page read said "copyrighted" generically, so attribution is kept and use stays personal). History from 1975, quarterly. Used only to report how far New York prices actually fell, as a reality check on scenario severity. |
+| **FRED: Case-Shiller NY (NYXRSA)** | **Rejected** | S&P Dow Jones Indices: reproduction prohibited without prior written permission (index_services@spdji.com). |
 | **HUD Fair Market Rents API** | Approved, **not built** | US government data; free token; [terms page](https://www.huduser.gov/portal/dataset/api-terms-of-service.html) and the API docs could not be read by the fetch tool (page renders in JavaScript), so read them by hand before building. Reported limit: 60 queries/min. |
 | **NYC Rent Guidelines Board operating-cost index** | Approved, **blocked** | Public NYC agency report ([RGB research](https://rentguidelinesboard.cityofnewyork.us/research/)). Blocked on data extraction, not on legality: the table is inside PDFs and this environment has no PDF tooling. The 4.1% figure is the RGB's projection for the coming lease year, not a measured history, so it is not used as a factor yet. |
 | **Apartment List rent estimates** | **On hold** | Publishes free CSVs "to the general public" ([data page](https://www.apartmentlist.com/research/category/data-rent-estimates)) but no license, attribution or automated-download terms could be found. Ask research@apartmentlist.com before ingesting. Zillow ZORI (already loaded) covers rent growth meanwhile. |
@@ -26,3 +29,11 @@ required; only through `rentcast.py`); Zillow Research CSVs (usage text has been
 keep attribution); Census ACS and TIGERweb (public domain); FHFA HPI (public); NYC Open Data / Socrata
 datasets (city open data terms); MTA, NYPD, DOF, ACRIS (via NYC Open Data). Confirm any of these before
 the app is shared publicly.
+
+## Links shown in the UI
+The links menu only *builds* web addresses for your own browser to open; nothing is fetched or scraped.
+Official-record links (NYC Planning ZoLa, NYC Finance ACRIS) and map links (Google Maps URLs API) use each
+provider's documented address patterns; the ACRIS pattern is from third-party documentation and is unverified.
+Search links point to a search page for the address on Zillow and (via Google) StreetEasy, never to scraped data.
+ACRIS itself blocks automated tools, so no code here or in scripts requests ACRIS pages: the project's ACRIS data
+comes from NYC Open Data.
