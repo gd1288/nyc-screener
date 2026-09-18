@@ -45,6 +45,16 @@ class MyNewSource(Source):
 - If the metric needs point-in-polygon rollup to neighborhoods, reuse
   `app/geo.NeighborhoodIndex` (via `ctx.geo`) rather than reimplementing that geometry.
 
+## 1a. Large national files: use DuckDB, don't load whole
+If the source is a large national bulk file (FHFA tract HPI's ~90MB CSV, Census LODES, ZIP Business
+Patterns, and similar Phase 1 national sources), query it with DuckDB's `read_csv_auto` filtered by
+a state/county SQL clause — never `pandas.read_csv` the whole thing into memory. As of 2026-09-17
+`duckdb` is **not yet a backend dependency** — add it (`uv add duckdb`) the first time this pattern
+is actually needed, don't assume it's already there. NYC-only sources that are already small (a
+single Socrata dataset) don't need it. Verify the filtered load stays well under memory limits for
+a full-size run, not just a small local sample — a filter that works on a NY-only slice can still
+blow up if accidentally applied to the unfiltered national file.
+
 ## 2. Scoring direction, if this feeds a score
 If the metric feeds `app/scoring/neighborhood.py`, set `higher_is_better` correctly on its
 `MetricDef` — getting this backwards silently inverts the percentile and nothing will look

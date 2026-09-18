@@ -1,0 +1,13 @@
+{
+  "median_abs_pct_error": 0.213729,
+  "n_scored": 11132,
+  "n_candidates": 15351,
+  "coverage": 0.7252,
+  "config": {
+    "as_of": "2026-09-17",
+    "eval_months": 24,
+    "comps_years": 3,
+    "min_building_comps": 3,
+    "comps_rules_version": 1
+  }
+}

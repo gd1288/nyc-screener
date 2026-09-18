@@ -8,6 +8,11 @@ sources:
     adapter: app.sources.nta_boundaries.NtaBoundaries
     schedule: "0 3 1 1 *"          # yearly
 
+  # --- national signals (any loaded region, keyed by census tract) ---
+  fhfa_tract_hpi:
+    adapter: app.sources.fhfa_hpi.FhfaTractHpi
+    schedule: "0 6 15 3 *"         # yearly - FHFA publishes this index once a year
+
   # --- closed sales & price history ---
   dof_condo_sales:
     adapter: app.sources.dof_sales.DofCondoSales
@@ -66,3 +71,26 @@ sources:
   acris_sold_check:
     adapter: app.sources.acris.AcrisSoldCheck
     schedule: "0 9 * * *"          # daily
+
+  # Checks whether the listings we already track are still listed. Manual-only (no schedule): run
+  # `app.cli refresh rentcast_sweep`, ideally once a week. A listing moves to off market only after two sweeps in a row
+  # both miss it. Uses the same request budget and 24-hour gap as rentcast_listings; never adds new listings.
+  rentcast_sweep:
+    adapter: app.sources.rentcast.RentCastListings
+    options:
+      mode: full
+      insert_new: false
+      days_old: 45                   # tracked listings are at most ~31 days old; a full sweep would need 17 requests
+      max_requests_per_run: 4
+      page_size: 500
+      min_hours_between_requests: 24
+      monthly_request_limit: 31
+      areas:
+        - {name: manhattan, latitude: 40.7831, longitude: -73.9712, radius: 6}
+
+  # --- macro series (national; needs a free API key in the environment file, skipped until then) ---
+  fred_series:
+    adapter: app.sources.fred.FredSeries
+    schedule: "30 7 * * 5"          # Fridays: Freddie Mac publishes on Thursdays, so FRED has the new week by then
+    options:
+      history_years: 5

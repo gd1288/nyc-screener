@@ -1,0 +1,13 @@
+{
+  "_doc": "Per-agent write boundaries, enforced by hooks/guard.sh (keyed by the agent's `name`). Add a block here for every new agent; no shell editing needed. deny_write_paths: substrings an Edit/Write/Bash-write may never touch. allow_write_paths: if present, Edit/Write may ONLY touch paths containing one of these. deny_bash_patterns: extended regexes refused in Bash commands. reason: shown when blocked.",
+  "research-analyst": {
+    "reason": "the research-analyst agent proposes data sources, it doesn't implement them. Hand the approved candidate to the add-data-source skill in a normal session instead.",
+    "deny_write_paths": ["backend/app/sources/", "backend/sources.yaml"],
+    "deny_bash_patterns": ["(^|[[:space:]])(uv add|uv remove|alembic)([[:space:]]|$)"]
+  },
+  "criteria-proposer": {
+    "reason": "the criteria-proposer only writes research/ (ledger rows and memos); it never touches code, the registry's decisions, or artifacts.",
+    "allow_write_paths": ["/research/"],
+    "deny_write_paths": ["research/registry.json", "research/evals/"]
+  }
+}

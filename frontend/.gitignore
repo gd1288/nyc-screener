@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# copied by scripts/copy-maplibre-worker.mjs (predev/prebuild)
+/public/maplibre/
+
 # production
 /build
 

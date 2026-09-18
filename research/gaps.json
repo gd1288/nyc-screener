@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-09-18T18:52:04.710453+00:00",
+  "gaps": [
+    {
+      "factor": "rent_growth",
+      "label": "Rent growth",
+      "reason": "no live data source wired; falls back to a fixed default"
+    },
+    {
+      "factor": "vacancy_pct",
+      "label": "Vacancy rate",
+      "reason": "no live data source wired; falls back to a fixed default"
+    },
+    {
+      "factor": "expense_growth",
+      "label": "Expense growth",
+      "reason": "no live data source wired; falls back to a fixed default"
+    }
+  ]
+}

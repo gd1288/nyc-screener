@@ -16,9 +16,10 @@ the pipeline detect listings that went off market.
 """
 
 import logging
+import math
 from datetime import date, datetime, timedelta
 
-from app.models import AppSetting
+from app.models import AppSetting, Listing, ListingStatus
 from app.pipeline.listings import RawListing, sync_listings
 from app.sources.base import Source, SourceContext, SourceSkipped
 
@@ -26,6 +27,8 @@ log = logging.getLogger(__name__)
 
 API = "https://api.rentcast.io/v1/listings/sale"
 USAGE_KEY = "rentcast_usage"
+#: Listings are stored under this source name whichever configured entry (daily fetch or sweep) ran.
+SOURCE_NAME = "rentcast_listings"
 DEFAULT_AREAS = [
     {"name": "manhattan", "latitude": 40.7831, "longitude": -73.9712, "radius": 6},
     {"name": "brooklyn", "latitude": 40.6500, "longitude": -73.9500, "radius": 6},
@@ -43,6 +46,29 @@ def read_usage(ctx: SourceContext) -> dict:
         value = {"months": {k: v for k, v in value.items() if k[:2] == "20"}, "last_request_at": None}
     value.setdefault("areas", {})
     return value
+
+
+def _miles(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    a = math.sin((p2 - p1) / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(math.radians(lon2 - lon1) / 2) ** 2
+    return 3958.8 * 2 * math.asin(math.sqrt(a))
+
+
+def scope_ids(session, area: dict, listed_since: date | None = None) -> set[str]:
+    """External ids of active listings a sweep may call missing: inside the searched circle and, when the sweep only
+    asks for recent listings (`daysOld`), listed no earlier than `listed_since`. An older listing cannot appear in
+    such a sweep even if it is still for sale, so it must not be judged by it."""
+    ids = set()
+    q = session.query(Listing.external_id, Listing.latitude, Listing.longitude).filter(
+        Listing.source == SOURCE_NAME, Listing.status == ListingStatus.ACTIVE
+    )
+    if listed_since is not None:
+        q = q.filter(Listing.listed_date >= listed_since)
+    rows = q
+    for ext, lat, lon in rows:
+        if lat is not None and lon is not None and _miles(area["latitude"], area["longitude"], lat, lon) <= float(area["radius"]):
+            ids.add(ext)
+    return ids
 
 
 def pick_area(areas: list[dict], last_fetched: dict[str, str]) -> dict:
@@ -75,6 +101,7 @@ class RentCastListings(Source):
         monthly_limit = int(self.options.get("monthly_request_limit", 31))
         min_gap = timedelta(hours=float(self.options.get("min_hours_between_requests", 24)))
         areas = self.options.get("areas") or DEFAULT_AREAS
+        insert_new = bool(self.options.get("insert_new", True))
 
         usage = read_usage(ctx)
         month = date.today().strftime("%Y-%m")
@@ -89,6 +116,9 @@ class RentCastListings(Source):
         area = pick_area(areas, usage["areas"])
         params = {"latitude": area["latitude"], "longitude": area["longitude"], "radius": area["radius"],
                   "propertyType": "Condo", "status": "Active", "limit": page_size, "includeTotalCount": "true"}
+        sweep_days = int(self.options["days_old"]) if mode == "full" and self.options.get("days_old") else None
+        if sweep_days:
+            params["daysOld"] = sweep_days
         if mode == "new":
             params["daysOld"] = days_old_for(area, usage["areas"], int(self.options.get("seed_days_old", 30)),
                                              int(self.options.get("max_days_old", 30)))
@@ -105,6 +135,8 @@ class RentCastListings(Source):
                 returned += len(page)
                 total = resp.headers.get("X-Total-Count", total)
                 raws += [r for r in (to_raw(item) for item in page) if r]
+                if mode == "full" and total is not None and int(total) > page_size * max_requests:
+                    break  # cannot cover every listing within this run's pages, so it could not prove any went missing
                 if len(page) < page_size:
                     exhausted = True
                     break
@@ -129,8 +161,10 @@ class RentCastListings(Source):
         if usage["last_result"]["truncated"]:
             log.warning("RentCast %s: %s matches but only %s returned; shorten the schedule or add areas",
                         area["name"], total, returned)
-        stats = sync_listings(ctx.session, self.name, raws, complete=(mode == "full" and exhausted),
-                              geo=ctx.geo, http=ctx.http)
+        complete = mode == "full" and exhausted
+        stats = sync_listings(ctx.session, SOURCE_NAME, raws, complete=complete, geo=ctx.geo, http=ctx.http,
+                              insert_new=insert_new, scope=scope_ids(ctx.session, area, date.today() - timedelta(days=sweep_days - 2) if sweep_days else None)
+                              if complete else None)
         return stats.total
 
 

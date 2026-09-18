@@ -30,9 +30,20 @@ if [[ -f "$DB" ]] && command -v sqlite3 >/dev/null 2>&1; then
   fi
 fi
 
+# Unsaved-work check (cheap git calls only): flags uncommitted files, unpushed commits, or an autosave problem.
+if git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+  DIRTY=$(git -C "$ROOT" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+  AHEAD=$(git -C "$ROOT" rev-list --count '@{u}..HEAD' 2>/dev/null || echo 0)
+  [[ "$DIRTY" != "0" ]] && MSGS+=("$DIRTY uncommitted file(s)")
+  [[ "$AHEAD" != "0" ]] && MSGS+=("$AHEAD commit(s) not on GitHub")
+  if [[ -f "$ROOT/.claude/state/autosave.log" ]] && tail -1 "$ROOT/.claude/state/autosave.log" | grep -q BLOCKED; then
+    MSGS+=("autosave blocked a possible secret, see .claude/state/autosave.log")
+  fi
+fi
+
 if [[ ${#MSGS[@]} -gt 0 ]]; then
   JOINED=$(IFS='; '; echo "${MSGS[*]}")
-  echo "Health: $JOINED — run 'uv run python -m app.cli diagnose' or /debug"
+  echo "Health: $JOINED — see docs/NEXT.md and docs/SESSIONS.md; 'uv run python -m app.cli diagnose' or /debug for failures"
 fi
 
 exit 0

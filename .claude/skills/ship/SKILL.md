@@ -23,11 +23,11 @@ Run `/code-review` against the diff on this branch. Address anything it flags as
 say why in your report rather than silently overriding it.
 
 ## 3. Valuation eval, if touched
-If the diff touches `backend/app/valuation/` or `backend/app/scoring/investment.py`, run
-`uv run python -m app.valuation.eval` (once that module exists) and compare its median error to
-`research/evals/baseline.json`. A regression blocks shipping — go fix it, don't ship a worse model
-and note it for later. Also consider using the `valuation-reviewer` subagent on this diff before
-proceeding, since it catches correctness gaps `/code-review` isn't specialized for.
+If the diff touches `backend/app/valuation/` or `backend/app/scoring/`, run the `valuation-eval-gate`
+skill against this diff. A real regression blocks shipping — go fix it, don't ship a worse model and
+note it for later; that skill also knows when to pull in the `valuation-reviewer` subagent for a
+correctness read. (Before Phase 2a lands, this step will just report there's no eval gate yet —
+that's expected, not a failure.)
 
 ## 4. Commit
 Stage only the files relevant to this change (never a blanket `git add -A`). Write a commit

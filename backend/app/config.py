@@ -15,10 +15,17 @@ class Settings(BaseSettings):
     socrata_app_token: str = ""
     census_api_key: str = ""
     rentcast_api_key: str = ""
+    fred_api_key: str = ""
+    perplexity_api_key: str = ""
     database_url: str = f"sqlite:///{DATA_DIR / 'screener.db'}"
     sources_file: Path = BACKEND_DIR / "sources.yaml"
     scheduler_enabled: bool = True
     cors_origins: str = "http://localhost:3000"
+    # Local developer tooling (app/dev/: run checks, read gh, drive headless Claude runs). Off
+    # unless explicitly enabled, and gated at router-registration time in main.py rather than
+    # per-request — an unregistered router cannot be reached, cannot appear in /docs, and cannot be
+    # switched on by a refactor that forgets a guard.
+    dev_tools: bool = False
 
 
 @lru_cache

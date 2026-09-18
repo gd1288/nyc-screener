@@ -1,15 +1,16 @@
 """Joins listings with neighborhood data and the investment model for the API."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from statistics import median
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Listing, Neighborhood, NeighborhoodMetric, NeighborhoodScore, Sale
+from app.models import AppSetting, Listing, Neighborhood, NeighborhoodMetric, NeighborhoodScore, Sale
 from app.pipeline.listings import days_on_market, ownership_type
 from app.scoring import investment as inv
+from app.valuation import comps
 
 NEW_LISTING_DAYS = 3
 COMPS_YEARS = 3
@@ -24,36 +25,67 @@ class MarketContext:
     metrics: dict[str, dict[str, float]]
     city_value_cagr_10y: float | None
     listing_ppsf_by_nta: dict[str, float]
+    #: National time series stored by macro sources (e.g. FRED), keyed by series id: {"points": [[date, value], ...], ...}
+    macro: dict[str, dict] = field(default_factory=dict)
 
     @classmethod
     def load(cls, session: Session) -> "MarketContext":
-        names = {n.code: (n.name, n.borough) for n in session.query(Neighborhood.code, Neighborhood.name, Neighborhood.borough)}
+        names = {
+            n.code: (n.name, n.borough)
+            for n in session.query(Neighborhood.code, Neighborhood.name, Neighborhood.borough)
+        }
         scores = dict(session.query(NeighborhoodScore.nta_code, NeighborhoodScore.score).all())
         metrics: dict[str, dict[str, float]] = {}
-        for code, metric, value in session.query(NeighborhoodMetric.nta_code, NeighborhoodMetric.metric,
-                                                 NeighborhoodMetric.value).filter(
-                NeighborhoodMetric.metric.in_(["zori_rent", "zhvi_cagr_10y", "condo_median_price"])):
+        for code, metric, value in session.query(
+            NeighborhoodMetric.nta_code, NeighborhoodMetric.metric, NeighborhoodMetric.value
+        ).filter(NeighborhoodMetric.metric.in_(["zori_rent", "zhvi_cagr_10y", "condo_median_price"])):
             metrics.setdefault(code, {})[metric] = value
         cagrs = [m["zhvi_cagr_10y"] for m in metrics.values() if "zhvi_cagr_10y" in m]
         ppsf: dict[str, list[float]] = {}
         for code, price, sqft in session.query(Listing.nta_code, Listing.price, Listing.sqft).filter(
-                Listing.status == "active", Listing.sqft > 200):
+            Listing.status == "active", Listing.sqft > 200
+        ):
             ppsf.setdefault(code, []).append(price / sqft)
-        return cls(names=names, scores=scores, metrics=metrics, city_value_cagr_10y=median(cagrs) if cagrs else None,
-                   listing_ppsf_by_nta={c: median(v) for c, v in ppsf.items() if len(v) >= 5})
+        return cls(
+            names=names,
+            scores=scores,
+            metrics=metrics,
+            city_value_cagr_10y=median(cagrs) if cagrs else None,
+            listing_ppsf_by_nta={c: median(v) for c, v in ppsf.items() if len(v) >= 5},
+            macro={s.key[len("macro:"):]: s.value for s in session.query(AppSetting).filter(AppSetting.key.like("macro:%"))},
+        )
 
 
-STREET_SUFFIXES = {"ST": "STREET", "AVE": "AVENUE", "AV": "AVENUE", "PL": "PLACE", "BLVD": "BOULEVARD", "RD": "ROAD",
-                   "DR": "DRIVE", "PKWY": "PARKWAY", "SQ": "SQUARE", "TER": "TERRACE", "LN": "LANE", "CT": "COURT",
-                   "E": "EAST", "W": "WEST", "N": "NORTH", "S": "SOUTH"}
+STREET_SUFFIXES = {
+    "ST": "STREET",
+    "AVE": "AVENUE",
+    "AV": "AVENUE",
+    "PL": "PLACE",
+    "BLVD": "BOULEVARD",
+    "RD": "ROAD",
+    "DR": "DRIVE",
+    "PKWY": "PARKWAY",
+    "SQ": "SQUARE",
+    "TER": "TERRACE",
+    "LN": "LANE",
+    "CT": "COURT",
+    "E": "EAST",
+    "W": "WEST",
+    "N": "NORTH",
+    "S": "SOUTH",
+}
 
 
 def building_address_key(address: str) -> str:
     """'15 William St, 27A' -> '15 WILLIAM STREET' (house number + normalised street, unit dropped)."""
     street = address.split(",")[0].upper().replace(".", " ")
     tokens = [STREET_SUFFIXES.get(t, t) for t in street.split()]
-    return " ".join(t.removesuffix("TH").removesuffix("ST").removesuffix("ND").removesuffix("RD")
-                    if t[:1].isdigit() and i > 0 else t for i, t in enumerate(tokens))
+    return " ".join(
+        t.removesuffix("TH").removesuffix("ST").removesuffix("ND").removesuffix("RD")
+        if t[:1].isdigit() and i > 0
+        else t
+        for i, t in enumerate(tokens)
+    )
 
 
 def building_sales(session: Session, listing: Listing, years: int = COMPS_YEARS) -> list[Sale]:
@@ -63,8 +95,12 @@ def building_sales(session: Session, listing: Listing, years: int = COMPS_YEARS)
     key = f"{listing.bbl[0]}-{int(listing.bbl[1:6])}"
     since = date.today() - timedelta(days=365 * years)
     target = building_address_key(listing.address)
-    sales = (session.query(Sale).filter(Sale.building_key == key, Sale.sale_date >= since)
-             .order_by(Sale.sale_date.desc()).all())
+    sales = (
+        session.query(Sale)
+        .filter(Sale.building_key == key, Sale.sale_date >= since)
+        .order_by(Sale.sale_date.desc())
+        .all()
+    )
     return [s for s in sales if building_address_key(s.address) == target]
 
 
@@ -85,25 +121,38 @@ def price_history_stats(listing: Listing) -> dict:
 def property_inputs(listing: Listing, ctx: MarketContext) -> inv.PropertyInputs:
     m = ctx.metrics.get(listing.nta_code or "", {})
     return inv.PropertyInputs(
-        price=listing.price, sqft=listing.sqft, bedrooms=listing.bedrooms, common_charges=listing.common_charges,
-        property_taxes=listing.property_taxes, rent_estimate=listing.rent_estimate,
-        neighborhood_rent=m.get("zori_rent"), neighborhood_value_cagr_10y=m.get("zhvi_cagr_10y"),
-        city_value_cagr_10y=ctx.city_value_cagr_10y, growth_score=ctx.scores.get(listing.nta_code or ""),
+        price=listing.price,
+        sqft=listing.sqft,
+        bedrooms=listing.bedrooms,
+        common_charges=listing.common_charges,
+        property_taxes=listing.property_taxes,
+        rent_estimate=listing.rent_estimate,
+        neighborhood_rent=m.get("zori_rent"),
+        neighborhood_value_cagr_10y=m.get("zhvi_cagr_10y"),
+        city_value_cagr_10y=ctx.city_value_cagr_10y,
+        growth_score=ctx.scores.get(listing.nta_code or ""),
     )
 
 
 def comps_ratio(listing: Listing, ctx: MarketContext, bldg_sales: list[Sale] | None) -> tuple[float | None, str | None]:
     """Listing price relative to comparable pricing, and what it was compared against."""
-    nta_ppsf = ctx.listing_ppsf_by_nta.get(listing.nta_code or "")
-    if listing.sqft and listing.sqft > 200 and nta_ppsf:
-        return (listing.price / listing.sqft) / nta_ppsf, "$/sqft vs active listings in neighborhood"
-    if bldg_sales and len(bldg_sales) >= 3:
-        return listing.price / median(s.price for s in bldg_sales), f"price vs {len(bldg_sales)} recent sales in building"
-    return None, None
+    estimate = comps.estimate_value(
+        sqft=listing.sqft,
+        nta_ppsf=ctx.listing_ppsf_by_nta.get(listing.nta_code or ""),
+        building_prices=[s.price for s in bldg_sales or []],
+    )
+    if estimate is None:
+        return None, None
+    return listing.price / estimate.value, estimate.basis
 
 
-def summarize(session: Session, listing: Listing, ctx: MarketContext, assumptions: inv.Assumptions | None = None,
-              with_building_sales: bool = True) -> dict:
+def summarize(
+    session: Session,
+    listing: Listing,
+    ctx: MarketContext,
+    assumptions: inv.Assumptions | None = None,
+    with_building_sales: bool = True,
+) -> dict:
     analysis = inv.analyze(property_inputs(listing, ctx), assumptions)
     bldg = building_sales(session, listing) if with_building_sales else None
     ratio, ratio_basis = comps_ratio(listing, ctx, bldg)
@@ -148,7 +197,9 @@ def summarize(session: Session, listing: Listing, ctx: MarketContext, assumption
         "irr_10y_base": base10["irr"],
         "comps_ratio": ratio,
         "comps_basis": ratio_basis,
-        "opportunity_score": inv.opportunity_score(growth, inv.value_score(ratio), inv.yield_score(analysis["cap_rate"])),
+        "opportunity_score": inv.opportunity_score(
+            growth, inv.value_score(ratio), inv.yield_score(analysis["cap_rate"])
+        ),
         "estimated_fields": analysis["estimated_fields"],
         "notes": listing.notes,
     }
@@ -156,8 +207,15 @@ def summarize(session: Session, listing: Listing, ctx: MarketContext, assumption
 
 def neighborhood_sales_stats(session: Session, nta_code: str) -> dict:
     since = date.today() - timedelta(days=365 * 2)
-    rows = session.execute(select(func.count(), func.min(Sale.sale_date), func.max(Sale.sale_date))
-                           .where(Sale.nta_code == nta_code, Sale.sale_date >= since)).one()
+    rows = session.execute(
+        select(func.count(), func.min(Sale.sale_date), func.max(Sale.sale_date)).where(
+            Sale.nta_code == nta_code, Sale.sale_date >= since
+        )
+    ).one()
     prices = [p for (p,) in session.query(Sale.price).filter(Sale.nta_code == nta_code, Sale.sale_date >= since)]
-    return {"sales_2y": rows[0], "median_price_2y": median(prices) if prices else None,
-            "first": rows[1].isoformat() if rows[1] else None, "last": rows[2].isoformat() if rows[2] else None}
+    return {
+        "sales_2y": rows[0],
+        "median_price_2y": median(prices) if prices else None,
+        "first": rows[1].isoformat() if rows[1] else None,
+        "last": rows[2].isoformat() if rows[2] else None,
+    }

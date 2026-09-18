@@ -12,6 +12,7 @@ cd backend && uv run alembic revision --autogenerate -m "..."   # after any mode
 cd backend && uv run alembic upgrade head
 cd backend && uv run python -m app.cli refresh [source ...]     # run data sources
 cd backend && uv run python -m app.cli diagnose                 # health report
+cd backend && uv run python -m app.cli status                   # what each phase has actually shipped
 cd frontend && npx tsc --noEmit && npm run lint && npm run build
 ./start.sh                               # run both servers in this terminal (see .claude/launch.json)
 ./scripts/dev-open.sh                    # start both in the background (if not already up) + open the browser
@@ -43,6 +44,41 @@ already running). **"Stop NYC Screener"** on the Desktop shuts both servers down
   `init_db()`'s `create_all` is dev-bootstrap only; migrations are the source of truth.
 - Condos on an ordinary tax lot are `likely_coop` (`ownership_type()` in `pipeline/listings.py`) and
   hidden from the screener by default — see the co-op-filtering discussion if touching listing display.
+
+## Roadmap and phase status
+`docs/PLAN.md` is the approved multi-phase plan (intent). `docs/phases.yaml` lists each phase's
+deliverables, and `app.cli status` checks them against the filesystem.
+
+**Never state what phase something is in, or call a phase done, from memory, a summary, or a commit
+message — run `app.cli status`.** Those all record a claim made at one moment; only the command
+reads current disk. (This rule exists because Phase 2a was twice described as complete while
+`export_xlsx.py` and `eval.py` had never been written.) Adding a deliverable means adding its check
+to `docs/phases.yaml` in the same commit.
+
+## Session start and end
+Read `docs/NEXT.md` (current goal, open work, UI lock) before starting. Update it when direction changes. How work is saved
+automatically, how to resume in a new window, and how to restore anything: `docs/SESSIONS.md`. Before ending a session:
+update NEXT.md/DECISIONS.md, commit with explicit paths, and never push without the user's OK (the GitHub repo is PUBLIC).
+
+## Keeping memory current
+When a session changes the plan, structure, rules, or adds an agent: update `docs/NEXT.md`, add a
+dated entry to `docs/DECISIONS.md`, and add the deliverable's check to `docs/phases.yaml`, all in the
+same commit. New agents follow `.claude/agents/README.md`. The user is building this in layers on a
+baseline; design every addition so the next layer is easy to add.
+
+## Real Estate Tool artifact: main is locked, work happens in staging
+Two artifacts, registered in `.claude/artifacts.json`. **Main** is the approved UI (Overview / Cash
+flow / Stress test / Assumptions). **Staging** (`docs/artifact/staging.html`) is where every new
+feature goes first, with additive changes only.
+- **Never publish, edit, delete or otherwise change main without the user's explicit approval in
+  chat.** `.claude/hooks/artifact-guard.sh` also forces a permission prompt on any main change.
+- Promotion = `python3 scripts/promote_artifact.py` (checks the layout survived), review the diff,
+  commit, then publish to the main URL once the user says so.
+- Never reuse an old scratch file path for publishing; publish only `docs/artifact/staging.html`
+  (staging) or pass the URL explicitly.
+
+**UI changes:** read `docs/UI.md` first (structure, components, checklist) and update it in the same
+commit. It is the single home for UI knowledge, shared by every session and worktree via git.
 
 ## Definition of done
 Tests pass (`pytest`), types check (`tsc --noEmit`), ruff is clean, and you've shown evidence (test

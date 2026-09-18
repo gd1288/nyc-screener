@@ -1,5 +1,5 @@
 """Command line: `uv run python -m app.cli refresh [source ...]`, `... sources`, `... backtest`,
-`... diagnose [--json]`, `... probe-sources`."""
+`... diagnose [--json]`, `... probe-sources`, `... status [--json]`."""
 
 import argparse
 import json
@@ -121,6 +121,204 @@ def cmd_probe_sources() -> int:
     return 1 if failures else 0
 
 
+def cmd_status(as_json: bool) -> int:
+    """Report what each phase has actually delivered, by checking docs/phases.yaml against the
+    filesystem. This asserts nothing and reads no stored summary: every line is recomputed from
+    disk at call time, so a phase can never be reported done because someone wrote that down once
+    and the code moved on underneath it."""
+    import yaml
+
+    manifest = PROJECT_ROOT / "docs" / "phases.yaml"
+    if not manifest.exists():
+        print(f"missing {manifest.relative_to(PROJECT_ROOT)} — cannot report status", file=sys.stderr)
+        return 1
+    phases = yaml.safe_load(manifest.read_text())["phases"]
+
+    report = []
+    for phase in phases:
+        missing = []
+        for check in phase.get("checks") or []:
+            target = PROJECT_ROOT / check["path"]
+            needle = check.get("contains")
+            if not target.exists():
+                missing.append(check["path"])
+            elif needle and (not target.is_file() or needle not in target.read_text(errors="replace")):
+                missing.append(f"{check['path']} (no '{needle}')")
+        total = len(phase.get("checks") or [])
+        report.append(
+            {
+                "id": str(phase["id"]),
+                "name": phase["name"],
+                "present": total - len(missing),
+                "total": total,
+                "missing": missing,
+                "manual": phase.get("manual") or [],
+            }
+        )
+
+    if as_json:
+        print(json.dumps({"checked_at": datetime.now(UTC).isoformat(), "phases": report}, indent=2))
+        return 0
+
+    for p in report:
+        mark = "done" if not p["missing"] else f"{p['present']}/{p['total']}"
+        print(f"\nPhase {p['id']} — {p['name']}: {mark}")
+        for m in p["missing"]:
+            print(f"    missing  {m}")
+        for note in p["manual"]:
+            print(f"    manual?  {note}")
+    print("\n(manual items are user-side setup — this command cannot verify them)")
+    return 0
+
+
+def cmd_research_gaps() -> int:
+    """Write research/gaps.json: valuation factors with no real data source wired, for the
+    research-analyst subagent to search against (it reads this file first, every time)."""
+    from app.services import MarketContext
+    from app.valuation.factors import FACTOR_DEFS, PropertyProfile, market_estimate
+
+    research_dir = PROJECT_ROOT / "research"
+    research_dir.mkdir(exist_ok=True)
+    with SessionLocal() as session:
+        ctx = MarketContext.load(session)
+        sample_nta = next(iter(ctx.scores), None)
+        estimates = market_estimate(ctx, PropertyProfile(price=1_000_000, nta_code=sample_nta))
+    gaps = [
+        {"factor": f.key, "label": f.label, "reason": "no live data source wired; falls back to a fixed default"}
+        for f in FACTOR_DEFS
+        if estimates.get(f.key) is None
+    ]
+    payload = {"generated_at": datetime.now(UTC).isoformat(), "gaps": gaps}
+    (research_dir / "gaps.json").write_text(json.dumps(payload, indent=2) + "\n")
+    print(f"{len(gaps)} gap(s) written to research/gaps.json")
+    for g in gaps:
+        print(f"  - {g['factor']}: {g['label']}")
+    return 0
+
+
+def cmd_research_precision(as_json: bool) -> int:
+    """Approved / decided — whether the research agent is earning its budget."""
+    from app.research import registry
+
+    entries = registry.load()
+    stats = registry.precision(entries)
+    if as_json:
+        print(json.dumps(stats, indent=2))
+        return 0
+    print(f"{stats['proposed']} proposed, {stats['decided']} decided, {stats['approved']} approved")
+    if stats["precision"] is None:
+        print("precision: n/a — nothing decided yet")
+    else:
+        print(f"precision: {stats['precision']:.0%}")
+    for entry in sorted(entries, key=lambda e: e.slug):
+        print(f"  {entry.status:12} {entry.slug:28} {entry.decided_at}  {entry.notes}")
+    return 0
+
+
+def cmd_criteria(as_json: bool) -> int:
+    """Validate research/criteria.yaml and count entries by status. Non-zero exit on problems so an
+    agent that just edited the ledger finds out immediately."""
+    from app.research import criteria
+    from app.valuation.factors import FACTOR_DEFS
+
+    entries = criteria.load()
+    problems = criteria.validate(entries, {f.key for f in FACTOR_DEFS})
+    counts = criteria.summary(entries)
+    if as_json:
+        print(json.dumps({"counts": counts, "problems": problems}, indent=2))
+        return 1 if problems else 0
+    print(", ".join(f"{n} {s}" for s, n in counts.items()))
+    for p in problems:
+        print(f"  problem  {p}")
+    print("ledger ok" if not problems else f"{len(problems)} problem(s)")
+    return 1 if problems else 0
+
+
+def cmd_find_listing_urls(limit: int, listing_id: int | None) -> int:
+    """Find public listing-page URLs (links only) via Perplexity's Search API. See app/pipeline/listing_urls.py."""
+    import httpx
+
+    from app.config import get_settings
+    from app.models import Listing, ListingStatus
+    from app.pipeline import listing_urls
+
+    key = get_settings().perplexity_api_key
+    if not key:
+        print("skipped: PERPLEXITY_API_KEY is not set (read docs/DATA_LICENSES.md before enabling)")
+        return 0
+    with SessionLocal() as session, httpx.Client() as http:
+        q = session.query(Listing).filter(Listing.status == ListingStatus.ACTIVE)
+        if listing_id is not None:
+            q = q.filter(Listing.id == listing_id)
+        listings = [
+            type("L", (), {"id": r.id, "address": r.address, "unit": r.unit, "borough": None})
+            for r in q.order_by(Listing.id).limit(2000)
+        ]
+        try:
+            stats = listing_urls.find_urls(session, http, key, listings, limit=limit)
+        except RuntimeError as e:
+            print(f"error: {e}")
+            return 1
+        print(stats, f"| requests this month: {listing_urls.requests_used(session)}/{listing_urls.MONTHLY_LIMIT}")
+    return 0
+
+
+def cmd_add_region(name: str, watch: bool) -> int:
+    """Load a metro's census tracts into `areas` so it can be scored like NYC."""
+    import httpx
+
+    from app.config import get_settings
+    from app.pipeline.areas import ensure_region, resolve_region, sync_nyc_ntas
+    from app.sources.base import SourceContext
+    from app.sources.tigerweb import TigerwebTracts
+
+    known = resolve_region(name)
+    if known is None:
+        from app.pipeline.areas import KNOWN_REGIONS
+
+        print(f"Unknown region {name!r}. Known: {', '.join(sorted(KNOWN_REGIONS))}")
+        return 1
+
+    with SessionLocal() as session:
+        region = ensure_region(session, known.kind, known.code, known.name, known.state_fips)
+        if watch and not region.watched:
+            region.watched = True
+            session.commit()
+        with httpx.Client(follow_redirects=True) as http:
+            ctx = SourceContext(session=session, settings=get_settings(), http=http, region=region)
+            source = TigerwebTracts("tigerweb_tracts", known_region=known)
+            tracts = source.run(ctx)
+        ntas = sync_nyc_ntas(session) if known.code == "35620" else 0
+    print(f"{known.name}: {tracts} tracts loaded across {len(known.counties)} counties")
+    if ntas:
+        print(f"  plus {ntas} NYC neighborhoods mirrored into areas")
+    print(f"  watched={'yes' if watch else 'no'}")
+    return 0
+
+
+def cmd_valuation_eval(write_baseline: bool, as_json: bool) -> int:
+    """Walk-forward accuracy of the comparable-sales value estimate, gated on the stored baseline."""
+    from app.valuation import eval as valuation_eval
+
+    with SessionLocal() as session:
+        result = valuation_eval.run_eval(session)
+    baseline = valuation_eval.load_baseline()
+    ok, message = valuation_eval.check_against_baseline(result, baseline)
+
+    if write_baseline:
+        valuation_eval.write_baseline(result)
+        message = f"Baseline written to research/evals/baseline.json. {message}"
+        ok = True
+    if as_json:
+        print(json.dumps({**result.to_json(), "ok": ok, "message": message}, indent=2))
+    else:
+        error = result.median_abs_pct_error
+        print(f"median absolute % error: {f'{error:.2%}' if error is not None else 'n/a'}")
+        print(f"scored {result.n_scored} of {result.n_candidates} sales (coverage {result.coverage:.1%})")
+        print(message)
+    return 0 if ok else 1
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(prog="app.cli")
@@ -133,7 +331,27 @@ def main() -> int:
     diagnose = sub.add_parser("diagnose", help="health snapshot: source status + cached test/type result")
     diagnose.add_argument("--json", action="store_true", dest="as_json")
     sub.add_parser("probe-sources", help="ping every source's declared endpoint, write nothing")
+    status = sub.add_parser("status", help="what each phase has actually delivered (checked against disk)")
+    status.add_argument("--json", action="store_true", dest="as_json")
+    sub.add_parser("research-gaps", help="write research/gaps.json: valuation factors with no real data source")
+    research_precision = sub.add_parser("research-precision", help="approved/decided ratio for proposed data sources")
+    research_precision.add_argument("--json", action="store_true", dest="as_json")
+    criteria_cmd = sub.add_parser("criteria", help="validate research/criteria.yaml and count entries by status")
+    criteria_cmd.add_argument("--json", action="store_true", dest="as_json")
+    flu = sub.add_parser("find-listing-urls", help="find public listing-page links via Perplexity Search (paid, capped)")
+    flu.add_argument("--limit", type=int, default=25, help="max requests this run (each costs about $0.005)")
+    flu.add_argument("--id", type=int, dest="listing_id", help="only this listing id")
+    sub.add_parser("rescore-areas", help="recompute area Growth Scores within each comparison set")
+    add_region = sub.add_parser("add-region", help="load a metro's census tracts into areas")
+    add_region.add_argument("name", help="metro nickname, e.g. austin")
+    add_region.add_argument("--watch", action="store_true", help="refresh this region on schedule")
+    valuation_eval = sub.add_parser("valuation-eval", help="walk-forward accuracy of the comps value estimate")
+    valuation_eval.add_argument("--write-baseline", action="store_true", dest="write_baseline")
+    valuation_eval.add_argument("--json", action="store_true", dest="as_json")
     args = parser.parse_args()
+
+    if args.cmd == "status":
+        return cmd_status(args.as_json)  # reads only the manifest and the filesystem; no DB needed
 
     if args.cmd == "probe-sources":
         # Needs the DB (for SourceContext) but not a full init_db(); harmless either way.
@@ -159,6 +377,23 @@ def main() -> int:
             print(json.dumps(run_backtest(s), indent=2))
     elif args.cmd == "diagnose":
         return cmd_diagnose(args.as_json)
+    elif args.cmd == "research-gaps":
+        return cmd_research_gaps()
+    elif args.cmd == "research-precision":
+        return cmd_research_precision(args.as_json)
+    elif args.cmd == "criteria":
+        return cmd_criteria(args.as_json)
+    elif args.cmd == "find-listing-urls":
+        return cmd_find_listing_urls(args.limit, args.listing_id)
+    elif args.cmd == "rescore-areas":
+        from app.scoring.area import recompute_area_scores
+
+        with SessionLocal() as s:
+            print(f"scored {recompute_area_scores(s)} areas")
+    elif args.cmd == "add-region":
+        return cmd_add_region(args.name, args.watch)
+    elif args.cmd == "valuation-eval":
+        return cmd_valuation_eval(args.write_baseline, args.as_json)
     return 0
 
 

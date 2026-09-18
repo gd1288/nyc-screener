@@ -10,9 +10,12 @@ const LINKS = [
   { href: "/", label: "Screener" },
   { href: "/sold", label: "Sold & off-market" },
   { href: "/neighborhoods", label: "Neighborhoods" },
+  { href: "/areas", label: "Areas" },
   { href: "/compare", label: "Compare" },
+  { href: "/valuation", label: "Valuation" },
   { href: "/add", label: "Add listings" },
   { href: "/sources", label: "Data sources" },
+  { href: "/workbench", label: "Workbench" },
 ];
 
 export default function Nav() {

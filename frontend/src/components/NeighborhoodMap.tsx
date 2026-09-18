@@ -3,6 +3,7 @@
 import { Map as MapLibreMap } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
+import "@/lib/maplibre-worker";
 
 type Point = { id: number; longitude: number; latitude: number; label: string };
 

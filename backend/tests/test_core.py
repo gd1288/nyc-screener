@@ -13,7 +13,10 @@ from app.pipeline.listings import RawListing, expire_stale_off_market, mark_sold
 from app.scoring import investment as inv
 from app.scoring.neighborhood import score_frame
 
-SQUARE = {"type": "Polygon", "coordinates": [[[-74.02, 40.70], [-74.00, 40.70], [-74.00, 40.72], [-74.02, 40.72], [-74.02, 40.70]]]}
+SQUARE = {
+    "type": "Polygon",
+    "coordinates": [[[-74.02, 40.70], [-74.00, 40.70], [-74.00, 40.72], [-74.02, 40.72], [-74.02, 40.70]]],
+}
 
 
 @pytest.fixture
@@ -21,14 +24,24 @@ def session():
     engine = create_engine("sqlite://")
     Base.metadata.create_all(engine)
     with sessionmaker(bind=engine)() as s:
-        s.add(Neighborhood(code="MN0101", name="Test", borough="Manhattan", residential=True, geometry=SQUARE, area_km2=4))
+        s.add(
+            Neighborhood(code="MN0101", name="Test", borough="Manhattan", residential=True, geometry=SQUARE, area_km2=4)
+        )
         s.commit()
         yield s
 
 
 def raw(price=1_000_000, ext="a", **kw):
-    return RawListing(external_id=ext, address="1 Test St", unit="12A", price=price, listed_date=date(2026, 1, 1),
-                      latitude=40.71, longitude=-74.01, **kw)
+    return RawListing(
+        external_id=ext,
+        address="1 Test St",
+        unit="12A",
+        price=price,
+        listed_date=date(2026, 1, 1),
+        latitude=40.71,
+        longitude=-74.01,
+        **kw,
+    )
 
 
 def test_lifecycle_new_price_cut_off_market_relist_sold(session):
@@ -73,8 +86,9 @@ def test_stale_off_market_becomes_withdrawn(session):
 
 def test_price_history_seeds_original_price(session):
     geo = NeighborhoodIndex.load(session)
-    sync_listings(session, "src", [raw(price=900_000, price_history=[(date(2026, 1, 1), 1_000_000)])],
-                  complete=False, geo=geo)
+    sync_listings(
+        session, "src", [raw(price=900_000, price_history=[(date(2026, 1, 1), 1_000_000)])], complete=False, geo=geo
+    )
     listing = session.query(Listing).one()
     assert listing.original_price == 1_000_000
     assert [s.event for s in listing.snapshots] == ["listed", "price_change"]
@@ -109,14 +123,40 @@ def test_irr_simple_case():
 
 def test_analyze_all_cash_no_growth_irr_equals_cap_rate_less_exit_drag():
     p = inv.PropertyInputs(price=1_000_000, rent_estimate=5_000, common_charges=800, property_taxes=700)
-    a = inv.Assumptions(down_payment_pct=1.0, appreciation_override=0.0, rent_growth=0, expense_growth=0,
-                        exit_cost_pct=0, vacancy_pct=0, management_pct=0, maintenance_monthly=0, insurance_monthly=0)
+    a = inv.Assumptions(
+        down_payment_pct=1.0,
+        appreciation_override=0.0,
+        rent_growth=0,
+        expense_growth=0,
+        exit_cost_pct=0,
+        vacancy_pct=0,
+        management_pct=0,
+        maintenance_monthly=0,
+        insurance_monthly=0,
+    )
     result = inv.analyze(p, a)
     assert result["monthly"]["noi"] == 3_500
     assert result["cap_rate"] == pytest.approx(0.042)
     # With no appreciation or exit costs, IRR is the NOI yield on total cash (price + closing costs).
     cash = result["cash_invested"]
     assert result["projections"]["base"]["10"]["irr"] == pytest.approx(42_000 / cash, abs=2e-3)
+
+
+def test_debt_service_stops_once_the_loan_is_paid_off():
+    """A hold period can outlast the loan term. Charging a full payment against a zero balance
+    corrupts IRR/cumulative cash flow/equity multiple, not just the displayed row."""
+    p = inv.PropertyInputs(price=1_000_000, rent_estimate=4_200)
+    result = inv.analyze(p, inv.Assumptions(loan_years=10, appreciation_override=0.03))
+    path = {row["year"]: row for row in result["projections"]["base"]["20"]["path"]}
+    assert path[10]["mortgage"] > 0  # final year of the loan still pays
+    assert path[11]["mortgage"] == 0 and path[11]["loan_balance"] == 0
+    assert path[20]["mortgage"] == 0
+    # Paying the loan off inside the hold frees up cash flow, so it must beat a 30-year loan here.
+    irr_10y_loan = result["projections"]["base"]["20"]["irr"]
+    irr_30y_loan = inv.analyze(p, inv.Assumptions(loan_years=30, appreciation_override=0.03))["projections"]["base"][
+        "20"
+    ]["irr"]
+    assert irr_10y_loan > irr_30y_loan
 
 
 def test_opportunity_score_requires_growth_and_reweights():
@@ -127,14 +167,25 @@ def test_opportunity_score_requires_growth_and_reweights():
 
 def test_score_frame_percentiles_direction_and_missing_pillars():
     idx = [f"N{i}" for i in range(20)]
-    wide = pd.DataFrame({
-        "residential": True,
-        "value_gap_borough": range(20),                   # higher is better
-        "felonies_per_1k_units": range(20),               # lower is better
-        "floodplain_2050s_pct": [0.0] * 19 + [1.0],
-    }, index=idx)
-    weights = {"valuation": 50, "quality": 50, "development": 0, "infrastructure": 0, "demographics": 0,
-               "momentum": 0, "commercial": 0, "flood_risk_penalty": 10}
+    wide = pd.DataFrame(
+        {
+            "residential": True,
+            "value_gap_borough": range(20),  # higher is better
+            "felonies_per_1k_units": range(20),  # lower is better
+            "floodplain_2050s_pct": [0.0] * 19 + [1.0],
+        },
+        index=idx,
+    )
+    weights = {
+        "valuation": 50,
+        "quality": 50,
+        "development": 0,
+        "infrastructure": 0,
+        "demographics": 0,
+        "momentum": 0,
+        "commercial": 0,
+        "flood_risk_penalty": 10,
+    }
     out = score_frame(wide, weights)
     assert out.loc["N19", "pillars"]["valuation"]["score"] == 100
     assert out.loc["N19", "pillars"]["quality"]["score"] == 5  # most crime -> lowest percentile
@@ -170,8 +221,15 @@ class _CountingHttp:
         if "geosearch" in url:
             return _FakeResponse({"features": []})
         self.calls.append(params)
-        item = {"id": f"rc{len(self.calls)}", "price": 900_000, "addressLine1": "1 Test St", "addressLine2": "Apt 3B",
-                "latitude": 40.71, "longitude": -74.01, "listedDate": "2026-09-10T00:00:00Z"}
+        item = {
+            "id": f"rc{len(self.calls)}",
+            "price": 900_000,
+            "addressLine1": "1 Test St",
+            "addressLine2": "Apt 3B",
+            "latitude": 40.71,
+            "longitude": -74.01,
+            "listedDate": "2026-09-10T00:00:00Z",
+        }
         return _FakeResponse([item], total=1)
 
 
@@ -194,10 +252,13 @@ def test_rentcast_budget_guards_and_area_rotation(session):
 
     http = _CountingHttp()
     ctx = SourceContext(session=session, settings=SimpleNamespace(rentcast_api_key="k"), http=http)
-    areas = [{"name": "a", "latitude": 40.71, "longitude": -74.01, "radius": 1},
-             {"name": "b", "latitude": 40.71, "longitude": -74.01, "radius": 1}]
-    source = RentCastListings("rentcast_listings", min_hours_between_requests=60, monthly_request_limit=3,
-                              seed_days_old=30, areas=areas)
+    areas = [
+        {"name": "a", "latitude": 40.71, "longitude": -74.01, "radius": 1},
+        {"name": "b", "latitude": 40.71, "longitude": -74.01, "radius": 1},
+    ]
+    source = RentCastListings(
+        "rentcast_listings", min_hours_between_requests=60, monthly_request_limit=3, seed_days_old=30, areas=areas
+    )
 
     source.run(ctx)
     assert len(http.calls) == 1 and http.calls[0]["daysOld"] == 30  # area "a" backfills
@@ -224,9 +285,11 @@ def test_rentcast_budget_guards_and_area_rotation(session):
 def test_tract_relationships_split_2010_tracts_by_land_area():
     from app.sources.census_acs import CensusAcs, parse_tract_relationships
 
-    text = ("GEOID_TRACT_20|GEOID_TRACT_10|AREALAND_TRACT_10|AREALAND_PART\n"
-            "36061000101|36061000100|100|75\n"
-            "36061000102|36061000100|100|25\n")
+    text = (
+        "GEOID_TRACT_20|GEOID_TRACT_10|AREALAND_TRACT_10|AREALAND_PART\n"
+        "36061000101|36061000100|100|75\n"
+        "36061000102|36061000100|100|25\n"
+    )
     mapping = parse_tract_relationships(text, {"36061000101": "MN0101", "36061000102": "MN0102"})
     assert sorted(mapping["36061000100"]) == [("MN0101", 0.75), ("MN0102", 0.25)]
     agg = CensusAcs._aggregate({"36061000100": {"pop": 1000}}, mapping)
@@ -245,9 +308,51 @@ def test_duplicate_feed_ids_for_same_unit_merge(session):
     assert session.query(Listing).count() == 1 and session.query(Listing).one().missed_fetches == 0
 
 
-@pytest.mark.parametrize("bbl,expected", [("1013107501", "condo"), ("1000251470", "condo"), ("1013500001", "likely_coop"),
-                                          (None, "unknown"), ("12", "unknown")])
+@pytest.mark.parametrize(
+    "bbl,expected",
+    [
+        ("1013107501", "condo"),
+        ("1000251470", "condo"),
+        ("1013500001", "likely_coop"),
+        (None, "unknown"),
+        ("12", "unknown"),
+    ],
+)
 def test_ownership_type_from_tax_lot(bbl, expected):
     from app.pipeline.listings import ownership_type
 
     assert ownership_type(bbl) == expected
+
+
+def test_update_only_sweep_refreshes_known_listings_but_never_adds_new_ones(session):
+    geo = NeighborhoodIndex.load(session)
+    sync_listings(session, "src", [raw(ext="a")], complete=False, geo=geo)
+    new = RawListing(external_id="new", address="9 Other St", unit="2", price=1, listed_date=date(2026, 1, 1), latitude=40.71, longitude=-74.01)
+    stats = sync_listings(session, "src", [raw(price=900_000, ext="a"), new], complete=True, geo=geo, insert_new=False)
+    assert stats.new == 0 and session.query(Listing).count() == 1 and session.query(Listing).one().price == 900_000
+
+
+def test_a_sweep_only_counts_listings_inside_its_scope_as_missed(session):
+    """A Manhattan sweep must not mark a Brooklyn listing as gone just because it was not in Manhattan's results."""
+    geo = NeighborhoodIndex.load(session)
+    other = RawListing(external_id="b", address="2 Test St", unit="1", price=1, listed_date=date(2026, 1, 1), latitude=40.71, longitude=-74.01)
+    sync_listings(session, "src", [raw(ext="a"), other], complete=False, geo=geo)
+    for _ in range(2):
+        sync_listings(session, "src", [], complete=True, geo=geo, scope={"a"})
+    assert {row.external_id: row.status for row in session.query(Listing)} == {
+        "a": ListingStatus.OFF_MARKET,
+        "b": ListingStatus.ACTIVE,
+    }
+
+
+def test_unmark_sold_restores_an_active_listing_and_keeps_the_history(session):
+    from app.pipeline.listings import unmark_sold
+
+    geo = NeighborhoodIndex.load(session)
+    sync_listings(session, "src", [raw()], complete=False, geo=geo)
+    listing = session.query(Listing).one()
+    mark_sold(listing, 2_100_000, date(2026, 3, 1), "DOC1")
+    unmark_sold(listing, "deed predates the listing")
+    session.commit()
+    assert listing.status == ListingStatus.ACTIVE and listing.sold_price is None and listing.sold_document_id is None
+    assert [s.event for s in listing.snapshots][-2:] == ["sold", "relisted"]

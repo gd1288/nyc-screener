@@ -9,8 +9,14 @@ from dataclasses import asdict, dataclass, field
 import numpy as np
 
 MANSION_TAX_BRACKETS = [  # (price at or above, rate) - NYS mansion tax, NYC progressive schedule
-    (25_000_000, 0.039), (20_000_000, 0.035), (15_000_000, 0.0325), (10_000_000, 0.0225),
-    (5_000_000, 0.015), (3_000_000, 0.0125), (2_000_000, 0.01), (1_000_000, 0.01),
+    (25_000_000, 0.039),
+    (20_000_000, 0.035),
+    (15_000_000, 0.0325),
+    (10_000_000, 0.0225),
+    (5_000_000, 0.015),
+    (3_000_000, 0.0125),
+    (2_000_000, 0.01),
+    (1_000_000, 0.01),
 ]
 BEDROOM_RENT_FACTOR = {0: 0.75, 1: 0.9, 2: 1.2, 3: 1.55, 4: 1.9}  # vs. the neighborhood's typical (ZORI) rent
 
@@ -86,6 +92,7 @@ def loan_balance(principal: float, annual_rate: float, years: int, months_paid: 
 
 def irr(cash_flows: list[float]) -> float | None:
     """Annual IRR by bisection (cash flows are yearly, t=0 first)."""
+
     def npv(rate):
         return sum(cf / (1 + rate) ** t for t, cf in enumerate(cash_flows))
 
@@ -157,14 +164,33 @@ def analyze(p: PropertyInputs, a: Assumptions | None = None) -> dict:
         "assumptions": asdict(a),
         "estimated_fields": sorted(set(estimated)),
         "rent_basis": rent_basis,
+        # Unrounded resolved inputs. `monthly` below is rounded for display, which is fine on screen
+        # but not as a basis for rebuilding this projection elsewhere: the Excel export drives its
+        # live formulas off these, and rounding rent to the dollar first puts year-20 NOI ~$10 out.
+        # Exposed rather than recomputed so the workbook can't quietly disagree with the engine.
+        "exact": {
+            "rent": rent,
+            "common_charges": common,
+            "property_taxes": taxes,
+            "opex_monthly": opex,
+            "loan_amount": loan,
+            "cash_invested": cash_invested,
+            "monthly_payment": mortgage,
+        },
         "purchase_costs": {k: round(v) for k, v in costs.items()},
         "cash_invested": round(cash_invested),
         "loan_amount": round(loan),
         "monthly": {
-            "rent": round(rent), "vacancy": round(rent - effective_rent), "common_charges": round(common),
-            "property_taxes": round(taxes), "insurance": round(a.insurance_monthly),
-            "maintenance": round(a.maintenance_monthly), "management": round(rent * a.management_pct),
-            "noi": round(noi_monthly), "mortgage": round(mortgage), "cash_flow": round(cash_flow_monthly),
+            "rent": round(rent),
+            "vacancy": round(rent - effective_rent),
+            "common_charges": round(common),
+            "property_taxes": round(taxes),
+            "insurance": round(a.insurance_monthly),
+            "maintenance": round(a.maintenance_monthly),
+            "management": round(rent * a.management_pct),
+            "noi": round(noi_monthly),
+            "mortgage": round(mortgage),
+            "cash_flow": round(cash_flow_monthly),
         },
         "gross_yield": rent * 12 / p.price if rent else None,
         "cap_rate": noi_monthly * 12 / p.price if rent else None,
@@ -176,10 +202,42 @@ def analyze(p: PropertyInputs, a: Assumptions | None = None) -> dict:
 
 def _project(price, loan, cash_invested, rent, opex, mortgage, rate, years, a: Assumptions) -> dict:
     flows = [-cash_invested]
+    path = []
+    cumulative = 0.0
+    cash_flow_positive_year = None
+    payback_year = None
     for y in range(years):
         r = rent * 12 * (1 + a.rent_growth) ** y * (1 - a.vacancy_pct)
         e = opex * 12 * (1 + a.expense_growth) ** y
-        flows.append(r - e - mortgage * 12)
+        # Debt service stops once the loan is paid off - a hold period can outlast the loan term.
+        # Without this the projection keeps charging a full payment against a zero balance, which
+        # corrupts IRR, cumulative cash flow and equity multiple (not just the displayed row).
+        months_of_payments = min(12, max(a.loan_years * 12 - y * 12, 0))
+        mortgage_annual = mortgage * months_of_payments
+        noi_annual = r - e
+        cf = noi_annual - mortgage_annual
+        flows.append(cf)
+        cumulative += cf
+        value_y = price * (1 + rate) ** (y + 1)
+        balance_y = loan_balance(loan, a.interest_rate, a.loan_years, (y + 1) * 12)
+        if cash_flow_positive_year is None and cf > 0:
+            cash_flow_positive_year = y + 1
+        if payback_year is None and cumulative >= cash_invested:
+            payback_year = y + 1
+        path.append(
+            {
+                "year": y + 1,
+                "noi": round(noi_annual),
+                "mortgage": round(mortgage_annual),
+                "cash_flow": round(cf),
+                "cumulative_cash_flow": round(cumulative),
+                "dscr": round(noi_annual / mortgage_annual, 2) if mortgage_annual else None,
+                "property_value": round(value_y),
+                "loan_balance": round(balance_y),
+                "equity": round(value_y - balance_y),
+                "sale_proceeds_if_exit_now": round(value_y * (1 - a.exit_cost_pct) - balance_y),
+            }
+        )
     value = price * (1 + rate) ** years
     balance = loan_balance(loan, a.interest_rate, a.loan_years, years * 12)
     sale_proceeds = value * (1 - a.exit_cost_pct) - balance
@@ -193,6 +251,9 @@ def _project(price, loan, cash_invested, rent, opex, mortgage, rate, years, a: A
         "profit": round(sum(flows)),
         "equity_multiple": round((sale_proceeds + total_cash_flow) / cash_invested, 2) if cash_invested else None,
         "irr": round(result_irr, 4) if result_irr is not None else None,
+        "cash_flow_positive_year": cash_flow_positive_year,
+        "payback_year": payback_year,
+        "path": path,
     }
 
 

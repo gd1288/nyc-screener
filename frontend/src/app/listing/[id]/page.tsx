@@ -63,6 +63,9 @@ export default function ListingPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <Link href={`/valuation?import=${data.id}`} className={ghostButtonCls}>
+            Analyze in Valuation
+          </Link>
           <div className="text-right text-xs text-stone-500">Opportunity<br />score</div>
           <ScoreBadge score={data.opportunity_score} size="lg" />
         </div>

@@ -1,0 +1,216 @@
+# Phase deliverables for `uv run python -m app.cli status`.
+#
+# This file is the definition of done, derived from docs/PLAN.md. `status` checks it against the
+# filesystem and reports what is actually present — so no session ever has to trust a status claim
+# written down earlier and since gone stale. When you add a deliverable to a phase, add its check
+# here in the same commit.
+#
+# check types:
+#   path:     repo-relative file or directory that must exist
+#   contains: substring that must appear in that file (for deliverables that live inside a module)
+#   manual:   things no script can verify (user-side setup); always reported as unverified
+
+phases:
+  - id: "0"
+    name: Foundation
+    checks:
+      - path: .github/workflows/ci.yml
+      - path: .github/workflows/source-uptime.yml
+      - path: .claude/hooks/guard.sh
+      - path: .claude/hooks/format.sh
+      - path: .claude/hooks/stop-gate.sh
+      - path: .claude/hooks/session-health.sh
+      - path: .claude/hooks/statusline.sh
+      - path: .claude/agents/debugger.md
+      - path: .claude/agents/valuation-reviewer.md
+      - path: .claude/skills/add-data-source
+      - path: .claude/skills/research-sources
+      - path: .claude/skills/debug
+      - path: .claude/skills/ship
+      - path: CLAUDE.md
+      - path: backend/CLAUDE.md
+      - path: frontend/CLAUDE.md
+      - path: backend/alembic/versions
+      - path: backend/app/cli.py
+        contains: "def cmd_diagnose"
+      - path: backend/app/cli.py
+        contains: "def cmd_probe_sources"
+    manual:
+      - "Remote Control enabled (Desktop Settings) and the Claude mobile app installed"
+      - "Plugins installed: pyright-lsp, typescript-lsp, context7, duckdb-skills"
+      - "Branch protection — blocked: needs a paid plan or a public repo (repo was PUBLIC on 2026-09-18)"
+
+  - id: "1"
+    name: Neighborhood research, US-ready
+    checks:
+      - path: backend/app/models.py
+        contains: "class Area"
+      - path: backend/app/models.py
+        contains: "class AreaMetric"
+      # A score is only meaningful against the set it was ranked within, so that set is stored
+      # rather than assumed — an Austin-CBSA percentile must not be readable as a national one.
+      - path: backend/app/models.py
+        contains: "comparison_set"
+      - path: backend/app/sources/base.py
+        contains: "coverage"
+      - path: backend/app/sources/base.py
+        contains: "def write_area_metrics"
+      - path: backend/app/pipeline/areas.py
+        contains: "def sync_nyc_ntas"
+      - path: backend/app/cli.py
+        contains: "def cmd_add_region"
+      - path: backend/app/sources/tigerweb.py
+      - path: backend/tests/test_areas.py
+        contains: "def test_known_region_counties_are_real_counties_with_the_expected_names"
+      - path: backend/app/sources/fhfa_hpi.py
+      # Percentiles must be ranked inside a comparison set, never across the whole table — ranking
+      # a Manhattan tract against a rural one measures two housing markets, not two neighbourhoods.
+      - path: backend/app/scoring/area.py
+        contains: "def recompute_area_scores"
+      - path: backend/app/api/areas.py
+      - path: frontend/src/app/areas
+
+  - id: 2a
+    name: Valuation engine + Excel export
+    checks:
+      - path: backend/app/valuation/engine.py
+      - path: backend/app/valuation/factors.py
+      - path: backend/app/valuation/property.py
+      - path: backend/app/valuation/scenarios.py
+      - path: backend/app/valuation/comps.py
+      - path: backend/app/valuation/export_xlsx.py
+      - path: backend/app/valuation/eval.py
+      - path: research/evals/baseline.json
+      - path: backend/app/api/valuation.py
+        contains: "export.xlsx"
+      - path: backend/app/cli.py
+        contains: "def cmd_valuation_eval"
+      # The eval is only worth its baseline if the comp set can't see the future; that guarantee
+      # lives in a test, so the test itself is a deliverable.
+      - path: backend/tests/test_valuation_eval.py
+        contains: "def test_comp_set_never_includes_the_target_sale_or_later"
+      # Likewise the export: "it has formulas" is not the same claim as "the formulas are right".
+      - path: backend/tests/test_export_xlsx.py
+        contains: "def test_cash_flow_rows_match_the_engine_to_the_dollar"
+
+  - id: 2b
+    name: Workbench
+    checks:
+      - path: backend/app/dev/checks.py
+      - path: backend/app/dev/github.py
+      - path: backend/app/dev/runner.py
+      - path: backend/app/api/dev.py
+        contains: "def guard"
+      # Registration, not a per-request check, is the gate: an unregistered router can't be reached
+      # and can't appear in /docs.
+      - path: backend/app/main.py
+        contains: "if get_settings().dev_tools:"
+      # The ceiling is refused, not clamped — clamping makes a run stop halfway and look like the
+      # model gave up. Unattended runs never touch the main working tree.
+      - path: backend/app/dev/runner.py
+        contains: "MAX_BUDGET_USD"
+      - path: backend/tests/test_dev_tools.py
+        contains: "def test_a_budget_above_the_ceiling_is_refused_not_clamped"
+      - path: backend/tests/test_dev_tools.py
+        contains: "def test_the_runner_never_grants_a_shell_tool"
+      - path: frontend/src/app/workbench
+
+  - id: "3"
+    name: Dynamic valuation UI
+    checks:
+      - path: frontend/src/app/valuation
+      - path: frontend/src/app/valuation/[id]
+      # One workspace, rendered by both routes. A forked second copy would drift from the backend's
+      # Assumptions defaults, which is exactly what the slider metadata mirrors.
+      - path: frontend/src/components/ValuationWorkspace.tsx
+        contains: "export default function PropertyWorkspace"
+      # The download must carry the scenario on screen; exporting the saved defaults instead would
+      # hand the user a workbook that quietly disagrees with what they were just looking at.
+      - path: frontend/src/components/ValuationWorkspace.tsx
+        contains: "exportHref"
+      - path: backend/tests/test_export_xlsx.py
+        contains: "def test_export_applies_the_on_screen_scenario_not_the_saved_defaults"
+
+  - id: "4"
+    name: Research agent
+    checks:
+      - path: research/registry.json
+      - path: research/gaps.json
+      - path: backend/app/research/evaluate_series.py
+      - path: backend/app/research/registry.py
+        contains: "def should_skip"
+      # The plan's own measure of whether the agent earns its budget.
+      - path: backend/app/cli.py
+        contains: "def cmd_research_precision"
+      # Correlating two trending series gives ~1.0 regardless of what they measure. If this guard
+      # ever goes, every correlation the agent reports becomes meaningless.
+      - path: backend/tests/test_research.py
+        contains: "def test_two_rising_series_are_not_reported_as_correlated_just_for_rising"
+      - path: .claude/skills/research-sources
+
+  # Not a product phase: the memory structure that lets a new session pick up the work without
+  # re-explaining it. Keep these files current; stale notes are worse than none.
+  - id: "M"
+    name: Memory and continuity
+    checks:
+      - path: docs/NEXT.md
+      - path: research/criteria.yaml
+        contains: "criteria:"
+      - path: docs/artifact/real-estate-tool.html
+        contains: "Glass Box Underwriting"
+      - path: CLAUDE.md
+        contains: "main is locked, work happens in staging"
+      - path: .claude/artifacts.json
+      - path: .claude/hooks/artifact-guard.sh
+      - path: docs/artifact/staging.html
+        contains: "function bar()"
+      - path: docs/UI.md
+        contains: "Components"
+      - path: scripts/promote_artifact.py
+      - path: docs/DECISIONS.md
+      - path: .claude/agent-boundaries.json
+      - path: .claude/agents/README.md
+      - path: .claude/agents/criteria-proposer.md
+      - path: .claude/skills/propose-criteria
+      - path: backend/app/research/criteria.py
+        contains: "def validate"
+      - path: backend/app/cli.py
+        contains: "def cmd_criteria"
+      - path: docs/artifact/staging.html
+        contains: "function loadListing"
+      - path: scripts/embed_screener.py
+        contains: "LISTINGS-START"
+      - path: docs/DATA_LICENSES.md
+      - path: backend/app/sources/fred.py
+        contains: "class FredSeries"
+      - path: backend/tests/test_fred.py
+      - path: backend/app/valuation/factors.py
+        contains: "def _estimate_interest_rate"
+      - path: backend/app/valuation/macro.py
+        contains: "def max_drawdown"
+      - path: docs/artifact/staging.html
+        contains: "function openLinks"
+      - path: docs/artifact/staging.html
+        contains: "function wreal"
+      - path: docs/artifact/checks/staging_sweep.js
+        contains: "orderViolations"
+      - path: backend/app/pipeline/listing_urls.py
+        contains: "ALLOWED_DOMAINS"
+      - path: backend/tests/test_listing_urls.py
+      - path: docs/plans/formulas-tab.md
+      - path: backend/tests/test_sweep_and_acris.py
+      - path: backend/app/pipeline/listings.py
+        contains: "def unmark_sold"
+      - path: docs/plans/purchase-analysis.md
+      - path: backend/app/valuation/purchase.py
+        contains: "def plan"
+      - path: backend/tests/test_purchase.py
+        contains: "same_numbers_as_the_backend"
+      - path: docs/artifact/staging.html
+        contains: "function purchasePlan"
+      - path: docs/artifact/staging.html
+        contains: "function svRender"
+      - path: docs/SESSIONS.md
+      - path: .claude/hooks/autosave.sh
+        contains: "refs/autosave"
+      - path: .claude/autosave.json

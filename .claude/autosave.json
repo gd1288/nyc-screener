@@ -1,0 +1,4 @@
+{
+  "_doc": "Autosave settings. push=false keeps snapshots local (refs/autosave/<branch>). Set true ONLY after deciding the GitHub repo is safe for what it holds (it was PUBLIC on 2026-09-18 and staging.html embeds RentCast and FRED data).",
+  "push": false
+}

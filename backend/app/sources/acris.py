@@ -9,13 +9,15 @@ from datetime import datetime, timedelta
 
 from app.models import Listing, ListingStatus
 from app.pipeline.geocode import normalize_unit
-from app.pipeline.listings import expire_stale_off_market, mark_sold
+from app.pipeline.listings import expire_stale_off_market, mark_sold, ownership_type
 from app.sources import socrata
 from app.sources.base import Source, SourceContext
 
 LEGALS = "8h5j-fqxa"
 MASTER = "bnx9-e6tj"
-LOOKBACK_BEFORE_LISTING = timedelta(days=14)  # a contract can pre-date the listing date we saw
+# A deed recorded before the listing date is the seller's own purchase, never this sale. (This used to allow 14 days
+# before the listing and produced a false 'sold' for a listing whose seller had bought three days earlier.)
+LOOKBACK_BEFORE_LISTING = timedelta(0)
 MIN_DEED_AMOUNT = 10_000  # skip nominal-consideration transfers
 
 
@@ -34,6 +36,8 @@ class AcrisSoldCheck(Source):
             )
             .all()
         )
+        # A co-op is not a deeded unit: its ordinary tax lot has no per-unit deed, so a match is another property's.
+        candidates = [c for c in candidates if ownership_type(c.bbl) != "likely_coop"]
         sold = 0
         for listing in candidates:
             deed = find_deed(ctx, listing)
