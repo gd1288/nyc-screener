@@ -13,11 +13,11 @@
     {
       "slug": "fred-mortgage30us",
       "name": "FRED 30-year mortgage rate (Freddie Mac PMMS)",
-      "status": "approved",
+      "status": "implemented",
       "decided_at": "2026-09-18",
       "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
       "gap": "interest_rate",
-      "notes": "Adapter built (app/sources/fred.py) and wired to interest_rate; needs a free FRED_API_KEY to run. See docs/DATA_LICENSES.md."
+      "notes": "Live 2026-09-18: 261 weekly points loaded, interest_rate factor reads 6.95%. Key redacted from HTTP logs. See docs/DATA_LICENSES.md."
     },
     {
       "slug": "hud-fair-market-rents",

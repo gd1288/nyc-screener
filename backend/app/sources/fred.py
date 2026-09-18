@@ -19,6 +19,7 @@ without the URL so the key can never land in `source_runs.message`.
 """
 
 import logging
+import re
 from datetime import date, datetime, timedelta
 
 import httpx
@@ -27,6 +28,24 @@ from app.models import AppSetting
 from app.sources.base import Source, SourceContext
 
 log = logging.getLogger(__name__)
+
+
+class _RedactApiKey(logging.Filter):
+    """httpx logs every request URL at INFO, and FRED takes its key as a query parameter, so the raw
+    log line would print the key into the console, server logs and any transcript of them."""
+
+    _PATTERN = re.compile(r"(api_key=)[^&\s\"']+")
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.msg = self._PATTERN.sub(r"\1REDACTED", str(record.msg))
+        if record.args:
+            record.args = tuple(
+                self._PATTERN.sub(r"\1REDACTED", str(a)) if "api_key=" in str(a) else a for a in record.args
+            )
+        return True
+
+
+logging.getLogger("httpx").addFilter(_RedactApiKey())
 
 API = "https://api.stlouisfed.org/fred/series/observations"
 MACRO_PREFIX = "macro:"

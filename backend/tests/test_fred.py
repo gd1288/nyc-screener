@@ -1,5 +1,6 @@
 """FRED macro series: parsing, storage, key hygiene, and the interest_rate factor it backs."""
 
+import logging
 from types import SimpleNamespace
 
 import httpx
@@ -115,3 +116,11 @@ def test_interest_rate_stays_a_gap_without_enough_data(points):
 def test_market_context_loads_stored_series(session):
     FredSeries("fred_series").run(_ctx(session, _Http(_payload())))
     assert len(MarketContext.load(session).macro["MORTGAGE30US"]["points"]) == 30
+
+
+def test_request_logging_never_prints_the_api_key(caplog):
+    """httpx logs the full URL at INFO; the filter installed by the FRED module must redact the key."""
+    with caplog.at_level(logging.INFO, logger="httpx"):
+        logging.getLogger("httpx").info('HTTP Request: %s %s "%s"', "GET", f"https://api.stlouisfed.org/x?api_key={KEY}&file_type=json", "HTTP/1.1 200 OK")
+    text = " ".join(r.getMessage() for r in caplog.records)
+    assert KEY not in text and "api_key=REDACTED" in text and "file_type=json" in text

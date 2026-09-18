@@ -21,9 +21,9 @@
 criteria:
   - id: interest_rate
     label: Mortgage rate
-    status: approved
+    status: live
     factor: interest_rate
-    evidence: "FRED MORTGAGE30US approved 2026-09-18; adapter and factor built (backend/app/sources/fred.py, valuation/factors.py). Goes live once FRED_API_KEY is set and `app.cli refresh fred_series` has run. Owner-occupied rate; investor loans price higher. Terms: docs/DATA_LICENSES.md."
+    evidence: "FRED MORTGAGE30US approved 2026-09-18; adapter and factor built (backend/app/sources/fred.py, valuation/factors.py). Live 2026-09-18 (261 weekly points; factor 6.95%, 5-year range 4.4% to 7.0%). Owner-occupied rate; investor loans price higher. Terms: docs/DATA_LICENSES.md."
     memo: research/memos/2026-09-18-data-source-landscape.md
     ui: "Stress test: Rates dial"
     decided: 2026-09-18
