@@ -23,7 +23,7 @@ live artifact before every republish; never regenerate over it from a template.
 - Your preferences: auto-memory. Facts about the code live in git, not in memory.
 
 ## Latest saved state
-Staging = version 8 (tag `staging-v8-2026-09-18`; earlier: `staging-v7-2026-09-18`, `staging-v6-2026-09-18`, `staging-v5-2026-09-18`; file `docs/artifact/staging.html`). How to change it from a new window:
+Staging = version 9 (tag `staging-v9-2026-09-18`; earlier: `staging-v8-2026-09-18`, `staging-v7-2026-09-18`, `staging-v6-2026-09-18`, `staging-v5-2026-09-18`; file `docs/artifact/staging.html`). How to change it from a new window:
 `docs/UI.md`, section "Picking this up in a new window". Main = `artifact-main-1`, unchanged, promotion pending your decision.
 
 ## Direction (decided 2026-09-18) - see docs/ARCHITECTURE.md
@@ -47,17 +47,16 @@ only colors/spacing tokens.
 Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion` (with a validator test).
 
 ## Other open work
-- **ACRIS sold check finished 2026-09-18 (7.5 minutes for 438 listings): 1 listing marked sold, very likely a FALSE match.**
-  Listing 55, 121 W 17th St #3B (BBL 1007930022): the deed is dated 2026-08-18, three days BEFORE its 2026-08-21 listing
-  date (so it is the seller's own purchase, not this sale), the recorded price is 24% above the ask, and the ordinary tax
-  lot means a likely co-op, which has no per-unit deed. Proposed fix (needs the user's OK): skip `likely_coop` listings in
-  `acris.py`, require the deed on or after the listing date, and revert listing 55 to active. Until then the artifact's
-  Sold view is empty because likely co-ops are hidden.
-- Stale-listing check, remaining work: the ACRIS sold check was re-run (free, slow: two lookups per listing).
-  RentCast alone cannot flag delisted properties today: the daily job only fetches listings from the last 30 days, and
-  a listing goes off market only after TWO complete sweeps both miss it (`MISSED_FETCHES_BEFORE_OFF_MARKET = 2`, and the
-  adapter enforces 24 hours between requests). Decisions needed from the user are listed in the chat of 2026-09-18:
-  budget, whether to keep only the current 438 or expand to all active Manhattan condos, and single-sweep flagging.
+- **Stale-listing checks (applied 2026-09-18).** ACRIS fix done: the sold check now skips likely co-ops and only accepts a
+  deed dated on or after the listing date; listing 55 (121 W 17th St #3B, a false "sold") was restored to active. RentCast
+  finding: the Manhattan circle has 8,472 active condo listings, so a full sweep would need 17 requests. Instead a
+  **recent-only sweep** exists: `rentcast_sweep` in `sources.yaml` (manual-only, `days_old: 45`, update-only, never adds
+  listings, only judges tracked listings listed within the window). Run it by hand:
+  `cd backend && uv run python -m app.cli refresh rentcast_sweep`. The 24-hour request gap means the first real sweep can
+  run **after Sep 19 3:34 PM**, the second **after Sep 20 3:35 PM** (a listing goes off market after two misses in a row;
+  after ONE miss it shows a "not in last check" chip in the artifact). Budget used this month: 3 of 31. From October the
+  daily job (about 31 requests) leaves no room for sweeps under the 31-request cap, so before then either fetch every
+  second day or raise `monthly_request_limit` (still under the free plan's 50).
 - **Formulas feature (planned, not started):** `docs/plans/formulas-tab.md` has the design, the phases and a paste-ready
   prompt for a new window (info marker on every number, formula inspector panel, Formulas tab, backend-authored registry).
 - FRED is live (mortgage rate, 10-year Treasury, FHFA New York price index). Rotate the FRED key at some point: it appeared

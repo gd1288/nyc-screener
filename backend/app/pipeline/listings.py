@@ -7,6 +7,7 @@
     off_market --(no deed after WITHDRAWN_AFTER_DAYS)--> withdrawn
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
@@ -17,6 +18,7 @@ from app.geo import NeighborhoodIndex
 from app.models import Listing, ListingSnapshot, ListingStatus
 from app.pipeline.geocode import geocode, normalize_unit
 
+log = logging.getLogger(__name__)
 MISSED_FETCHES_BEFORE_OFF_MARKET = 2
 WITHDRAWN_AFTER_DAYS = 90
 
@@ -82,9 +84,15 @@ def sync_listings(
     complete: bool,
     geo: NeighborhoodIndex,
     http: httpx.Client | None = None,
+    insert_new: bool = True,
+    scope: set[str] | None = None,
 ) -> SyncStats:
     """Upsert `raws`. If `complete` (the fetch covered every active listing for this source), listings
-    not seen count as a missed fetch and eventually move to off_market."""
+    not seen count as a missed fetch and eventually move to off_market.
+
+    `insert_new=False` makes this an update-only sweep: listings we already track are refreshed and checked,
+    but ones we have never seen are not added. `scope` (external ids) limits which listings a complete fetch may
+    count as missed, so a sweep of one area cannot mark listings in another area as gone."""
     stats = SyncStats()
     now = datetime.now()
     existing = {row.external_id: row for row in session.query(Listing).filter(Listing.source == source)}
@@ -95,6 +103,8 @@ def sync_listings(
     for raw in raws:
         listing = existing.get(raw.external_id) or by_unit.get(unit_key(raw.address, raw.unit))
         if listing is None:
+            if not insert_new:
+                continue
             listing = _create(session, source, raw, geo, http)
             existing[raw.external_id] = by_unit[unit_key(raw.address, raw.unit)] = listing
             seen.add(raw.external_id)
@@ -119,6 +129,8 @@ def sync_listings(
     if complete:
         for ext_id, listing in existing.items():
             if ext_id in seen or listing.status != ListingStatus.ACTIVE:
+                continue
+            if scope is not None and ext_id not in scope:
                 continue
             listing.missed_fetches += 1
             if listing.missed_fetches >= MISSED_FETCHES_BEFORE_OFF_MARKET:
@@ -186,6 +198,14 @@ def mark_sold(listing: Listing, price: float | None, sold_date: date, document_i
     listing.off_market_date = listing.off_market_date or sold_date
     listing.snapshots.append(ListingSnapshot(event="sold", price=price, status=ListingStatus.SOLD,
                                              observed_at=datetime.combine(sold_date, datetime.min.time())))
+
+
+def unmark_sold(listing: Listing, reason: str) -> None:
+    """Undo a wrong sale: back to active, sale fields cleared, and the history keeps a record of why."""
+    listing.status = ListingStatus.ACTIVE
+    listing.sold_price = listing.sold_date = listing.sold_document_id = listing.off_market_date = None
+    log.info("listing %s restored to active: %s", listing.id, reason)
+    listing.snapshots.append(ListingSnapshot(event="relisted", price=listing.price, status=ListingStatus.ACTIVE))
 
 
 def expire_stale_off_market(session: Session) -> int:

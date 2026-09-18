@@ -73,6 +73,7 @@ def trimmed(client: TestClient, rate: float | None) -> tuple[list[dict], dict]:
     rows, assump = [], {}
     with SessionLocal() as session:
         loc = {i: (b, lat, lon) for i, b, lat, lon in session.query(Listing.id, Listing.bbl, Listing.latitude, Listing.longitude)}
+        missed = dict(session.query(Listing.id, Listing.missed_fetches))
         found = (session.get(AppSetting, URLS_KEY).value if session.get(AppSetting, URLS_KEY) else {})
     for s in client.get("/api/listings").json():
         d = client.post(f"/api/listings/{s['id']}/analyze", json={"interest_rate": rate} if rate else {}).json()
@@ -87,6 +88,7 @@ def trimmed(client: TestClient, rate: float | None) -> tuple[list[dict], dict]:
             "dom": d["days_on_market"], "cut": d["price_cuts"], "new": bool(d["is_new"]),
             "gs": d["growth_score"], "os": d["opportunity_score"], "own": d["ownership"],
             "bbl": bbl, "lat": lat, "lon": lon,
+            "ms": missed.get(s["id"]) or 0,  # consecutive complete feed checks that did not include this listing
             # listing page found by search (link only); re-validated here so nothing unchecked reaches the page
             "lu": (found.get(str(s["id"])) or {}).get("url") if is_allowed_url((found.get(str(s["id"])) or {}).get("url") or "") else None,
             "ll": (found.get(str(s["id"])) or {}).get("level"),

@@ -5,6 +5,12 @@ Add an entry (and update `docs/NEXT.md`) in the same session any such change is 
 what is built are NOT recorded here; run `app.cli status`.
 
 ## 2026-09-18
+- **Stale listings: ACRIS fixed, RentCast recent-only sweep added.** The sold check no longer matches likely co-ops or
+  deeds recorded before the listing date (it produced a false sale). RentCast has 8,472 active Manhattan-circle condos, so
+  full sweeps are unaffordable on the free plan; `rentcast_sweep` asks only for the last 45 days (tracked listings are
+  <=31 days old), never inserts, and only judges listings inside that window and circle. A first, oversized attempt spent
+  1 request and correctly marked nothing (guard: a sweep that cannot cover everything proves nothing). Same shared
+  budget and 24-hour gap as the daily job. The artifact flags a single missed check ("not in last check").
 - **Perplexity paused by the user; code kept.** Listing pages for the top 10 properties were found instead with the
   assistant's web search tool (URLs only, same validation, never fetching listing sites). Building-level links must be
   a recognised building-page shape: a search returned another unit's page for 155 E 34th St, which the first, looser rule

@@ -72,6 +72,22 @@ sources:
     adapter: app.sources.acris.AcrisSoldCheck
     schedule: "0 9 * * *"          # daily
 
+  # Checks whether the listings we already track are still listed. Manual-only (no schedule): run
+  # `app.cli refresh rentcast_sweep`, ideally once a week. A listing moves to off market only after two sweeps in a row
+  # both miss it. Uses the same request budget and 24-hour gap as rentcast_listings; never adds new listings.
+  rentcast_sweep:
+    adapter: app.sources.rentcast.RentCastListings
+    options:
+      mode: full
+      insert_new: false
+      days_old: 45                   # tracked listings are at most ~31 days old; a full sweep would need 17 requests
+      max_requests_per_run: 4
+      page_size: 500
+      min_hours_between_requests: 24
+      monthly_request_limit: 31
+      areas:
+        - {name: manhattan, latitude: 40.7831, longitude: -73.9712, radius: 6}
+
   # --- macro series (national; needs a free API key in the environment file, skipped until then) ---
   fred_series:
     adapter: app.sources.fred.FredSeries

@@ -322,3 +322,37 @@ def test_ownership_type_from_tax_lot(bbl, expected):
     from app.pipeline.listings import ownership_type
 
     assert ownership_type(bbl) == expected
+
+
+def test_update_only_sweep_refreshes_known_listings_but_never_adds_new_ones(session):
+    geo = NeighborhoodIndex.load(session)
+    sync_listings(session, "src", [raw(ext="a")], complete=False, geo=geo)
+    new = RawListing(external_id="new", address="9 Other St", unit="2", price=1, listed_date=date(2026, 1, 1), latitude=40.71, longitude=-74.01)
+    stats = sync_listings(session, "src", [raw(price=900_000, ext="a"), new], complete=True, geo=geo, insert_new=False)
+    assert stats.new == 0 and session.query(Listing).count() == 1 and session.query(Listing).one().price == 900_000
+
+
+def test_a_sweep_only_counts_listings_inside_its_scope_as_missed(session):
+    """A Manhattan sweep must not mark a Brooklyn listing as gone just because it was not in Manhattan's results."""
+    geo = NeighborhoodIndex.load(session)
+    other = RawListing(external_id="b", address="2 Test St", unit="1", price=1, listed_date=date(2026, 1, 1), latitude=40.71, longitude=-74.01)
+    sync_listings(session, "src", [raw(ext="a"), other], complete=False, geo=geo)
+    for _ in range(2):
+        sync_listings(session, "src", [], complete=True, geo=geo, scope={"a"})
+    assert {row.external_id: row.status for row in session.query(Listing)} == {
+        "a": ListingStatus.OFF_MARKET,
+        "b": ListingStatus.ACTIVE,
+    }
+
+
+def test_unmark_sold_restores_an_active_listing_and_keeps_the_history(session):
+    from app.pipeline.listings import unmark_sold
+
+    geo = NeighborhoodIndex.load(session)
+    sync_listings(session, "src", [raw()], complete=False, geo=geo)
+    listing = session.query(Listing).one()
+    mark_sold(listing, 2_100_000, date(2026, 3, 1), "DOC1")
+    unmark_sold(listing, "deed predates the listing")
+    session.commit()
+    assert listing.status == ListingStatus.ACTIVE and listing.sold_price is None and listing.sold_document_id is None
+    assert [s.event for s in listing.snapshots][-2:] == ["sold", "relisted"]
