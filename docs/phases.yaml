@@ -106,6 +106,16 @@ phases:
     checks:
       - path: frontend/src/app/valuation
       - path: frontend/src/app/valuation/[id]
+      # One workspace, rendered by both routes. A forked second copy would drift from the backend's
+      # Assumptions defaults, which is exactly what the slider metadata mirrors.
+      - path: frontend/src/components/ValuationWorkspace.tsx
+        contains: "export default function PropertyWorkspace"
+      # The download must carry the scenario on screen; exporting the saved defaults instead would
+      # hand the user a workbook that quietly disagrees with what they were just looking at.
+      - path: frontend/src/components/ValuationWorkspace.tsx
+        contains: "exportHref"
+      - path: backend/tests/test_export_xlsx.py
+        contains: "def test_export_applies_the_on_screen_scenario_not_the_saved_defaults"
 
   - id: "4"
     name: Research agent

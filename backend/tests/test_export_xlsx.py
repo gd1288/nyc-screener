@@ -228,3 +228,92 @@ def test_export_endpoint_404s_for_an_unknown_property():
         assert TestClient(app).get("/api/valuation/properties/999/export.xlsx").status_code == 404
     finally:
         app.dependency_overrides.clear()
+
+
+def _client_with_property():
+    from fastapi.testclient import TestClient
+    from sqlalchemy.orm import sessionmaker
+
+    from app.api import valuation as valuation_api
+    from app.main import app
+    from app.models import ValuationProperty
+
+    db_engine = _threadsafe_memory_engine()
+    Base.metadata.create_all(db_engine)
+    Session = sessionmaker(bind=db_engine)
+    with Session() as session:
+        session.add(
+            Neighborhood(code="MN0101", name="Test", borough="Manhattan", residential=True, geometry=SQUARE, area_km2=4)
+        )
+        session.add(ValuationProperty(label="P", property_type="condo", nta_code="MN0101", price=1_200_000))
+        session.commit()
+    app.dependency_overrides[valuation_api.db] = lambda: Session()
+    return TestClient(app)
+
+
+def test_export_applies_the_on_screen_scenario_not_the_saved_defaults():
+    """The export is a GET so it can stay a plain download link, which means the scenario has to
+    travel in the URL. Without this the workbook would silently disagree with the sliders."""
+    import io
+
+    import openpyxl
+
+    from app.main import app
+
+    client = _client_with_property()
+    try:
+        cheap = client.get("/api/valuation/properties/1/export.xlsx", params={"overrides": '{"interest_rate": 0.04}'})
+        dear = client.get("/api/valuation/properties/1/export.xlsx", params={"overrides": '{"interest_rate": 0.11}'})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert cheap.status_code == dear.status_code == 200
+
+    def rate(response):
+        wb = openpyxl.load_workbook(io.BytesIO(response.content))
+        # Resolved through the defined name rather than a hardcoded address, so inserting a row on
+        # the Assumptions sheet can't make this test silently read a different cell.
+        sheet, cell = wb.defined_names["interest_rate"].attr_text.split("!")
+        return (
+            wb[sheet]
+            .cell(row=int(cell.split("$")[2]), column=openpyxl.utils.column_index_from_string(cell.split("$")[1]))
+            .value
+        )
+
+    assert rate(cheap) == pytest.approx(0.04)
+    assert rate(dear) == pytest.approx(0.11)
+
+
+@pytest.mark.parametrize(
+    "params, expected_fragment",
+    [
+        ({"overrides": '{"not_a_field": 1}'}, "Unknown overrides field"),
+        ({"overrides": "not json"}, "must be JSON"),
+        ({"overrides": '["a"]'}, "must be a JSON object"),
+        ({"overrides": '{"interest_rate": "high"}'}, "must be numbers"),
+        ({"property_overrides": '{"nope": 1}'}, "Unknown property_overrides field"),
+    ],
+)
+def test_export_rejects_a_malformed_override_parameter(params, expected_fragment):
+    """These arrive from a URL, so they are user input, not internal state."""
+    from app.main import app
+
+    client = _client_with_property()
+    try:
+        response = client.get("/api/valuation/properties/1/export.xlsx", params=params)
+    finally:
+        app.dependency_overrides.clear()
+    assert response.status_code == 422
+    assert expected_fragment in response.json()["detail"]
+
+
+def test_export_rejects_an_oversized_override_parameter():
+    from app.main import app
+
+    client = _client_with_property()
+    try:
+        response = client.get("/api/valuation/properties/1/export.xlsx", params={"overrides": "x" * 5000})
+    finally:
+        app.dependency_overrides.clear()
+    assert response.status_code == 422
+    assert "too large" in response.json()["detail"]

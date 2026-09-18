@@ -3,6 +3,7 @@ scenarios/sensitivity/a two-factor data table/Monte Carlo against it, and export
 Excel model.
 """
 
+import json
 from dataclasses import asdict
 
 import httpx
@@ -377,13 +378,48 @@ def _safe_filename(label: str) -> str:
     return f"{cleaned[:60].replace(' ', '-')}.xlsx"
 
 
+def _parse_override_param(raw: str | None, allowed: set[str], what: str) -> dict[str, float]:
+    """Decode an `overrides` query parameter. It is a GET (not a POST) so the export can stay a
+    plain `<a download>` link, which means the on-screen scenario has to travel in the URL."""
+    if not raw:
+        return {}
+    if len(raw) > 4000:
+        raise HTTPException(422, f"{what} parameter is too large")
+    try:
+        parsed = json.loads(raw)
+    except ValueError as e:
+        raise HTTPException(422, f"{what} must be JSON") from e
+    if not isinstance(parsed, dict):
+        raise HTTPException(422, f"{what} must be a JSON object")
+    if unknown := set(parsed) - allowed:
+        raise HTTPException(422, f"Unknown {what} field(s): {sorted(unknown)}")
+    try:
+        return {key: float(value) for key, value in parsed.items()}
+    except (TypeError, ValueError) as e:
+        raise HTTPException(422, f"{what} values must be numbers") from e
+
+
 @router.get("/properties/{property_id}/export.xlsx")
-def export_property_xlsx(property_id: int, session: Session = Depends(db)):
-    """The saved scenario as a live Excel model - formulas, not a snapshot of the numbers."""
+def export_property_xlsx(
+    property_id: int,
+    overrides: str | None = None,
+    property_overrides: str | None = None,
+    session: Session = Depends(db),
+):
+    """The scenario on screen as a live Excel model - formulas, not a snapshot of the numbers.
+
+    Without the override parameters this exports the property's *saved* assumptions, which would
+    quietly disagree with whatever the user currently has on the sliders.
+    """
     from app.valuation import export_xlsx
 
     row = _get(session, property_id)
-    profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, {}, {})
+    profile, ctx, merged_overrides = _resolve_run_inputs(
+        session,
+        property_id,
+        _parse_override_param(overrides, engine.ASSUMPTION_FIELDS, "overrides"),
+        _parse_override_param(property_overrides, PROFILE_OVERRIDE_FIELDS, "property_overrides"),
+    )
     try:
         workbook = export_xlsx.build_workbook(profile, ctx, merged_overrides, label=row.label)
     except engine.UnknownOverrideError as e:
