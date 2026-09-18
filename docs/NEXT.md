@@ -47,14 +47,14 @@ only colors/spacing tokens.
 Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion` (with a validator test).
 
 ## Other open work
-- **Add a free FRED key** to make the mortgage-rate factor live: create it at
-  https://fred.stlouisfed.org/docs/api/api_key.html, put `FRED_API_KEY=...` in the project-root `.env` (next to `.env.example`, not in `backend/`) yourself, then
-  `cd backend && uv run python -m app.cli refresh fred_series`. Until then the factor falls back to the fixed default.
+- FRED is live (mortgage rate, 10-year Treasury, FHFA New York price index). Rotate the FRED key at some point: it appeared
+  in a transcript before log redaction was added. Key lives in the project-root `.env`.
 - Data-source follow-ups (see docs/DATA_LICENSES.md): read HUD's API terms, then build it; email Apartment List for
   terms; the RGB operating-cost table needs PDF extraction.
-- **Listing links in the UI** (asked 2026-09-18, not built): no listing has a URL; all have coordinates and 437 of 438
-  have a BBL. Options are official NYC record links from the BBL (ZoLa, ACRIS), a map link from coordinates, and
-  search links to listing sites built from the address (links only, never fetched).
+- **Listing links** are built in staging (official records, maps, search links, save-your-own). Better link finding via
+  Perplexity's Search API was requested 2026-09-18: see docs/DATA_LICENSES.md for the legal review and status. The ACRIS
+  link format is unverified: click one and confirm. Re-scale the stress scenarios using the FHFA history (9 of 17 are harsher
+  than New York's worst real price fall).
 - **Decide on promoting staging to main** (deferred by the user). Staging now has the result bar, the screener
   drawer, and a fix for a scenario bug that main still has (downside worlds could show HIGHER returns than base).
   Promoting will change the numbers on all 18 scenario cards. Run `scripts/promote_artifact.py` first.
