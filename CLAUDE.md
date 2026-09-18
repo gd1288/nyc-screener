@@ -55,6 +55,14 @@ reads current disk. (This rule exists because Phase 2a was twice described as co
 `export_xlsx.py` and `eval.py` had never been written.) Adding a deliverable means adding its check
 to `docs/phases.yaml` in the same commit.
 
+## Session start
+Read `docs/NEXT.md` (current goal, open work, UI lock) before starting. Update it when direction changes.
+
+## Real Estate Tool artifact is locked
+The published "Real Estate Tool" artifact (Glass Box Underwriting; Overview / Cash flow / Stress test /
+Assumptions) is the approved UI. Read the live artifact first and make additive changes only; never
+republish a regenerated version over it. Restore point: its Stress test tab with 18 scenarios.
+
 ## Definition of done
 Tests pass (`pytest`), types check (`tsc --noEmit`), ruff is clean, and you've shown evidence (test
 output, or a screenshot/`/verify` for UI changes) — not just a claim that it works.
