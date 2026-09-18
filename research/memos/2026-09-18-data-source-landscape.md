@@ -47,3 +47,14 @@ not per record; a listings request returns up to 500 records.
 Pay for nothing now. Wire FRED, Apartment List and the RGB operating-cost index for the four gap factors,
 and spend spare RentCast requests (of the free 50) on on-demand rent estimates for properties actually opened
 in valuation, cached in the database.
+
+## More FRED series (checked on FRED's own pages 2026-09-18; same API key and terms as MORTGAGE30US)
+| Series | What | Status on FRED | Use |
+|---|---|---|---|
+| DGS10 | 10-year Treasury yield, daily (Fed Board) | Public domain, citation requested | Benchmark for exit cap and discount rate; mortgage spread (6.95% mortgage vs 5.01% Treasury, about 1.9 pts, dates a day apart) |
+| ATNHPIUS35614Q | FHFA All-Transactions HPI, NY-Jersey City-White Plains MSAD, quarterly since 1975 | US government | Real NYC drawdowns and recoveries to calibrate the 18 scenarios |
+| RRVRUSQ156N | US rental vacancy rate, quarterly (Census) | Public domain, citation requested | National context only (7.3% Q2 2026) |
+| CUSR0000SEHA | CPI rent of primary residence (BLS) | Marked copyrighted by FRED | Rent-growth reference, personal use only |
+| NYXRSA | Case-Shiller New York HPI (S&P) | Copyrighted; reproduction prohibited without S&P's written permission | **Do not use** |
+Not verified: my guess ATNHPIUS35620Q does not exist (404); NYC unemployment and metro GDP series IDs still need lookup.
+
