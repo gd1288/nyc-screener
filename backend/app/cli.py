@@ -1,5 +1,5 @@
 """Command line: `uv run python -m app.cli refresh [source ...]`, `... sources`, `... backtest`,
-`... diagnose [--json]`, `... probe-sources`."""
+`... diagnose [--json]`, `... probe-sources`, `... status [--json]`."""
 
 import argparse
 import json
@@ -121,6 +121,56 @@ def cmd_probe_sources() -> int:
     return 1 if failures else 0
 
 
+def cmd_status(as_json: bool) -> int:
+    """Report what each phase has actually delivered, by checking docs/phases.yaml against the
+    filesystem. This asserts nothing and reads no stored summary: every line is recomputed from
+    disk at call time, so a phase can never be reported done because someone wrote that down once
+    and the code moved on underneath it."""
+    import yaml
+
+    manifest = PROJECT_ROOT / "docs" / "phases.yaml"
+    if not manifest.exists():
+        print(f"missing {manifest.relative_to(PROJECT_ROOT)} — cannot report status", file=sys.stderr)
+        return 1
+    phases = yaml.safe_load(manifest.read_text())["phases"]
+
+    report = []
+    for phase in phases:
+        missing = []
+        for check in phase.get("checks") or []:
+            target = PROJECT_ROOT / check["path"]
+            needle = check.get("contains")
+            if not target.exists():
+                missing.append(check["path"])
+            elif needle and (not target.is_file() or needle not in target.read_text(errors="replace")):
+                missing.append(f"{check['path']} (no '{needle}')")
+        total = len(phase.get("checks") or [])
+        report.append(
+            {
+                "id": str(phase["id"]),
+                "name": phase["name"],
+                "present": total - len(missing),
+                "total": total,
+                "missing": missing,
+                "manual": phase.get("manual") or [],
+            }
+        )
+
+    if as_json:
+        print(json.dumps({"checked_at": datetime.now(UTC).isoformat(), "phases": report}, indent=2))
+        return 0
+
+    for p in report:
+        mark = "done" if not p["missing"] else f"{p['present']}/{p['total']}"
+        print(f"\nPhase {p['id']} — {p['name']}: {mark}")
+        for m in p["missing"]:
+            print(f"    missing  {m}")
+        for note in p["manual"]:
+            print(f"    manual?  {note}")
+    print("\n(manual items are user-side setup — this command cannot verify them)")
+    return 0
+
+
 def cmd_research_gaps() -> int:
     """Write research/gaps.json: valuation factors with no real data source wired, for the
     research-analyst subagent to search against (it reads this file first, every time)."""
@@ -158,8 +208,13 @@ def main() -> int:
     diagnose = sub.add_parser("diagnose", help="health snapshot: source status + cached test/type result")
     diagnose.add_argument("--json", action="store_true", dest="as_json")
     sub.add_parser("probe-sources", help="ping every source's declared endpoint, write nothing")
+    status = sub.add_parser("status", help="what each phase has actually delivered (checked against disk)")
+    status.add_argument("--json", action="store_true", dest="as_json")
     sub.add_parser("research-gaps", help="write research/gaps.json: valuation factors with no real data source")
     args = parser.parse_args()
+
+    if args.cmd == "status":
+        return cmd_status(args.as_json)  # reads only the manifest and the filesystem; no DB needed
 
     if args.cmd == "probe-sources":
         # Needs the DB (for SourceContext) but not a full init_db(); harmless either way.

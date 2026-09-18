@@ -20,7 +20,7 @@ one is overridable so "what if long-term gains rise to 28%" is a scenario, not a
 """
 
 from dataclasses import dataclass, field, replace
-from enum import Enum
+from enum import StrEnum
 
 # Statutory ceilings. These bound what a caller may set; they are not themselves assumptions.
 MAX_RECAPTURE_RATE = 0.25  # unrecaptured Section 1250 gain
@@ -32,7 +32,7 @@ COMMERCIAL_LIFE = 39.0
 RESIDENTIAL_KINDS = {"condo", "coop", "single_family", "1_4_family", "multifamily"}
 
 
-class LossElection(str, Enum):
+class LossElection(StrEnum):
     """How a rental loss is treated in the year it arises.
 
     `SUSPEND` is the default because it is the general rule under Section 469: passive losses are

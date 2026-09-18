@@ -1,0 +1,89 @@
+# Phase deliverables for `uv run python -m app.cli status`.
+#
+# This file is the definition of done, derived from docs/PLAN.md. `status` checks it against the
+# filesystem and reports what is actually present — so no session ever has to trust a status claim
+# written down earlier and since gone stale. When you add a deliverable to a phase, add its check
+# here in the same commit.
+#
+# check types:
+#   path:     repo-relative file or directory that must exist
+#   contains: substring that must appear in that file (for deliverables that live inside a module)
+#   manual:   things no script can verify (user-side setup); always reported as unverified
+
+phases:
+  - id: "0"
+    name: Foundation
+    checks:
+      - path: .github/workflows/ci.yml
+      - path: .github/workflows/source-uptime.yml
+      - path: .claude/hooks/guard.sh
+      - path: .claude/hooks/format.sh
+      - path: .claude/hooks/stop-gate.sh
+      - path: .claude/hooks/session-health.sh
+      - path: .claude/hooks/statusline.sh
+      - path: .claude/agents/debugger.md
+      - path: .claude/agents/valuation-reviewer.md
+      - path: .claude/skills/add-data-source
+      - path: .claude/skills/research-sources
+      - path: .claude/skills/debug
+      - path: .claude/skills/ship
+      - path: CLAUDE.md
+      - path: backend/CLAUDE.md
+      - path: frontend/CLAUDE.md
+      - path: backend/alembic/versions
+      - path: backend/app/cli.py
+        contains: "def cmd_diagnose"
+      - path: backend/app/cli.py
+        contains: "def cmd_probe_sources"
+    manual:
+      - "Remote Control enabled (Desktop Settings) and the Claude mobile app installed"
+      - "Plugins installed: pyright-lsp, typescript-lsp, context7, duckdb-skills"
+      - "Branch protection — blocked: needs a paid plan or a public repo (repo is private, free plan)"
+
+  - id: "1"
+    name: Neighborhood research, US-ready
+    checks:
+      - path: backend/app/models.py
+        contains: "class Area"
+      - path: backend/app/models.py
+        contains: "class AreaMetric"
+      - path: backend/app/sources/base.py
+        contains: "coverage"
+      - path: backend/app/sources/tigerweb.py
+      - path: backend/app/sources/fhfa_hpi.py
+      - path: frontend/src/app/areas
+
+  - id: 2a
+    name: Valuation engine + Excel export
+    checks:
+      - path: backend/app/valuation/engine.py
+      - path: backend/app/valuation/factors.py
+      - path: backend/app/valuation/property.py
+      - path: backend/app/valuation/scenarios.py
+      - path: backend/app/valuation/export_xlsx.py
+      - path: backend/app/valuation/eval.py
+      - path: research/evals/baseline.json
+      - path: backend/app/api/valuation.py
+        contains: "export.xlsx"
+
+  - id: 2b
+    name: Workbench
+    checks:
+      - path: backend/app/dev/checks.py
+      - path: backend/app/dev/github.py
+      - path: backend/app/dev/runner.py
+      - path: frontend/src/app/workbench
+
+  - id: "3"
+    name: Dynamic valuation UI
+    checks:
+      - path: frontend/src/app/valuation
+      - path: frontend/src/app/valuation/[id]
+
+  - id: "4"
+    name: Research agent
+    checks:
+      - path: research/registry.json
+      - path: research/gaps.json
+      - path: backend/app/research/evaluate_series.py
+      - path: .claude/skills/research-sources

@@ -12,6 +12,7 @@ cd backend && uv run alembic revision --autogenerate -m "..."   # after any mode
 cd backend && uv run alembic upgrade head
 cd backend && uv run python -m app.cli refresh [source ...]     # run data sources
 cd backend && uv run python -m app.cli diagnose                 # health report
+cd backend && uv run python -m app.cli status                   # what each phase has actually shipped
 cd frontend && npx tsc --noEmit && npm run lint && npm run build
 ./start.sh                               # run both servers in this terminal (see .claude/launch.json)
 ./scripts/dev-open.sh                    # start both in the background (if not already up) + open the browser
@@ -43,6 +44,16 @@ already running). **"Stop NYC Screener"** on the Desktop shuts both servers down
   `init_db()`'s `create_all` is dev-bootstrap only; migrations are the source of truth.
 - Condos on an ordinary tax lot are `likely_coop` (`ownership_type()` in `pipeline/listings.py`) and
   hidden from the screener by default — see the co-op-filtering discussion if touching listing display.
+
+## Roadmap and phase status
+`docs/PLAN.md` is the approved multi-phase plan (intent). `docs/phases.yaml` lists each phase's
+deliverables, and `app.cli status` checks them against the filesystem.
+
+**Never state what phase something is in, or call a phase done, from memory, a summary, or a commit
+message — run `app.cli status`.** Those all record a claim made at one moment; only the command
+reads current disk. (This rule exists because Phase 2a was twice described as complete while
+`export_xlsx.py` and `eval.py` had never been written.) Adding a deliverable means adding its check
+to `docs/phases.yaml` in the same commit.
 
 ## Definition of done
 Tests pass (`pytest`), types check (`tsc --noEmit`), ruff is clean, and you've shown evidence (test
