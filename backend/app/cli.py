@@ -234,6 +234,35 @@ def cmd_criteria(as_json: bool) -> int:
     return 1 if problems else 0
 
 
+def cmd_find_listing_urls(limit: int, listing_id: int | None) -> int:
+    """Find public listing-page URLs (links only) via Perplexity's Search API. See app/pipeline/listing_urls.py."""
+    import httpx
+
+    from app.config import get_settings
+    from app.models import Listing, ListingStatus
+    from app.pipeline import listing_urls
+
+    key = get_settings().perplexity_api_key
+    if not key:
+        print("skipped: PERPLEXITY_API_KEY is not set (read docs/DATA_LICENSES.md before enabling)")
+        return 0
+    with SessionLocal() as session, httpx.Client() as http:
+        q = session.query(Listing).filter(Listing.status == ListingStatus.ACTIVE)
+        if listing_id is not None:
+            q = q.filter(Listing.id == listing_id)
+        listings = [
+            type("L", (), {"id": r.id, "address": r.address, "unit": r.unit, "borough": None})
+            for r in q.order_by(Listing.id).limit(2000)
+        ]
+        try:
+            stats = listing_urls.find_urls(session, http, key, listings, limit=limit)
+        except RuntimeError as e:
+            print(f"error: {e}")
+            return 1
+        print(stats, f"| requests this month: {listing_urls.requests_used(session)}/{listing_urls.MONTHLY_LIMIT}")
+    return 0
+
+
 def cmd_add_region(name: str, watch: bool) -> int:
     """Load a metro's census tracts into `areas` so it can be scored like NYC."""
     import httpx
@@ -309,6 +338,9 @@ def main() -> int:
     research_precision.add_argument("--json", action="store_true", dest="as_json")
     criteria_cmd = sub.add_parser("criteria", help="validate research/criteria.yaml and count entries by status")
     criteria_cmd.add_argument("--json", action="store_true", dest="as_json")
+    flu = sub.add_parser("find-listing-urls", help="find public listing-page links via Perplexity Search (paid, capped)")
+    flu.add_argument("--limit", type=int, default=25, help="max requests this run (each costs about $0.005)")
+    flu.add_argument("--id", type=int, dest="listing_id", help="only this listing id")
     sub.add_parser("rescore-areas", help="recompute area Growth Scores within each comparison set")
     add_region = sub.add_parser("add-region", help="load a metro's census tracts into areas")
     add_region.add_argument("name", help="metro nickname, e.g. austin")
@@ -351,6 +383,8 @@ def main() -> int:
         return cmd_research_precision(args.as_json)
     elif args.cmd == "criteria":
         return cmd_criteria(args.as_json)
+    elif args.cmd == "find-listing-urls":
+        return cmd_find_listing_urls(args.limit, args.listing_id)
     elif args.cmd == "rescore-areas":
         from app.scoring.area import recompute_area_scores
 

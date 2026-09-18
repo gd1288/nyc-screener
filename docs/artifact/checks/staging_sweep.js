@@ -17,6 +17,7 @@
       tabs.forEach(t => { click(t); if (visible()) r.nanCases++; if (svgBad()) r.svgCases++; });
       const d = document.querySelector('#terms .term:nth-child(3) .dot').className; r.rateChips[d] = (r.rateChips[d] || 0) + 1;
       const L = linkSets(row); [...L.off, ...L.map, ...L.find].forEach(([, u]) => { if (!/^https:\/\//.test(u)) r.badLinks++; });
+      if (row.lu && !/^https:\/\//.test(row.lu)) r.badLinks++;  // found listing pages must be https
     } catch (e) { r.exc++; r.firstError = r.firstError || (row.a + ': ' + e.message); }
   }
   loadSample(); click('ov');

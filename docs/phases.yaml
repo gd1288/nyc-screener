@@ -194,3 +194,6 @@ phases:
         contains: "function wreal"
       - path: docs/artifact/checks/staging_sweep.js
         contains: "orderViolations"
+      - path: backend/app/pipeline/listing_urls.py
+        contains: "ALLOWED_DOMAINS"
+      - path: backend/tests/test_listing_urls.py

@@ -51,6 +51,10 @@ Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion`
   in a transcript before log redaction was added. Key lives in the project-root `.env`.
 - Data-source follow-ups (see docs/DATA_LICENSES.md): read HUD's API terms, then build it; email Apartment List for
   terms; the RGB operating-cost table needs PDF extraction.
+- **To turn on found listing pages:** sign up for Perplexity's API (paid, about $5 per 1,000 requests), read the Search
+  Service terms, put `PERPLEXITY_API_KEY=` in the project-root `.env`, then run
+  `cd backend && uv run python -m app.cli find-listing-urls --limit 10` and check the results by hand before running the
+  rest, then `uv run python ../scripts/embed_screener.py` and republish staging.
 - **Listing links** are built in staging (official records, maps, search links, save-your-own). Better link finding via
   Perplexity's Search API was requested 2026-09-18: see docs/DATA_LICENSES.md for the legal review and status. The ACRIS
   link format is unverified: click one and confirm. Re-scale the stress scenarios using the FHFA history (9 of 17 are harsher

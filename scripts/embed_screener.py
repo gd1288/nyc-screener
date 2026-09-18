@@ -25,7 +25,8 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from app.db import SessionLocal  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import Listing  # noqa: E402
+from app.models import AppSetting, Listing  # noqa: E402
+from app.pipeline.listing_urls import URLS_KEY, is_allowed_url  # noqa: E402
 from app.services import MarketContext  # noqa: E402
 from app.sources.fred import FRED_NOTICE  # noqa: E402
 from app.valuation import macro as macro_mod  # noqa: E402
@@ -53,6 +54,7 @@ def trimmed(client: TestClient, rate: float | None) -> tuple[list[dict], dict]:
     rows, assump = [], {}
     with SessionLocal() as session:
         loc = {i: (b, lat, lon) for i, b, lat, lon in session.query(Listing.id, Listing.bbl, Listing.latitude, Listing.longitude)}
+        found = (session.get(AppSetting, URLS_KEY).value if session.get(AppSetting, URLS_KEY) else {})
     for s in client.get("/api/listings").json():
         d = client.post(f"/api/listings/{s['id']}/analyze", json={"interest_rate": rate} if rate else {}).json()
         ex, an = d["analysis"]["exact"], d["analysis"]
@@ -66,6 +68,9 @@ def trimmed(client: TestClient, rate: float | None) -> tuple[list[dict], dict]:
             "dom": d["days_on_market"], "cut": d["price_cuts"], "new": bool(d["is_new"]),
             "gs": d["growth_score"], "os": d["opportunity_score"], "own": d["ownership"],
             "bbl": bbl, "lat": lat, "lon": lon,
+            # listing page found by search (link only); re-validated here so nothing unchecked reaches the page
+            "lu": (found.get(str(s["id"])) or {}).get("url") if is_allowed_url((found.get(str(s["id"])) or {}).get("url") or "") else None,
+            "ll": (found.get(str(s["id"])) or {}).get("level"),
             # unrounded backend inputs (monthly) and what the backend itself concludes at the same rate
             "rent": round(ex["rent"], 2), "cc": round(ex["common_charges"], 2), "tax": round(ex["property_taxes"], 2),
             "ins": a["insurance_monthly"], "mnt": a["maintenance_monthly"],

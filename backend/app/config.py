@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     census_api_key: str = ""
     rentcast_api_key: str = ""
     fred_api_key: str = ""
+    perplexity_api_key: str = ""
     database_url: str = f"sqlite:///{DATA_DIR / 'screener.db'}"
     sources_file: Path = BACKEND_DIR / "sources.yaml"
     scheduler_enabled: bool = True

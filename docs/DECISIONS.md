@@ -5,6 +5,11 @@ Add an entry (and update `docs/NEXT.md`) in the same session any such change is 
 what is built are NOT recorded here; run `app.cli status`.
 
 ## 2026-09-18
+- **Listing pages found through Perplexity's Search API, links only.** The only automated caller is Perplexity (our own
+  key); we never fetch listing sites (their terms forbid it), keep only validated https URLs from a domain allowlist
+  that contain the street number and name, discard all result text, and cap spend at 300 requests a month (about
+  $1.50). Dormant until `PERPLEXITY_API_KEY` is set and the user has read Perplexity's Search Service terms (their
+  page blocked my fetch, so that part is unverified).
 - **FRED series expanded** to the 10-year Treasury and the FHFA New York metro price index (both public domain,
   citation requested), stored as macro series. `app/valuation/macro.py` reports plain numbers from them (rates,
   spread, worst real price drawdown); no modelling. Case-Shiller rejected on license.
