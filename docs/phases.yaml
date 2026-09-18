@@ -123,4 +123,13 @@ phases:
       - path: research/registry.json
       - path: research/gaps.json
       - path: backend/app/research/evaluate_series.py
+      - path: backend/app/research/registry.py
+        contains: "def should_skip"
+      # The plan's own measure of whether the agent earns its budget.
+      - path: backend/app/cli.py
+        contains: "def cmd_research_precision"
+      # Correlating two trending series gives ~1.0 regardless of what they measure. If this guard
+      # ever goes, every correlation the agent reports becomes meaningless.
+      - path: backend/tests/test_research.py
+        contains: "def test_two_rising_series_are_not_reported_as_correlated_just_for_rising"
       - path: .claude/skills/research-sources

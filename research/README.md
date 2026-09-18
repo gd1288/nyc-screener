@@ -4,5 +4,28 @@
   real data source wired. The `research-analyst` subagent reads this first, every time.
 - `candidates/schema.json` — shape of a proposed data source (see `candidates/*.json` once any exist).
 - `memos/` — one-page write-ups backing each candidate.
-- `registry.json` (not created yet) — will track approved/rejected candidates once a Workbench
-  approval flow exists (Phase 4 of the plan); until then, approval is a conversation with the user.
+- `registry.json` — what has already been proposed and what you decided. The `research-sources`
+  skill reads it **first, before spending a single search**, so the agent stops rediscovering
+  answers you already gave. Managed by `app/research/registry.py`; `uv run python -m app.cli
+  research-precision` prints the approved/decided ratio.
+  - An **approved** or **implemented** source is skipped permanently.
+  - A **rejected** source is skipped for 90 days, then allowed back — a source rejected for thin
+    data may be worth another look later, so a rejection is a cooldown, not a tombstone.
+  - Approval is still a conversation with you; the Workbench approval UI is Phase 2b.
+- `evals/baseline.json` — the valuation accuracy gate (`app.cli valuation-eval`), not research.
+
+## Judging a candidate
+
+`app/research/evaluate_series.py` measures whether a candidate series actually predicts house-price
+or rent growth. It is deterministic code rather than model judgement, so the agent's budget goes on
+*finding* sources instead of estimating numbers it cannot compute. It deliberately refuses to
+overclaim:
+
+- Series are **differenced to growth before correlating** — two series that both trend upward
+  correlate near 1.0 regardless of what they measure.
+- **Spearman is reported beside Pearson**, so one crisis year cannot decide the verdict.
+- Every correlation carries a **95% confidence interval**; an interval spanning zero is reported as
+  "consistent with no relationship". On annual data, ~25 years is ~24 observations, and a
+  correlation of 0.36 on that sample is not evidence.
+- A candidate strongest at **lag 0** is flagged as *not* a leading indicator — moving with the
+  target adds nothing that reading the target later wouldn't.

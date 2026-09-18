@@ -196,6 +196,25 @@ def cmd_research_gaps() -> int:
     return 0
 
 
+def cmd_research_precision(as_json: bool) -> int:
+    """Approved / decided — whether the research agent is earning its budget."""
+    from app.research import registry
+
+    entries = registry.load()
+    stats = registry.precision(entries)
+    if as_json:
+        print(json.dumps(stats, indent=2))
+        return 0
+    print(f"{stats['proposed']} proposed, {stats['decided']} decided, {stats['approved']} approved")
+    if stats["precision"] is None:
+        print("precision: n/a — nothing decided yet")
+    else:
+        print(f"precision: {stats['precision']:.0%}")
+    for entry in sorted(entries, key=lambda e: e.slug):
+        print(f"  {entry.status:12} {entry.slug:28} {entry.decided_at}  {entry.notes}")
+    return 0
+
+
 def cmd_add_region(name: str, watch: bool) -> int:
     """Load a metro's census tracts into `areas` so it can be scored like NYC."""
     import httpx
@@ -267,6 +286,8 @@ def main() -> int:
     status = sub.add_parser("status", help="what each phase has actually delivered (checked against disk)")
     status.add_argument("--json", action="store_true", dest="as_json")
     sub.add_parser("research-gaps", help="write research/gaps.json: valuation factors with no real data source")
+    research_precision = sub.add_parser("research-precision", help="approved/decided ratio for proposed data sources")
+    research_precision.add_argument("--json", action="store_true", dest="as_json")
     sub.add_parser("rescore-areas", help="recompute area Growth Scores within each comparison set")
     add_region = sub.add_parser("add-region", help="load a metro's census tracts into areas")
     add_region.add_argument("name", help="metro nickname, e.g. austin")
@@ -305,6 +326,8 @@ def main() -> int:
         return cmd_diagnose(args.as_json)
     elif args.cmd == "research-gaps":
         return cmd_research_gaps()
+    elif args.cmd == "research-precision":
+        return cmd_research_precision(args.as_json)
     elif args.cmd == "rescore-areas":
         from app.scoring.area import recompute_area_scores
 

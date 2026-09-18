@@ -34,10 +34,11 @@ YEAR_WINDOW = 15  # enough for a 10-year CAGR plus slack for tracts whose latest
 HORIZONS = {"hpi_cagr_5y": 5, "hpi_cagr_10y": 10}
 
 
-def stream_rows(ctx: SourceContext, url: str = HPI_URL) -> Iterator[dict[str, str]]:
+def stream_rows(http, url: str = HPI_URL) -> Iterator[dict[str, str]]:
     """Yield the CSV a row at a time straight off the socket, so the 90MB file never lands on disk
-    or in memory in full."""
-    with ctx.http.stream("GET", url, timeout=600, follow_redirects=True) as response:
+    or in memory in full. Takes a bare http client, not a `SourceContext`, so the research tooling
+    can reuse it without pretending to be a data source."""
+    with http.stream("GET", url, timeout=600, follow_redirects=True) as response:
         response.raise_for_status()
         yield from csv.DictReader(response.iter_lines())
 
@@ -92,7 +93,7 @@ class FhfaTractHpi(Source):
         if not wanted:
             raise SourceSkipped("no tracts loaded; run `app.cli add-region <metro>` first")
         min_year = date.today().year - YEAR_WINDOW
-        by_tract = collect_index(stream_rows(ctx), wanted, min_year)
+        by_tract = collect_index(stream_rows(ctx.http), wanted, min_year)
         if not by_tract:
             raise SourceSkipped("no matching tract-years in the FHFA file")
         metrics = compute_cagrs(by_tract)
