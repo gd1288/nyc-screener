@@ -95,6 +95,14 @@ wheels = [
 ]
 
 [[package]]
+name = "et-xmlfile"
+version = "2.0.0"
+source = { registry = "/private/tmp/claude-501/-Users-bobjoe-Desktop-nyc-screener/4d23491c-acbf-48b6-b62b-ca2ec1241a5d/scratchpad/wheels" }
+wheels = [
+    { path = "/private/tmp/claude-501/-Users-bobjoe-Desktop-nyc-screener/4d23491c-acbf-48b6-b62b-ca2ec1241a5d/scratchpad/wheels/et_xmlfile-2.0.0-py3-none-any.whl" },
+]
+
+[[package]]
 name = "fastapi"
 version = "0.141.1"
 source = { registry = "https://pypi.org/simple" }
@@ -414,6 +422,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "numpy" },
+    { name = "openpyxl" },
     { name = "pandas" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
@@ -436,6 +445,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "numpy", specifier = ">=2.5.3" },
+    { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=3.0.5" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
@@ -449,6 +459,17 @@ dev = [
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "respx", specifier = ">=0.23.1" },
     { name = "ruff", specifier = ">=0.16.8" },
+]
+
+[[package]]
+name = "openpyxl"
+version = "3.1.5"
+source = { registry = "/private/tmp/claude-501/-Users-bobjoe-Desktop-nyc-screener/4d23491c-acbf-48b6-b62b-ca2ec1241a5d/scratchpad/wheels" }
+dependencies = [
+    { name = "et-xmlfile" },
+]
+wheels = [
+    { path = "/private/tmp/claude-501/-Users-bobjoe-Desktop-nyc-screener/4d23491c-acbf-48b6-b62b-ca2ec1241a5d/scratchpad/wheels/openpyxl-3.1.5-py2.py3-none-any.whl" },
 ]
 
 [[package]]

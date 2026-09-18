@@ -5,6 +5,7 @@ set -euo pipefail
 
 INPUT=$(cat)
 TOOL=$(echo "$INPUT" | jq -r '.tool_name // empty')
+AGENT_TYPE=$(echo "$INPUT" | jq -r '.agent_type // empty')
 
 block() {
   echo "Blocked: $1" >&2
@@ -21,6 +22,11 @@ if [[ "$TOOL" == "Edit" || "$TOOL" == "Write" ]]; then
     *package-lock.json|*uv.lock) block "editing a lockfile directly is not allowed — regenerate it with npm/uv instead." ;;
     */.git/*) block "editing files under .git/ is not allowed." ;;
   esac
+  if [[ "$AGENT_TYPE" == "research-analyst" ]]; then
+    case "$FILE_PATH" in
+      */backend/app/sources/*|*/backend/sources.yaml) block "the research-analyst agent proposes data sources, it doesn't implement them — writing to backend/app/sources/ or sources.yaml from this agent is not allowed. Hand the approved candidate to the add-data-source skill in a normal session instead." ;;
+    esac
+  fi
 fi
 
 if [[ "$TOOL" == "Bash" ]]; then
@@ -30,6 +36,15 @@ if [[ "$TOOL" == "Bash" ]]; then
   fi
   if echo "$CMD" | grep -qE '\brm\s+.*backend/data/'; then
     block "deleting files under backend/data/ is not allowed — that's the live database."
+  fi
+  if [[ "$AGENT_TYPE" == "research-analyst" ]]; then
+    if echo "$CMD" | grep -qE '(^|[[:space:]])(uv add|uv remove|alembic)([[:space:]]|$)'; then
+      block "the research-analyst agent doesn't add dependencies or run migrations — that's implementation work for a normal session, not this agent's job."
+    fi
+    if echo "$CMD" | grep -qE '(^|[[:space:]])(cp|mv|tee)([[:space:]].*)?[[:space:]](backend/app/sources|backend/sources\.yaml)' \
+       || echo "$CMD" | grep -qE '>>?[[:space:]]*[^|&;]*\b(backend/app/sources|backend/sources\.yaml)\b'; then
+      block "the research-analyst agent proposes data sources, it doesn't implement them — writing to backend/app/sources/ or sources.yaml from this agent is not allowed, including via shell redirection."
+    fi
   fi
   # Only fire when a file-reading command is actually invoked AND a bare .env token
   # appears somewhere in the line — matching on ".env" alone would also catch it inside

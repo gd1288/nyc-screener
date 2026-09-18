@@ -1,0 +1,63 @@
+name: Research routine watchdog
+
+# Doesn't run the research routine itself — that's a Claude Code cloud routine (set up via the
+# `schedule` skill) with its own native twice-weekly cron. This job's only purpose is to check,
+# a day after each expected run, that a claude/research-* PR actually appeared, and flag it if not
+# — the same "code checks, model only spent on failure" split already used in source-uptime.yml.
+# Uses only GITHUB_TOKEN; no Anthropic credentials involved.
+
+on:
+  schedule:
+    # One day after the routine's own Mon/Thu cron, so a same-day PR has time to land first.
+    - cron: "23 14 * * 2,5" # Tue/Fri 14:23 UTC (~9-10am NYC depending on DST)
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Look for a recent claude/research-* PR
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Expected window: since the last scheduled fire (Mon or Thu), so 3-4 days back covers
+          # a Tue-after-Mon or Fri-after-Thu check without false-flagging on a slow-but-fine run.
+          SINCE=$(date -u -d '4 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          FOUND=$(gh pr list --state all --search "head:claude/research- created:>=$SINCE" \
+            --json number --jq 'length')
+          echo "found=$FOUND" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the tracking issue if none found
+        if: steps.check.outputs.found == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BODY="No \`claude/research-*\` PR was found in the last 4 days, but the research routine \
+          is scheduled to run twice a week (Mon/Thu). Check whether the Claude Code cloud routine \
+          actually fired: \`claude.ai/code\` -> routines, or ask Claude to run \
+          \`RemoteTrigger action=list_runs\` for it. This does not necessarily mean something is \
+          broken — a week with nothing worth proposing is a valid outcome too — but a *silent* \
+          non-run (budget exhausted, routine paused, repo access revoked) is worth catching."
+
+          EXISTING=$(gh issue list --label research-routine-missed --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "Research routine: no recent PR found" \
+              --label research-routine-missed --body "$BODY"
+          fi
+
+      - name: Close the standing issue once a PR shows up again
+        if: steps.check.outputs.found != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh issue list --label research-routine-missed --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "A claude/research-* PR showed up again. Closing."
+            gh issue close "$EXISTING"
+          fi
