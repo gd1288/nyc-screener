@@ -4,11 +4,18 @@ Every function here is a thin loop over `engine.run()` - none of them touch cash
 directly. That's deliberate: a second numeric implementation here is exactly how this module could
 quietly disagree with the Opportunity Score for the same property (see engine.py's own docstring).
 
+Two modes, chosen per call. `mode="quick"` (default) reads the screener model's IRR. `mode="deal"`
+runs the full pro forma (`engine.run(mode="deal")`) and reads its headline IRR - after-tax when the
+`DealOptions` carry tax inputs, before-tax otherwise. A scenario may carry `"deltas"` (relative
+changes to Assumptions, as before) and, in deal mode, `"set"` (absolute deal/tax inputs such as
+`exit_cap_spread` or `recapture_rate`) - absolute because those have no meaningful baseline to add to.
+
 Custom scenarios aren't persisted yet (same as Quick Mode's sliders) - see the module-level note in
 frontend/src/app/valuation/page.tsx for why, and what persisting them would take.
 """
 
-from dataclasses import dataclass
+import math
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 
@@ -48,7 +55,12 @@ FACTOR_BOUNDS = {
     "down_payment_pct": (0.01, 1.0),
     "exit_cost_pct": (0.0, 0.30),
     "management_pct": (0.0, 0.30),
+    "exit_cap_rate": (0.02, 0.15),
+    "exit_cap_spread": (-0.03, 0.05),
 }
+# Deal-only factors swung in the tornado when the deal actually uses them (absolute +/- swing).
+DEAL_SWINGS = {"exit_cap_rate": 0.01, "exit_cap_spread": 0.01}
+DEAL_LABELS = {"exit_cap_rate": "Exit cap rate", "exit_cap_spread": "Exit cap spread"}
 
 
 def _clamp(factor: str, value: float) -> float:
@@ -98,6 +110,47 @@ def _resolve_baseline(profile: PropertyProfile, ctx: MarketContext, overrides: d
     return resolved
 
 
+def _deal_for(mode: str, deal: engine.DealOptions | None, horizon: str | int | None = None):
+    """The DealOptions for a run (None in quick mode), with the hold set to `horizon` years."""
+    if mode == "quick":
+        if deal is not None:
+            raise ValueError("Deal options were given but mode is 'quick'; pass mode='deal'")
+        return None
+    if mode != "deal":
+        raise ValueError(f"Unknown mode {mode!r}; expected one of {engine.MODES}")
+    d = deal or engine.DealOptions()
+    return replace(d, hold_years=int(horizon)) if horizon is not None else d
+
+
+def _run_point(
+    profile: PropertyProfile,
+    ctx: MarketContext,
+    baseline: dict[str, float],
+    changes: dict[str, float],
+    mode: str,
+    deal: engine.DealOptions | None,
+    horizon: str | int | None,
+) -> dict:
+    """One engine run at `baseline` with `changes` applied. Assumptions fields go to the baseline,
+    deal/tax fields to the DealOptions (deal mode only)."""
+    assumptions, deal_changes = dict(baseline), {}
+    for key, value in changes.items():
+        (assumptions if key in ASSUMPTION_FIELDS else deal_changes)[key] = value
+    d = _deal_for(mode, deal, horizon)
+    if deal_changes:
+        if d is None:
+            raise ValueError(f"Deal input(s) {sorted(deal_changes)} need mode='deal'")
+        d = d.with_set(deal_changes)
+    return engine.run(profile, ctx, assumptions, mode=mode, deal=d)
+
+
+def _irr(run: dict, mode: str, horizon: str) -> float | None:
+    if mode == "deal":
+        irr = run["deal"]["headline"]["irr"]
+        return round(irr, 4) if irr is not None else None
+    return run["projections"]["base"][horizon]["irr"]
+
+
 @dataclass
 class ScenarioResult:
     name: str
@@ -111,19 +164,56 @@ class ScenarioResult:
     equity_multiple_20: float | None
     payback_year_10: int | None
     estimated_factors: list[str]
+    # Deal mode only (None in quick mode): what was `set`, whether the IRRs are after tax, and the
+    # extra headline numbers. Additive, so quick-mode consumers see the same shape as before.
+    deal_set: dict[str, float] = field(default_factory=dict)
+    after_tax: bool | None = None
+    npv_10: float | None = None
+    dcr_year1: float | None = None
+    break_even_ratio_year1: float | None = None
 
 
 def compare(
-    profile: PropertyProfile, ctx: MarketContext, overrides: dict[str, float], scenarios: list[dict] | None = None
+    profile: PropertyProfile,
+    ctx: MarketContext,
+    overrides: dict[str, float],
+    scenarios: list[dict] | None = None,
+    mode: str = "quick",
+    deal: engine.DealOptions | None = None,
 ) -> list[ScenarioResult]:
+    _deal_for(mode, deal)  # validate mode/deal up front
     baseline = _resolve_baseline(profile, ctx, overrides)
     results = []
     for s in scenarios if scenarios is not None else PRESETS:
-        if unknown := set(s.get("deltas", {})) - ASSUMPTION_FIELDS:
+        deltas, absolute = s.get("deltas", {}), s.get("set", {})
+        if unknown := set(deltas) - ASSUMPTION_FIELDS:
             raise engine.UnknownOverrideError(unknown)
-        assumptions = {**baseline, **{k: baseline[k] + d for k, d in s.get("deltas", {}).items()}}
-        run = engine.run(profile, ctx, assumptions)
-        p10, p20 = run["projections"]["base"]["10"], run["projections"]["base"]["20"]
+        if unknown := set(absolute) - engine.DEAL_SET_FIELDS:
+            raise engine.UnknownOverrideError(unknown)
+        if absolute and mode != "deal":
+            raise ValueError(f"Scenario {s['name']!r} sets deal input(s) {sorted(absolute)} but mode is 'quick'")
+        assumptions = {**baseline, **{k: baseline[k] + d for k, d in deltas.items()}}
+        run = engine.run(profile, ctx, assumptions)  # quick: cap rate, cash flow, factors
+        extra: dict = {}
+        if mode == "deal":
+            r10 = _run_point(profile, ctx, assumptions, absolute, mode, deal, 10)["deal"]["headline"]
+            r20 = _run_point(profile, ctx, assumptions, absolute, mode, deal, 20)["deal"]["headline"]
+            irr_10, irr_20 = (round(h["irr"], 4) if h["irr"] is not None else None for h in (r10, r20))
+            multiple_10, multiple_20 = r10["equity_multiple"], r20["equity_multiple"]
+            payback = r10["payback_years"]
+            extra = {
+                "deal_set": dict(absolute),
+                "after_tax": r10["after_tax"],
+                "npv_10": r10["npv"],
+                "dcr_year1": r10["dcr_year1"],
+                "break_even_ratio_year1": r10["break_even_ratio_year1"],
+            }
+            payback_year_10 = math.ceil(payback) if payback is not None else None
+        else:
+            p10, p20 = run["projections"]["base"]["10"], run["projections"]["base"]["20"]
+            irr_10, irr_20 = p10["irr"], p20["irr"]
+            multiple_10, multiple_20 = p10["equity_multiple"], p20["equity_multiple"]
+            payback_year_10 = p10["payback_year"]
         results.append(
             ScenarioResult(
                 name=s["name"],
@@ -131,42 +221,61 @@ def compare(
                 cap_rate=run["cap_rate"],
                 cash_on_cash=run["cash_on_cash"],
                 monthly_cash_flow=run["monthly"]["cash_flow"],
-                irr_10=p10["irr"],
-                irr_20=p20["irr"],
-                equity_multiple_10=p10["equity_multiple"],
-                equity_multiple_20=p20["equity_multiple"],
-                payback_year_10=p10["payback_year"],
+                irr_10=irr_10,
+                irr_20=irr_20,
+                equity_multiple_10=multiple_10,
+                equity_multiple_20=multiple_20,
+                payback_year_10=payback_year_10,
                 estimated_factors=run["estimated_factors"],
+                **extra,
             )
         )
     return results
 
 
 def sensitivity(
-    profile: PropertyProfile, ctx: MarketContext, overrides: dict[str, float], horizon: str = "10"
+    profile: PropertyProfile,
+    ctx: MarketContext,
+    overrides: dict[str, float],
+    horizon: str = "10",
+    mode: str = "quick",
+    deal: engine.DealOptions | None = None,
 ) -> list[dict]:
+    d = _deal_for(mode, deal, horizon)
     baseline = _resolve_baseline(profile, ctx, overrides)
     estimates = market_estimate(ctx, profile)
-    base_irr = engine.run(profile, ctx, baseline)["projections"]["base"][horizon]["irr"]
+
+    def irr_at(changes: dict[str, float]) -> float | None:
+        return _irr(_run_point(profile, ctx, baseline, changes, mode, deal, horizon), mode, horizon)
+
+    base_irr = irr_at({})
+    # (factor, label, low, high, backed_by_source). Deal-only factors join only when the deal uses them.
+    swings = [
+        (f, SENSITIVITY_LABELS.get(f, f), *_swing_range(f, baseline, estimates, w), estimates.get(f) is not None)
+        for f, w in SENSITIVITY_SWINGS.items()
+    ]
+    if d is not None:
+        for f, w in DEAL_SWINGS.items():
+            current = getattr(d, f)
+            if current is None or (f == "exit_cap_spread" and d.exit_cap_rate is not None):
+                continue  # an explicit exit cap makes the spread inert
+            swings.append((f, DEAL_LABELS[f], _clamp(f, current - w), _clamp(f, current + w), False))
     rows = []
-    for factor, swing in SENSITIVITY_SWINGS.items():
-        est = estimates.get(factor)
-        lo_val, hi_val = _swing_range(factor, baseline, estimates, swing)
-        lo_irr = engine.run(profile, ctx, {**baseline, factor: lo_val})["projections"]["base"][horizon]["irr"]
-        hi_irr = engine.run(profile, ctx, {**baseline, factor: hi_val})["projections"]["base"][horizon]["irr"]
+    for factor, label, lo_val, hi_val, backed in swings:
+        lo_irr, hi_irr = irr_at({factor: lo_val}), irr_at({factor: hi_val})
         # A factor whose end of the range has no solvable IRR is still reported, with nulls, rather
         # than dropped - silently returning a one-bar tornado reads as "nothing else matters".
         undefined = lo_irr is None or hi_irr is None
         rows.append(
             {
                 "factor": factor,
-                "label": SENSITIVITY_LABELS.get(factor, factor),
+                "label": label,
                 "low_value": round(lo_val, 4),
                 "high_value": round(hi_val, 4),
                 "low_irr": lo_irr,
                 "high_irr": hi_irr,
                 "base_irr": base_irr,
-                "backed_by_source": est is not None,
+                "backed_by_source": backed,
                 "undefined": undefined,
                 "swing": None if undefined else round(abs(hi_irr - lo_irr), 4),
             }
@@ -184,13 +293,16 @@ def data_table(
     x_values: list[float],
     y_values: list[float],
     horizon: str = "10",
+    mode: str = "quick",
+    deal: engine.DealOptions | None = None,
 ) -> dict:
-    if x_factor not in ASSUMPTION_FIELDS or y_factor not in ASSUMPTION_FIELDS:
-        raise engine.UnknownOverrideError({x_factor, y_factor} - ASSUMPTION_FIELDS)
+    allowed = ASSUMPTION_FIELDS | (engine.DEAL_SET_FIELDS if mode == "deal" else set())
+    if bad := {x_factor, y_factor} - allowed:
+        raise engine.UnknownOverrideError(bad)
     baseline = _resolve_baseline(profile, ctx, overrides)
     grid = [
         [
-            engine.run(profile, ctx, {**baseline, x_factor: x, y_factor: y})["projections"]["base"][horizon]["irr"]
+            _irr(_run_point(profile, ctx, baseline, {x_factor: x, y_factor: y}, mode, deal, horizon), mode, horizon)
             for x in x_values
         ]
         for y in y_values
@@ -217,7 +329,10 @@ def monte_carlo(
     n: int = 1000,
     seed: int | None = None,
     horizon: str = "10",
+    mode: str = "quick",
+    deal: engine.DealOptions | None = None,
 ) -> dict:
+    _deal_for(mode, deal)  # validate up front
     n = min(max(n, 100), MAX_MONTE_CARLO_RUNS)
     baseline = _resolve_baseline(profile, ctx, overrides)
     estimates = market_estimate(ctx, profile)
@@ -231,9 +346,9 @@ def monte_carlo(
         sample = dict(baseline)
         for factor in randomized_factors:
             lo, hi = sample_ranges[factor]
-            mode = min(max(baseline[factor], lo), hi)
-            sample[factor] = lo if hi <= lo else float(rng.triangular(lo, mode, hi))
-        result_irr = engine.run(profile, ctx, sample)["projections"]["base"][horizon]["irr"]
+            peak = min(max(baseline[factor], lo), hi)
+            sample[factor] = lo if hi <= lo else float(rng.triangular(lo, peak, hi))
+        result_irr = _irr(_run_point(profile, ctx, sample, {}, mode, deal, horizon), mode, horizon)
         if result_irr is not None:
             irrs[i] = result_irr
     valid = irrs[~np.isnan(irrs)]

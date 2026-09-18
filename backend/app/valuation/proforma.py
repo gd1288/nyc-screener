@@ -66,8 +66,12 @@ class ProFormaInputs:
     # Exit. With `exit_cap_rate` set, value = forward (year hold+1) NOI / cap rate: a buyer prices
     # next year's income. Otherwise the property appreciates at `appreciation`.
     exit_cap_rate: float | None = None
+    # Exit cap as the going-in cap plus this spread (cap-rate expansion is a top driver of realised
+    # return). Ignored when `exit_cap_rate` is set explicitly.
+    exit_cap_spread: float | None = None
     exit_cost_pct: float = 0.08
     tax: TaxInputs | None = None  # None -> before-tax only
+    discount_rate: float = 0.08  # for NPV; an assumption about the investor's required return
 
     def __post_init__(self):
         if self.price <= 0:
@@ -112,6 +116,12 @@ class YearRow:
     income_tax: float | None = None  # negative when a loss is deductible
     suspended_loss_balance: float | None = None
     after_tax_cash_flow: float | None = None
+    # Ratio block. None where the denominator is zero (e.g. no debt service -> no DCR).
+    dcr: float | None = None  # NOI / debt service
+    break_even_ratio: float | None = None  # (OpEx + debt service) / EGI: occupancy needed to cover everything
+    opex_ratio: float | None = None  # OpEx / EGI, tracked per year to show margin compression
+    cap_rate: float | None = None  # NOI / purchase price
+    ltv: float | None = None  # loan balance / property value (appreciation path only)
 
 
 @dataclass
@@ -139,7 +149,17 @@ class ProFormaResult:
     equity_multiple_before_tax: float | None
     equity_multiple_after_tax: float | None
     forward_noi: float
+    exit_cap_rate: float | None
     going_in_cap_rate: float = field(default=0.0)
+    # Deal-level metrics. Multiples are price / year-1 figure, so lower means cheaper.
+    grm: float | None = None  # gross rent multiplier: price / potential gross rent
+    gim: float | None = None  # gross income multiplier: price / effective gross income
+    nim: float | None = None  # net income multiplier: price / NOI (None when NOI <= 0)
+    discount_rate: float = 0.08
+    npv_before_tax: float | None = None
+    npv_after_tax: float | None = None
+    payback_years_before_tax: float | None = None  # fractional; None if not recovered within the hold
+    payback_years_after_tax: float | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -154,6 +174,29 @@ def _factors(rate: Rate, n: int) -> list[float]:
         g = rate if not isinstance(rate, list) else rate[min(i - 1, len(rate) - 1)]
         out.append(out[-1] * (1 + g))
     return out
+
+
+def npv(rate: float, flows: list[float]) -> float:
+    """Present value of yearly flows, t=0 first. At the IRR this is ~0 by definition."""
+    return sum(cf / (1 + rate) ** t for t, cf in enumerate(flows))
+
+
+def payback_years(cash_invested: float, yearly_flows: list[float]) -> float | None:
+    """Years until cumulative operating cash flow covers the cash invested, interpolated within the
+    year it happens (year + shortfall / that year's flow) rather than rounded up. Sale proceeds are
+    excluded: this asks how fast the operations return the money, not when the exit does."""
+    cumulative = 0.0
+    for i, cf in enumerate(yearly_flows):
+        if cumulative + cf >= cash_invested and cf > 0:
+            return i + (cash_invested - cumulative) / cf
+        cumulative += cf
+    return None
+
+
+def implied_value(noi: float, net_income_multiplier: float) -> float:
+    """The inverse use of a multiple: a benchmark NIM applied to NOI gives an independent value
+    to hold up against the ask (the income-approach cross-check from the methodology memo)."""
+    return noi * net_income_multiplier
 
 
 def _resolve_jurisdiction(t: TaxInputs) -> taxes.Jurisdiction:
@@ -172,6 +215,8 @@ def project(inp: ProFormaInputs) -> ProFormaResult:
     exp_idx = _factors(inp.expense_growth, n + 1)
     tax_idx = _factors(inp.tax_growth if inp.tax_growth is not None else inp.expense_growth, n + 1)
     value_idx = _factors(inp.appreciation, n)
+
+    use_cap_exit = inp.exit_cap_rate is not None or inp.exit_cap_spread is not None
 
     def operating(y: int) -> dict[str, float]:
         """Income statement for 0-based year `y`, down to NOI."""
@@ -246,8 +291,14 @@ def project(inp: ProFormaInputs) -> ProFormaResult:
             principal=principal,
             loan_balance=balance,
             before_tax_cash_flow=btcf,
-            property_value=None if inp.exit_cap_rate else inp.price * value_idx[y + 1],
+            property_value=None if use_cap_exit else inp.price * value_idx[y + 1],
+            dcr=op["noi"] / debt_service if debt_service else None,
+            break_even_ratio=(op["opex"] + debt_service) / op["egi"] if op["egi"] else None,
+            opex_ratio=op["opex"] / op["egi"] if op["egi"] else None,
+            cap_rate=op["noi"] / inp.price,
         )
+        if row.property_value:
+            row.ltv = balance / row.property_value
         if tax and j:
             depreciation = dep_schedule[y]
             cumulative_dep += depreciation
@@ -262,7 +313,12 @@ def project(inp: ProFormaInputs) -> ProFormaResult:
         balance_prev = balance
 
     forward_noi = operating(n)["noi"]
-    exit_value = forward_noi / inp.exit_cap_rate if inp.exit_cap_rate else inp.price * value_idx[n]
+    exit_cap = inp.exit_cap_rate
+    if exit_cap is None and inp.exit_cap_spread is not None:
+        exit_cap = rows[0].noi / inp.price + inp.exit_cap_spread
+        if exit_cap <= 0:
+            raise ValueError(f"going-in cap plus spread gives a non-positive exit cap rate ({exit_cap:.4f})")
+    exit_value = forward_noi / exit_cap if exit_cap else inp.price * value_idx[n]
     selling_costs = exit_value * inp.exit_cost_pct
     payoff = rows[-1].loan_balance
     pre_tax_equity = exit_value - selling_costs - payoff
@@ -293,6 +349,7 @@ def project(inp: ProFormaInputs) -> ProFormaResult:
     def multiple(flows: list[float]) -> float | None:
         return sum(flows[1:]) / cash_invested if cash_invested else None
 
+    first = rows[0]
     return ProFormaResult(
         cash_invested=cash_invested,
         purchase_costs=costs,
@@ -307,5 +364,18 @@ def project(inp: ProFormaInputs) -> ProFormaResult:
         equity_multiple_before_tax=multiple(before_flows),
         equity_multiple_after_tax=multiple(after_flows) if after_flows else None,
         forward_noi=forward_noi,
-        going_in_cap_rate=rows[0].noi / inp.price,
+        exit_cap_rate=exit_cap,
+        going_in_cap_rate=first.noi / inp.price,
+        grm=inp.price / first.potential_gross_rent if first.potential_gross_rent else None,
+        gim=inp.price / first.effective_gross_income if first.effective_gross_income else None,
+        nim=inp.price / first.noi if first.noi > 0 else None,
+        discount_rate=inp.discount_rate,
+        npv_before_tax=npv(inp.discount_rate, before_flows),
+        npv_after_tax=npv(inp.discount_rate, after_flows) if after_flows else None,
+        payback_years_before_tax=payback_years(cash_invested, [r.before_tax_cash_flow for r in rows]),
+        payback_years_after_tax=(
+            payback_years(cash_invested, [r.after_tax_cash_flow for r in rows])  # type: ignore[misc]
+            if after_flows
+            else None
+        ),
     )

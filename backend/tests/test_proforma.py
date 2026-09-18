@@ -230,3 +230,104 @@ def test_result_serializes_to_a_plain_dict():
     d = project(deal(tax=TaxInputs(land_pct=0.2))).to_dict()
     assert len(d["years"]) == 10 and d["reversion"]["sale_tax"]["total"] is not None
     assert proforma.project is project
+
+
+# --- ratio block, NPV and payback --------------------------------------------------------------
+
+
+def test_year_one_ratios_by_hand_all_cash():
+    # NOI 22,200; PGR 36,000; EGI 34,200; OpEx 12,000; price 500,000.
+    r = project(deal())
+    y1 = r.years[0]
+    assert y1.dcr is None  # no debt service to cover
+    assert y1.break_even_ratio == pytest.approx(12_000 / 34_200)
+    assert y1.opex_ratio == pytest.approx(12_000 / 34_200)
+    assert y1.cap_rate == pytest.approx(22_200 / 500_000)
+    assert r.grm == pytest.approx(500_000 / 36_000)
+    assert r.gim == pytest.approx(500_000 / 34_200)
+    assert r.nim == pytest.approx(500_000 / 22_200)
+
+
+def test_dcr_break_even_and_ltv_with_a_loan():
+    r = project(deal(down_payment_pct=0.25))
+    y1 = r.years[0]
+    ds = inv.monthly_payment(375_000, 0.065, 30) * 12
+    assert y1.dcr == pytest.approx(22_200 / ds)
+    assert y1.break_even_ratio == pytest.approx((12_000 + ds) / 34_200)
+    assert y1.ltv == pytest.approx(y1.loan_balance / (500_000 * 1.03))
+
+
+def test_ltv_is_omitted_on_the_cap_rate_path():
+    assert project(deal(down_payment_pct=0.25, exit_cap_rate=0.05)).years[0].ltv is None
+
+
+def test_nim_is_none_when_noi_is_not_positive():
+    r = project(deal(monthly_rent=500))
+    assert r.years[0].noi < 0 and r.nim is None
+
+
+def test_opex_ratio_rises_when_expenses_outgrow_rent():
+    r = project(deal(rent_growth=0.02, expense_growth=0.06))
+    ratios = [y.opex_ratio for y in r.years]
+    assert ratios == sorted(ratios) and ratios[-1] > ratios[0]
+
+
+def test_npv_is_zero_at_the_irr_and_the_plain_sum_at_zero_percent():
+    r = project(deal(down_payment_pct=0.25, appreciation=0.04))
+    assert proforma.npv(r.irr_before_tax, r.before_tax_flows) == pytest.approx(0, abs=0.01)
+    assert proforma.npv(0.0, r.before_tax_flows) == pytest.approx(sum(r.before_tax_flows))
+
+
+def test_npv_falls_as_the_discount_rate_rises_and_matches_the_result_field():
+    lo = project(deal(down_payment_pct=0.25, discount_rate=0.05))
+    hi = project(deal(down_payment_pct=0.25, discount_rate=0.12))
+    assert lo.npv_before_tax > hi.npv_before_tax
+    assert lo.npv_before_tax == pytest.approx(proforma.npv(0.05, lo.before_tax_flows))
+
+
+def test_after_tax_npv_is_only_present_with_tax_inputs():
+    assert project(deal()).npv_after_tax is None
+    r = project(deal(down_payment_pct=0.25, appreciation=0.05, tax=TaxInputs(land_pct=0.2, jurisdiction="US")))
+    assert r.npv_after_tax == pytest.approx(proforma.npv(0.08, r.after_tax_flows))
+    assert r.npv_after_tax < r.npv_before_tax
+
+
+def test_payback_interpolates_within_the_year():
+    assert proforma.payback_years(1_000, [400, 400, 400]) == pytest.approx(2.5)
+    assert proforma.payback_years(1_000, [0, 600, 600]) == pytest.approx(2 + 400 / 600)
+    assert proforma.payback_years(1_000, [100, 100]) is None  # not recovered within the hold
+    assert proforma.payback_years(1_000, [-50, 1_100]) == pytest.approx(1 + 1_050 / 1_100)  # loss year first
+    assert proforma.payback_years(1_000, [-50, 1_000]) is None  # only 950 back: correctly unrecovered
+
+
+def test_payback_on_a_deal_that_returns_its_cash_from_operations():
+    # Price 100,000 all cash: invested 103,450 (title 450 + attorney 3,000). Rent and expenses both
+    # grow 3%, so year-k cash flow is 22,200 x 1.03^(k-1). Cumulative after 4 years = 92,878.
+    r = project(deal(price=100_000))
+    after_4 = 22_200 * (1.03**4 - 1) / 0.03
+    year_5 = 22_200 * 1.03**4
+    assert r.payback_years_before_tax == pytest.approx(4 + (103_450 - after_4) / year_5, abs=1e-6)
+    assert proforma.project(deal()).payback_years_before_tax is None  # 500k never returns via cash flow in 10 yrs
+
+
+def test_implied_value_is_noi_times_the_benchmark_multiple():
+    assert proforma.implied_value(22_200, 20.0) == pytest.approx(444_000)
+
+
+def test_exit_cap_spread_is_added_to_the_going_in_cap():
+    # Flat rent and costs, so forward NOI = 22,200; going-in cap 22,200 / 500,000 = 4.44%; +1pp = 5.44%.
+    r = project(deal(rent_growth=0.0, expense_growth=0.0, exit_cap_spread=0.01))
+    assert r.exit_cap_rate == pytest.approx(0.0444 + 0.01)
+    assert r.reversion.exit_value == pytest.approx(22_200 / 0.0544)
+    wider = project(deal(rent_growth=0.0, expense_growth=0.0, exit_cap_spread=0.02))
+    assert wider.reversion.exit_value < r.reversion.exit_value
+
+
+def test_an_explicit_exit_cap_rate_beats_the_spread():
+    r = project(deal(exit_cap_rate=0.05, exit_cap_spread=0.03))
+    assert r.exit_cap_rate == 0.05
+
+
+def test_a_spread_that_makes_the_exit_cap_non_positive_is_rejected():
+    with pytest.raises(ValueError, match="non-positive exit cap"):
+        project(deal(exit_cap_spread=-0.05))
