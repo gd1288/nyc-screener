@@ -44,7 +44,7 @@ Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion`
 
 ## Other open work
 - **Add a free FRED key** to make the mortgage-rate factor live: create it at
-  https://fred.stlouisfed.org/docs/api/api_key.html, put `FRED_API_KEY=...` in `backend/.env` yourself, then
+  https://fred.stlouisfed.org/docs/api/api_key.html, put `FRED_API_KEY=...` in the project-root `.env` (next to `.env.example`, not in `backend/`) yourself, then
   `cd backend && uv run python -m app.cli refresh fred_series`. Until then the factor falls back to the fixed default.
 - Data-source follow-ups (see docs/DATA_LICENSES.md): read HUD's API terms, then build it; email Apartment List for
   terms; the RGB operating-cost table needs PDF extraction.
