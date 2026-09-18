@@ -47,7 +47,13 @@ only colors/spacing tokens.
 Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion` (with a validator test).
 
 ## Other open work
-- **Stale-listing check (in progress 2026-09-18):** the ACRIS sold check was re-run (free, slow: two lookups per listing).
+- **ACRIS sold check finished 2026-09-18 (7.5 minutes for 438 listings): 1 listing marked sold, very likely a FALSE match.**
+  Listing 55, 121 W 17th St #3B (BBL 1007930022): the deed is dated 2026-08-18, three days BEFORE its 2026-08-21 listing
+  date (so it is the seller's own purchase, not this sale), the recorded price is 24% above the ask, and the ordinary tax
+  lot means a likely co-op, which has no per-unit deed. Proposed fix (needs the user's OK): skip `likely_coop` listings in
+  `acris.py`, require the deed on or after the listing date, and revert listing 55 to active. Until then the artifact's
+  Sold view is empty because likely co-ops are hidden.
+- Stale-listing check, remaining work: the ACRIS sold check was re-run (free, slow: two lookups per listing).
   RentCast alone cannot flag delisted properties today: the daily job only fetches listings from the last 30 days, and
   a listing goes off market only after TWO complete sweeps both miss it (`MISSED_FETCHES_BEFORE_OFF_MARKET = 2`, and the
   adapter enforces 24 hours between requests). Decisions needed from the user are listed in the chat of 2026-09-18:
