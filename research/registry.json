@@ -8,52 +8,52 @@
       "decided_at": "2026-09-18",
       "url": "https://www.apartmentlist.com/research/category/data-rent-estimates",
       "gap": "rent_growth",
-      "notes": "Free CSVs, metro/county/city, monthly and annual growth since 2017. Second opinion beside Zillow ZORI."
+      "notes": "ON HOLD: no license or automated-download terms published; email research@apartmentlist.com before ingesting."
     },
     {
       "slug": "fred-mortgage30us",
       "name": "FRED 30-year mortgage rate (Freddie Mac PMMS)",
-      "status": "proposed",
+      "status": "approved",
       "decided_at": "2026-09-18",
       "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
       "gap": "interest_rate",
-      "notes": "Free API key, 120 req/min. Weekly."
+      "notes": "Adapter built (app/sources/fred.py) and wired to interest_rate; needs a free FRED_API_KEY to run. See docs/DATA_LICENSES.md."
     },
     {
       "slug": "hud-fair-market-rents",
       "name": "HUD Fair Market Rents API",
-      "status": "proposed",
+      "status": "approved",
       "decided_at": "2026-09-18",
       "url": "https://www.huduser.gov/portal/dataset/fmr-api.html",
       "gap": "rent_growth",
-      "notes": "Free token; FMR-area level, ZIP crosswalk for small-area values."
+      "notes": "Not built: read HUD's API terms and docs by hand first (pages did not load for the fetch tool); needs a HUD USER token."
     },
     {
       "slug": "nyc-rgb-operating-costs",
       "name": "NYC Rent Guidelines Board Price Index of Operating Costs",
-      "status": "proposed",
+      "status": "approved",
       "decided_at": "2026-09-18",
       "url": "https://rentguidelinesboard.cityofnewyork.us/research/",
       "gap": "expense_growth",
-      "notes": "Annual PDF; 2026 projects +4.1%. Needs manual extraction."
+      "notes": "Blocked on PDF table extraction, not legality. 4.1% is the RGB projection for the coming lease year, not history."
     },
     {
       "slug": "redfin-data-center",
       "name": "Redfin Data Center downloads",
-      "status": "proposed",
+      "status": "rejected",
       "decided_at": "2026-09-18",
       "url": "https://www.redfin.com/news/data-center/",
       "gap": "market_context",
-      "notes": "Free bulk CSVs; cite source. Days on market, price drops, sale-to-list."
+      "notes": "Terms of Use s.2.3.5 forbid automated crawling/querying without written permission; manual download only."
     },
     {
       "slug": "walk-score-api",
       "name": "Walk Score API",
-      "status": "proposed",
+      "status": "rejected",
       "decided_at": "2026-09-18",
       "url": "https://www.walkscore.com/professional/api.php",
       "gap": "livability",
-      "notes": "Free tier reported at 5,000 calls/day; attribution required."
+      "notes": "Free tier is for consumer-facing apps only and caching is paid; a private tool does not qualify."
     }
   ]
 }

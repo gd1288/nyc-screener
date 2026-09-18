@@ -21,12 +21,12 @@
 criteria:
   - id: interest_rate
     label: Mortgage rate
-    status: gap
+    status: approved
     factor: interest_rate
-    evidence: "gaps.json: falls back to a fixed default. PLAN.md names FRED MORTGAGE30US (keyless) as the source; not yet wired."
-    memo: research/memos/2026-09-17-valuation-methodology.md
+    evidence: "FRED MORTGAGE30US approved 2026-09-18; adapter and factor built (backend/app/sources/fred.py, valuation/factors.py). Goes live once FRED_API_KEY is set and `app.cli refresh fred_series` has run. Owner-occupied rate; investor loans price higher. Terms: docs/DATA_LICENSES.md."
+    memo: research/memos/2026-09-18-data-source-landscape.md
     ui: "Stress test: Rates dial"
-    decided: null
+    decided: 2026-09-18
 
   - id: rent_growth
     label: Rent growth

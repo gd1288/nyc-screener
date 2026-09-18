@@ -180,3 +180,9 @@ phases:
         contains: "function loadListing"
       - path: scripts/embed_screener.py
         contains: "LISTINGS-START"
+      - path: docs/DATA_LICENSES.md
+      - path: backend/app/sources/fred.py
+        contains: "class FredSeries"
+      - path: backend/tests/test_fred.py
+      - path: backend/app/valuation/factors.py
+        contains: "def _estimate_interest_rate"

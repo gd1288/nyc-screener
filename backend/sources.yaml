@@ -71,3 +71,10 @@ sources:
   acris_sold_check:
     adapter: app.sources.acris.AcrisSoldCheck
     schedule: "0 9 * * *"          # daily
+
+  # --- macro series (national; needs a free API key in the environment file, skipped until then) ---
+  fred_series:
+    adapter: app.sources.fred.FredSeries
+    schedule: "30 7 * * 5"          # Fridays: Freddie Mac publishes on Thursdays, so FRED has the new week by then
+    options:
+      history_years: 5

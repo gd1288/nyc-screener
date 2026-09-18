@@ -1,13 +1,13 @@
 """Joins listings with neighborhood data and the investment model for the API."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from statistics import median
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Listing, Neighborhood, NeighborhoodMetric, NeighborhoodScore, Sale
+from app.models import AppSetting, Listing, Neighborhood, NeighborhoodMetric, NeighborhoodScore, Sale
 from app.pipeline.listings import days_on_market, ownership_type
 from app.scoring import investment as inv
 from app.valuation import comps
@@ -25,6 +25,8 @@ class MarketContext:
     metrics: dict[str, dict[str, float]]
     city_value_cagr_10y: float | None
     listing_ppsf_by_nta: dict[str, float]
+    #: National time series stored by macro sources (e.g. FRED), keyed by series id: {"points": [[date, value], ...], ...}
+    macro: dict[str, dict] = field(default_factory=dict)
 
     @classmethod
     def load(cls, session: Session) -> "MarketContext":
@@ -50,6 +52,7 @@ class MarketContext:
             metrics=metrics,
             city_value_cagr_10y=median(cagrs) if cagrs else None,
             listing_ppsf_by_nta={c: median(v) for c, v in ppsf.items() if len(v) >= 5},
+            macro={s.key[len("macro:"):]: s.value for s in session.query(AppSetting).filter(AppSetting.key.like("macro:%"))},
         )
 
 

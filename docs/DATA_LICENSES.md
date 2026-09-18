@@ -1,0 +1,28 @@
+# Data source licenses and legal decisions
+
+One row per source: what the terms say, what we do about it, and where the terms were read. Reviewed
+2026-09-18 by reading each provider's own terms pages (links below), not summaries. **This is a personal,
+single-user tool.** Several sources below change status if the app is ever shared or made public;
+revisit this file before that happens. Not legal advice.
+
+Rule for every new source: read the terms first, add a row here, and use only documented APIs or
+files the provider publishes for download. Never scrape pages, and never automate against a site whose
+terms forbid automated access.
+
+## Sources added or decided in this pass
+| Source | Decision | Terms and what they mean for us |
+|---|---|---|
+| **FRED API** (mortgage rate, series MORTGAGE30US) | **Built** (`app/sources/fred.py`); runs once a free key is set | [FRED API terms](https://fred.stlouisfed.org/docs/api/terms_of_use.html): free key; must display "This product uses the FRED(R) API but is not endorsed or certified by the Federal Reserve Bank of St. Louis."; may not imply endorsement or replicate FRED's own site. Caching is not addressed in the terms; we keep only a rolling ~5 years of one series. Documented API only, one request per series per run. |
+| **Freddie Mac PMMS** (the data behind MORTGAGE30US) | Used, with attribution, personal use only | [Freddie Mac PMMS](https://www.freddiemac.com/pmms): "may be used with proper attribution. Alteration ... is strictly prohibited." FRED's terms add that third-party series used beyond your own personal use need the owner's permission. **Ask Freddie Mac before sharing or publishing the app.** Citation is stored with the data: "Freddie Mac, 30-Year Fixed Rate Mortgage Average in the United States [MORTGAGE30US], retrieved from FRED, Federal Reserve Bank of St. Louis; https://fred.stlouisfed.org/series/MORTGAGE30US". It is an owner-occupied rate; investor loans price higher (the factor's source text says so). |
+| **HUD Fair Market Rents API** | Approved, **not built** | US government data; free token; [terms page](https://www.huduser.gov/portal/dataset/api-terms-of-service.html) and the API docs could not be read by the fetch tool (page renders in JavaScript), so read them by hand before building. Reported limit: 60 queries/min. |
+| **NYC Rent Guidelines Board operating-cost index** | Approved, **blocked** | Public NYC agency report ([RGB research](https://rentguidelinesboard.cityofnewyork.us/research/)). Blocked on data extraction, not on legality: the table is inside PDFs and this environment has no PDF tooling. The 4.1% figure is the RGB's projection for the coming lease year, not a measured history, so it is not used as a factor yet. |
+| **Apartment List rent estimates** | **On hold** | Publishes free CSVs "to the general public" ([data page](https://www.apartmentlist.com/research/category/data-rent-estimates)) but no license, attribution or automated-download terms could be found. Ask research@apartmentlist.com before ingesting. Zillow ZORI (already loaded) covers rent growth meanwhile. |
+| **Redfin Data Center** | **Rejected** | [Redfin Terms of Use](https://www.redfin.com/about/terms-of-use) s.2.3.5 forbids automated crawling or querying "for any purpose" without written permission, and the services addendum forbids scraping and data mining. The Data Center is a manual-download product; scripting it would be automated access. Manual, occasional use with a citation is a separate personal choice. |
+| **Walk Score API** | **Rejected** | [Free tier](https://www.walkscore.com/professional/api-sign-up.php) is "for free consumer-facing applications only" and caching is a paid feature. A private analysis tool does not qualify. |
+
+## Sources already in the project (not re-reviewed in this pass)
+RentCast (plan terms: [rentcast.io/api](https://www.rentcast.io/api), "flexible licensing", no attribution
+required; only through `rentcast.py`); Zillow Research CSVs (usage text has been removed from their page;
+keep attribution); Census ACS and TIGERweb (public domain); FHFA HPI (public); NYC Open Data / Socrata
+datasets (city open data terms); MTA, NYPD, DOF, ACRIS (via NYC Open Data). Confirm any of these before
+the app is shared publicly.

@@ -43,6 +43,14 @@ only colors/spacing tokens.
 Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion` (with a validator test).
 
 ## Other open work
+- **Add a free FRED key** to make the mortgage-rate factor live: create it at
+  https://fred.stlouisfed.org/docs/api/api_key.html, put `FRED_API_KEY=...` in `backend/.env` yourself, then
+  `cd backend && uv run python -m app.cli refresh fred_series`. Until then the factor falls back to the fixed default.
+- Data-source follow-ups (see docs/DATA_LICENSES.md): read HUD's API terms, then build it; email Apartment List for
+  terms; the RGB operating-cost table needs PDF extraction.
+- **Listing links in the UI** (asked 2026-09-18, not built): no listing has a URL; all have coordinates and 437 of 438
+  have a BBL. Options are official NYC record links from the BBL (ZoLa, ACRIS), a map link from coordinates, and
+  search links to listing sites built from the address (links only, never fetched).
 - **Decide on promoting staging to main** (deferred by the user). Staging now has the result bar, the screener
   drawer, and a fix for a scenario bug that main still has (downside worlds could show HIGHER returns than base).
   Promoting will change the numbers on all 18 scenario cards. Run `scripts/promote_artifact.py` first.

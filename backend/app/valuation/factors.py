@@ -89,6 +89,37 @@ def _estimate_appreciation(ctx: MarketContext, profile: PropertyProfile) -> Fact
     )
 
 
+def _percentile(sorted_vals: list[float], q: float) -> float:
+    if not sorted_vals:
+        raise ValueError("no values")
+    pos = q * (len(sorted_vals) - 1)
+    lo = int(pos)
+    hi = min(lo + 1, len(sorted_vals) - 1)
+    return sorted_vals[lo] + (sorted_vals[hi] - sorted_vals[lo]) * (pos - lo)
+
+
+def _estimate_interest_rate(ctx: MarketContext, _profile: PropertyProfile) -> FactorEstimate | None:
+    """Freddie Mac's weekly 30-year fixed average via FRED. Value is the latest reading; P10/P90 come
+    from the stored history (about five years), so the tornado and Monte Carlo swing across a range the
+    market has actually produced. It is an owner-occupied conforming rate: investor loans usually price
+    higher, which the source text says so nobody reads it as a quote."""
+    series = ctx.macro.get("MORTGAGE30US")
+    points = (series or {}).get("points") or []
+    if len(points) < 20:  # too little history to call a range a range
+        return None
+    values = sorted(v for _, v in points)
+    latest_date, latest = points[-1]
+    return FactorEstimate(
+        key="interest_rate",
+        label="Mortgage rate",
+        value=round(latest / 100, 4),
+        p10=round(_percentile(values, 0.10) / 100, 4),
+        p90=round(_percentile(values, 0.90) / 100, 4),
+        source="Freddie Mac 30-yr fixed average via FRED (weekly; owner-occupied rate, investor loans price higher)",
+        as_of=latest_date,
+    )
+
+
 def _no_source(_key: str, _label: str) -> Callable[[MarketContext, PropertyProfile], None]:
     def estimate(_ctx: MarketContext, _profile: PropertyProfile) -> None:
         return None
@@ -98,7 +129,7 @@ def _no_source(_key: str, _label: str) -> Callable[[MarketContext, PropertyProfi
 
 FACTOR_DEFS: list[FactorDef] = [
     FactorDef("appreciation_override", "Long-run appreciation", _estimate_appreciation),
-    FactorDef("interest_rate", "Mortgage rate", _no_source("interest_rate", "Mortgage rate")),
+    FactorDef("interest_rate", "Mortgage rate", _estimate_interest_rate),
     FactorDef("rent_growth", "Rent growth", _no_source("rent_growth", "Rent growth")),
     FactorDef("vacancy_pct", "Vacancy rate", _no_source("vacancy_pct", "Vacancy rate")),
     FactorDef("expense_growth", "Expense growth", _no_source("expense_growth", "Expense growth")),

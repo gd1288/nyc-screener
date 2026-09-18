@@ -5,6 +5,13 @@ Add an entry (and update `docs/NEXT.md`) in the same session any such change is 
 what is built are NOT recorded here; run `app.cli status`.
 
 ## 2026-09-18
+- **Free data sources: legal review before ingestion** (docs/DATA_LICENSES.md). Built FRED mortgage rate (Freddie
+  Mac, attribution, personal use). Rejected Redfin (terms forbid automated access) and Walk Score (free tier is
+  consumer-facing only). Held Apartment List (no published terms). HUD and the NYC RGB operating-cost index are
+  approved but unbuilt (HUD terms unreadable by tooling; RGB needs PDF extraction). Rule: no new source without a
+  DATA_LICENSES row, and never automate against a site whose terms forbid it.
+- **Macro series live in `app_settings` as `macro:<SERIES>`,** exposed as `MarketContext.macro`, so a national time
+  series needs no schema change. A factor stays a gap (fixed default) until its series has enough history.
 - **Screener drawer in the artifact.** A "Browse screener" drawer opens from the deal header (the four
   tabs are unchanged). The artifact cannot call the backend, so listings are an embedded snapshot written by
   `scripts/embed_screener.py` from the backend's own analysis; rent and property tax are estimates for all
