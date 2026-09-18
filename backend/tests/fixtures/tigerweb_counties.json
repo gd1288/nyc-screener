@@ -1,0 +1,100 @@
+{
+ "displayFieldName": "NAME",
+ "fieldAliases": {
+  "GEOID": "GEOID",
+  "BASENAME": "BASENAME",
+  "STATE": "STATE"
+ },
+ "fields": [
+  {
+   "name": "GEOID",
+   "type": "esriFieldTypeString",
+   "alias": "GEOID",
+   "length": 5
+  },
+  {
+   "name": "BASENAME",
+   "type": "esriFieldTypeString",
+   "alias": "BASENAME",
+   "length": 100
+  },
+  {
+   "name": "STATE",
+   "type": "esriFieldTypeString",
+   "alias": "STATE",
+   "length": 2
+  }
+ ],
+ "features": [
+  {
+   "attributes": {
+    "GEOID": "36005",
+    "BASENAME": "Bronx",
+    "STATE": "36"
+   }
+  },
+  {
+   "attributes": {
+    "GEOID": "36047",
+    "BASENAME": "Kings",
+    "STATE": "36"
+   }
+  },
+  {
+   "attributes": {
+    "GEOID": "36061",
+    "BASENAME": "New York",
+    "STATE": "36"
+   }
+  },
+  {
+   "attributes": {
+    "GEOID": "36081",
+    "BASENAME": "Queens",
+    "STATE": "36"
+   }
+  },
+  {
+   "attributes": {
+    "GEOID": "36085",
+    "BASENAME": "Richmond",
+    "STATE": "36"
+   }
+  },
+  {
+   "attributes": {
+    "GEOID": "48021",
+    "BASENAME": "Bastrop",
+    "STATE": "48"
+   }
+  },
+  {
+   "attributes": {
+    "GEOID": "48055",
+    "BASENAME": "Caldwell",
+    "STATE": "48"
+   }
+  },
+  {
+   "attributes": {
+    "GEOID": "48209",
+    "BASENAME": "Hays",
+    "STATE": "48"
+   }
+  },
+  {
+   "attributes": {
+    "GEOID": "48453",
+    "BASENAME": "Travis",
+    "STATE": "48"
+   }
+  },
+  {
+   "attributes": {
+    "GEOID": "48491",
+    "BASENAME": "Williamson",
+    "STATE": "48"
+   }
+  }
+ ]
+}

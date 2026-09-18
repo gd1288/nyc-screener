@@ -196,6 +196,39 @@ def cmd_research_gaps() -> int:
     return 0
 
 
+def cmd_add_region(name: str, watch: bool) -> int:
+    """Load a metro's census tracts into `areas` so it can be scored like NYC."""
+    import httpx
+
+    from app.config import get_settings
+    from app.pipeline.areas import ensure_region, resolve_region, sync_nyc_ntas
+    from app.sources.base import SourceContext
+    from app.sources.tigerweb import TigerwebTracts
+
+    known = resolve_region(name)
+    if known is None:
+        from app.pipeline.areas import KNOWN_REGIONS
+
+        print(f"Unknown region {name!r}. Known: {', '.join(sorted(KNOWN_REGIONS))}")
+        return 1
+
+    with SessionLocal() as session:
+        region = ensure_region(session, known.kind, known.code, known.name, known.state_fips)
+        if watch and not region.watched:
+            region.watched = True
+            session.commit()
+        with httpx.Client(follow_redirects=True) as http:
+            ctx = SourceContext(session=session, settings=get_settings(), http=http, region=region)
+            source = TigerwebTracts("tigerweb_tracts", known_region=known)
+            tracts = source.run(ctx)
+        ntas = sync_nyc_ntas(session) if known.code == "35620" else 0
+    print(f"{known.name}: {tracts} tracts loaded across {len(known.counties)} counties")
+    if ntas:
+        print(f"  plus {ntas} NYC neighborhoods mirrored into areas")
+    print(f"  watched={'yes' if watch else 'no'}")
+    return 0
+
+
 def cmd_valuation_eval(write_baseline: bool, as_json: bool) -> int:
     """Walk-forward accuracy of the comparable-sales value estimate, gated on the stored baseline."""
     from app.valuation import eval as valuation_eval
@@ -234,6 +267,9 @@ def main() -> int:
     status = sub.add_parser("status", help="what each phase has actually delivered (checked against disk)")
     status.add_argument("--json", action="store_true", dest="as_json")
     sub.add_parser("research-gaps", help="write research/gaps.json: valuation factors with no real data source")
+    add_region = sub.add_parser("add-region", help="load a metro's census tracts into areas")
+    add_region.add_argument("name", help="metro nickname, e.g. austin")
+    add_region.add_argument("--watch", action="store_true", help="refresh this region on schedule")
     valuation_eval = sub.add_parser("valuation-eval", help="walk-forward accuracy of the comps value estimate")
     valuation_eval.add_argument("--write-baseline", action="store_true", dest="write_baseline")
     valuation_eval.add_argument("--json", action="store_true", dest="as_json")
@@ -268,6 +304,8 @@ def main() -> int:
         return cmd_diagnose(args.as_json)
     elif args.cmd == "research-gaps":
         return cmd_research_gaps()
+    elif args.cmd == "add-region":
+        return cmd_add_region(args.name, args.watch)
     elif args.cmd == "valuation-eval":
         return cmd_valuation_eval(args.write_baseline, args.as_json)
     return 0

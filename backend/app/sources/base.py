@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.geo import NeighborhoodIndex
-from app.models import NeighborhoodMetric
+from app.models import Area, AreaMetric, NeighborhoodMetric, Region
 
 
 @dataclass
@@ -20,6 +20,9 @@ class SourceContext:
     session: Session
     settings: Settings
     http: httpx.Client
+    #: The region being refreshed, for sources whose `coverage` is wider than one city. None means
+    #: the legacy NYC-only run, which is why every pre-area-model source can ignore it.
+    region: Region | None = None
     _geo: NeighborhoodIndex | None = field(default=None, repr=False)
 
     @property
@@ -36,6 +39,15 @@ class SourceSkipped(Exception):
 class Source:
     #: "boundaries", "neighborhood" (writes metrics), "sales", "listings" or "sold_check"
     kind: ClassVar[str]
+    #: Where this source has data: "national", "state:NY", or "city:NYC".
+    #: The default is the truth about every source written before the area model existed — they all
+    #: read NYC-only endpoints. A new national source MUST set this, because it is what decides
+    #: whether loading Austin runs the source or skips it.
+    coverage: ClassVar[str] = "city:NYC"
+    #: The unit this source reports at, before any rollup: "tract", "block_group", "zcta", "nta",
+    #: "county" or "point". Sources finer than a tract are rolled up to one; NYC's NTA sources keep
+    #: writing NTA metrics directly.
+    granularity: ClassVar[str] = "nta"
     #: env settings that must be non-empty for this source to run, e.g. ["rentcast_api_key"]
     requires: ClassVar[list[str]] = []
     description: ClassVar[str] = ""
@@ -82,6 +94,42 @@ class Source:
             except Exception as e:  # noqa: BLE001
                 return False, f"{self.probe_url}: {type(e).__name__}: {e}"
         return None, "no probe configured (see the add-data-source skill)"
+
+    # ---- helpers for area sources (any US geography) ----
+    def write_area_metrics(
+        self,
+        ctx: SourceContext,
+        metrics: dict[str, dict[str, float | None]],
+        as_of: dict[str, str],
+        kind: str = "tract",
+    ) -> int:
+        """Replace this source's area metrics. `metrics` maps metric name -> {area code: value}.
+
+        Codes are resolved to `areas` rows once per call; a code with no area row is skipped rather
+        than created, because an area's geometry and CBSA come from the boundary source that owns
+        it — inventing a bare row here would produce areas that can never be scored or mapped.
+        """
+        ids = {code: area_id for code, area_id in ctx.session.query(Area.code, Area.id).filter(Area.kind == kind)}
+        ctx.session.execute(
+            delete(AreaMetric).where(AreaMetric.source == self.name, AreaMetric.metric.in_(list(metrics)))
+        )
+        written = 0
+        for metric, by_code in metrics.items():
+            for code, value in by_code.items():
+                if value is None or value != value or code not in ids:  # skip None/NaN/unknown area
+                    continue
+                ctx.session.add(
+                    AreaMetric(
+                        area_id=ids[code],
+                        metric=metric,
+                        value=float(value),
+                        source=self.name,
+                        as_of=as_of.get(metric, ""),
+                    )
+                )
+                written += 1
+        ctx.session.commit()
+        return written
 
     # ---- helpers for neighborhood sources ----
     def write_metrics(

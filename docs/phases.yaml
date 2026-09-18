@@ -47,9 +47,21 @@ phases:
         contains: "class Area"
       - path: backend/app/models.py
         contains: "class AreaMetric"
+      # A score is only meaningful against the set it was ranked within, so that set is stored
+      # rather than assumed — an Austin-CBSA percentile must not be readable as a national one.
+      - path: backend/app/models.py
+        contains: "comparison_set"
       - path: backend/app/sources/base.py
         contains: "coverage"
+      - path: backend/app/sources/base.py
+        contains: "def write_area_metrics"
+      - path: backend/app/pipeline/areas.py
+        contains: "def sync_nyc_ntas"
+      - path: backend/app/cli.py
+        contains: "def cmd_add_region"
       - path: backend/app/sources/tigerweb.py
+      - path: backend/tests/test_areas.py
+        contains: "def test_known_region_counties_are_real_counties_with_the_expected_names"
       - path: backend/app/sources/fhfa_hpi.py
       - path: frontend/src/app/areas
 

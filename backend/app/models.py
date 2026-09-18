@@ -49,6 +49,76 @@ class NeighborhoodScore(Base):
     computed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
+class Region(Base):
+    """A metro or county the screener has loaded. Added on demand; only `watched` regions refresh on
+    schedule, so loading Austin to look at it once doesn't commit every later refresh to fetching it."""
+
+    __tablename__ = "regions"
+    __table_args__ = (UniqueConstraint("kind", "code"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(8))  # cbsa | county
+    code: Mapped[str] = mapped_column(String(12), index=True)  # CBSA code (35620) or county FIPS (36061)
+    name: Mapped[str] = mapped_column(String(160))
+    state_fips: Mapped[str | None] = mapped_column(String(2))
+    watched: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+
+class Area(Base):
+    """Any geography the screener can score, anywhere in the US.
+
+    Census tracts are the universal unit — every national source either reports by tract or rolls up
+    to one. NYC's NTAs live here too (`kind="nta"`, linked back to their `Neighborhood` row), which
+    is what lets the existing NYC pages keep working unchanged while Austin is scored through the
+    same tables: the NYC-specific `neighborhoods` tables are not migrated, they are overlaid.
+    """
+
+    __tablename__ = "areas"
+    __table_args__ = (UniqueConstraint("kind", "code"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(8), index=True)  # tract | zcta | nta | custom
+    code: Mapped[str] = mapped_column(String(16), index=True)  # tract GEOID (36061000100) or NTA code
+    name: Mapped[str] = mapped_column(String(160))
+    state_fips: Mapped[str | None] = mapped_column(String(2), index=True)
+    county_fips: Mapped[str | None] = mapped_column(String(5), index=True)
+    # The default comparison set: percentiles are ranked within a metro, never across incomparable
+    # markets. An area with no CBSA (rural) falls back to its state — see `scoring/area.py`.
+    cbsa: Mapped[str | None] = mapped_column(String(5), index=True)
+    residential: Mapped[bool] = mapped_column(default=True)
+    geometry: Mapped[dict | None] = mapped_column(JSON)  # GeoJSON (WGS84)
+    area_km2: Mapped[float | None] = mapped_column(Float)
+    nta_code: Mapped[str | None] = mapped_column(ForeignKey("neighborhoods.code"), index=True)
+
+
+class AreaMetric(Base):
+    __tablename__ = "area_metrics"
+    __table_args__ = (UniqueConstraint("area_id", "metric"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    area_id: Mapped[int] = mapped_column(ForeignKey("areas.id", ondelete="CASCADE"), index=True)
+    metric: Mapped[str] = mapped_column(String(64), index=True)
+    value: Mapped[float] = mapped_column(Float)
+    source: Mapped[str] = mapped_column(String(64))
+    as_of: Mapped[str] = mapped_column(String(32))
+
+
+class AreaScore(Base):
+    __tablename__ = "area_scores"
+
+    area_id: Mapped[int] = mapped_column(ForeignKey("areas.id", ondelete="CASCADE"), primary_key=True)
+    # Which areas this was ranked against, e.g. "cbsa:12420". A percentile is only meaningful
+    # relative to its comparison set, and storing it is what stops an Austin-CBSA score from being
+    # read, compared or charted as if it were national.
+    comparison_set: Mapped[str] = mapped_column(String(32), index=True)
+    score: Mapped[float | None] = mapped_column(Float)
+    rank: Mapped[int | None] = mapped_column(Integer)
+    pillars: Mapped[dict] = mapped_column(JSON)
+    coverage: Mapped[float] = mapped_column(Float)
+    computed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+
 class Sale(Base):
     """Closed condo sales (DOF annualized/rolling sales)."""
 
