@@ -5,6 +5,7 @@ Excel model.
 
 import json
 from dataclasses import asdict
+from typing import Literal
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -15,7 +16,7 @@ from app.db import SessionLocal
 from app.models import Listing, ListingStatus, Neighborhood, ValuationProperty
 from app.pipeline.listings import ownership_type
 from app.services import MarketContext
-from app.valuation import engine
+from app.valuation import engine, proforma, taxes
 from app.valuation import scenarios as scenarios_mod
 from app.valuation.factors import FACTOR_DEFS, PropertyProfile
 from app.valuation.property import lookup_address
@@ -276,7 +277,59 @@ def delete_property(property_id: int, session: Session = Depends(db)):
 PROFILE_OVERRIDE_FIELDS = {"price", "sqft", "bedrooms", "common_charges", "property_taxes", "rent_estimate"}
 
 
+Mode = Literal["quick", "deal"]
+
+
+class TaxIn(BaseModel):
+    land_pct: float = Field(ge=0, lt=1)  # required: the land share is never depreciable
+    jurisdiction: str | None = None  # e.g. "NY:NYC"; None -> the default market
+    election: taxes.LossElection = taxes.LossElection.SUSPEND
+    other_income: float = 300_000.0
+    property_kind: str = "condo"
+    placed_in_service_month: int = Field(default=1, ge=1, le=12)
+
+
+class DealIn(BaseModel):
+    """Inputs only the deal-grade pro forma uses (see `engine.DealOptions`). Sent with `mode="deal"`.
+    On the scenario endpoints the hold comes from `horizon`, so `hold_years` only applies to /run."""
+
+    hold_years: int = Field(default=10, ge=1, le=40)
+    exit_cap_rate: float | None = Field(default=None, gt=0)
+    exit_cap_spread: float | None = None
+    tax_growth: float | None = None
+    discount_rate: float = 0.08
+    other_income_monthly: float = 0.0
+    tax: TaxIn | None = None  # omit for before-tax returns
+    tax_rate_overrides: dict[str, float] = {}  # e.g. {"recapture_rate": 0.25}; needs `tax`
+
+
+def _deal_options(mode: Mode, deal: DealIn | None) -> engine.DealOptions | None:
+    """None in quick mode. A `deal` block without mode="deal" is rejected rather than ignored."""
+    if mode == "quick":
+        if deal is not None:
+            raise HTTPException(422, "`deal` inputs need mode='deal'")
+        return None
+    d = deal or DealIn()
+    if unknown := set(d.tax_rate_overrides) - engine.TAX_RATE_FIELDS:
+        raise HTTPException(422, f"Unknown tax rate field(s): {sorted(unknown)}")
+    options = engine.DealOptions(
+        hold_years=d.hold_years,
+        exit_cap_rate=d.exit_cap_rate,
+        exit_cap_spread=d.exit_cap_spread,
+        tax_growth=d.tax_growth,
+        discount_rate=d.discount_rate,
+        other_income_monthly=d.other_income_monthly,
+        tax=proforma.TaxInputs(**d.tax.model_dump()) if d.tax else None,
+    )
+    try:
+        return options.with_set(d.tax_rate_overrides) if d.tax_rate_overrides else options
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
+
+
 class RunIn(BaseModel):
+    mode: Mode = "quick"
+    deal: DealIn | None = None
     overrides: dict[str, float] = {}  # Assumptions fields, e.g. interest_rate, appreciation_override
     property_overrides: dict[
         str, float
@@ -300,18 +353,23 @@ def _resolve_run_inputs(
 @router.post("/properties/{property_id}/run")
 def run_property(property_id: int, body: RunIn, session: Session = Depends(db)):
     profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, body.overrides, body.property_overrides)
+    options = _deal_options(body.mode, body.deal)
     try:
-        return engine.run(profile, ctx, merged_overrides)
-    except engine.UnknownOverrideError as e:
+        return engine.run(profile, ctx, merged_overrides, mode=body.mode, deal=options)
+    except ValueError as e:  # unknown override, or a deal input the model rejects (e.g. a rate over its ceiling)
         raise HTTPException(422, str(e)) from e
 
 
 class ScenarioIn(BaseModel):
     name: str
-    deltas: dict[str, float] = {}
+    deltas: dict[str, float] = {}  # relative changes to Assumptions fields
+    # Absolute deal/tax inputs (deal mode only), e.g. {"exit_cap_spread": 0.02, "recapture_rate": 0.25}.
+    set: dict[str, float] = {}
 
 
 class CompareIn(BaseModel):
+    mode: Mode = "quick"
+    deal: DealIn | None = None
     overrides: dict[str, float] = {}
     property_overrides: dict[str, float] = {}
     scenarios: list[ScenarioIn] | None = (
@@ -323,14 +381,17 @@ class CompareIn(BaseModel):
 def compare_scenarios(property_id: int, body: CompareIn, session: Session = Depends(db)):
     profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, body.overrides, body.property_overrides)
     scenario_dicts = [s.model_dump() for s in body.scenarios] if body.scenarios is not None else None
+    options = _deal_options(body.mode, body.deal)
     try:
-        results = scenarios_mod.compare(profile, ctx, merged_overrides, scenario_dicts)
-    except engine.UnknownOverrideError as e:
+        results = scenarios_mod.compare(profile, ctx, merged_overrides, scenario_dicts, body.mode, options)
+    except ValueError as e:
         raise HTTPException(422, str(e)) from e
     return [asdict(r) for r in results]
 
 
 class SensitivityIn(BaseModel):
+    mode: Mode = "quick"
+    deal: DealIn | None = None
     overrides: dict[str, float] = {}
     property_overrides: dict[str, float] = {}
     horizon: str = "10"
@@ -341,10 +402,19 @@ def sensitivity(property_id: int, body: SensitivityIn, session: Session = Depend
     if body.horizon not in ("10", "20"):
         raise HTTPException(422, "horizon must be '10' or '20'")
     profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, body.overrides, body.property_overrides)
-    return scenarios_mod.sensitivity(profile, ctx, merged_overrides, body.horizon)
+    options = _deal_options(body.mode, body.deal)
+    try:
+        return scenarios_mod.sensitivity(profile, ctx, merged_overrides, body.horizon, body.mode, options)
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
 
 
 class DataTableIn(BaseModel):
+    mode: Mode = "quick"
+    deal: DealIn | None = None
+    # Required for a deal-only factor (e.g. exit_cap_spread), which has no default axis.
+    x_values: list[float] | None = None
+    y_values: list[float] | None = None
     overrides: dict[str, float] = {}
     property_overrides: dict[str, float] = {}
     x_factor: str = "interest_rate"
@@ -357,15 +427,28 @@ class DataTableIn(BaseModel):
 def data_table(property_id: int, body: DataTableIn, session: Session = Depends(db)):
     if body.horizon not in ("10", "20"):
         raise HTTPException(422, "horizon must be '10' or '20'")
-    if unknown := {body.x_factor, body.y_factor} - engine.ASSUMPTION_FIELDS:
-        raise HTTPException(422, f"Unknown Assumptions field(s): {sorted(unknown)}")
+    allowed = engine.ASSUMPTION_FIELDS | (engine.DEAL_SET_FIELDS if body.mode == "deal" else set())
+    if unknown := {body.x_factor, body.y_factor} - allowed:
+        raise HTTPException(422, f"Unknown factor(s) for mode {body.mode!r}: {sorted(unknown)}")
     steps = min(max(body.steps, 3), 9)
+    options = _deal_options(body.mode, body.deal)
     profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, body.overrides, body.property_overrides)
-    x_values = scenarios_mod.default_data_table_axis(profile, ctx, merged_overrides, body.x_factor, steps)
-    y_values = scenarios_mod.default_data_table_axis(profile, ctx, merged_overrides, body.y_factor, steps)
-    return scenarios_mod.data_table(
-        profile, ctx, merged_overrides, body.x_factor, body.y_factor, x_values, y_values, body.horizon
-    )
+
+    def axis(factor: str, given: list[float] | None) -> list[float]:
+        if given:
+            return given
+        if factor not in engine.ASSUMPTION_FIELDS:
+            raise HTTPException(422, f"{factor} has no default range; send x_values/y_values for it")
+        return scenarios_mod.default_data_table_axis(profile, ctx, merged_overrides, factor, steps)
+
+    x_values, y_values = axis(body.x_factor, body.x_values), axis(body.y_factor, body.y_values)
+    try:
+        return scenarios_mod.data_table(
+            profile, ctx, merged_overrides, body.x_factor, body.y_factor, x_values, y_values, body.horizon,
+            body.mode, options,
+        )  # fmt: skip
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
 
 
 XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -432,6 +515,8 @@ def export_property_xlsx(
 
 
 class MonteCarloIn(BaseModel):
+    mode: Mode = "quick"
+    deal: DealIn | None = None
     overrides: dict[str, float] = {}
     property_overrides: dict[str, float] = {}
     n: int = 1000
@@ -444,4 +529,8 @@ def run_monte_carlo(property_id: int, body: MonteCarloIn, session: Session = Dep
     if body.horizon not in ("10", "20"):
         raise HTTPException(422, "horizon must be '10' or '20'")
     profile, ctx, merged_overrides = _resolve_run_inputs(session, property_id, body.overrides, body.property_overrides)
-    return scenarios_mod.monte_carlo(profile, ctx, merged_overrides, body.n, body.seed, body.horizon)
+    options = _deal_options(body.mode, body.deal)
+    try:
+        return scenarios_mod.monte_carlo(profile, ctx, merged_overrides, body.n, body.seed, body.horizon, body.mode, options)
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
