@@ -1,6 +1,6 @@
 # Plan: "Purchase property" analysis page (staging artifact)
 
-Status: designed 2026-09-18, awaiting the user's answers to the questions at the end. Not built.
+Status: BUILT 2026-09-18 on staging (option 1, plus a Saved properties tab). The user's answers: live in it and possibly rent it out, so the page is a scenario picker (live / rent all / live in one room and rent the rest / live first then rent) with broad customisation; and a page to save and track properties. Still open: Excel export, printable view, the 12-month cash calendar section.
 
 ## What the user asked for
 A "Purchase property" button. Pressing it runs an analysis of what owning that property would actually cost: the cash needed to

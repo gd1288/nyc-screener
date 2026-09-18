@@ -23,7 +23,7 @@ live artifact before every republish; never regenerate over it from a template.
 - Your preferences: auto-memory. Facts about the code live in git, not in memory.
 
 ## Latest saved state
-Staging = version 10 (tag `staging-v10-2026-09-18`; earlier: `staging-v9-2026-09-18`, `staging-v8-2026-09-18`, `staging-v7-2026-09-18`, `staging-v6-2026-09-18`, `staging-v5-2026-09-18`; file `docs/artifact/staging.html`). How to change it from a new window:
+Staging = version 11 (tag `staging-v11-2026-09-18`; earlier: `staging-v10-2026-09-18`, `staging-v9-2026-09-18`, `staging-v8-2026-09-18`, `staging-v7-2026-09-18`, `staging-v6-2026-09-18`, `staging-v5-2026-09-18`; file `docs/artifact/staging.html`). How to change it from a new window:
 `docs/UI.md`, section "Picking this up in a new window". Main = `artifact-main-1`, unchanged, promotion pending your decision.
 
 ## Direction (decided 2026-09-18) - see docs/ARCHITECTURE.md
@@ -57,8 +57,9 @@ Also: add a `stage` field (staged / main / app) to criteria.yaml `ui_suggestion`
   after ONE miss it shows a "not in last check" chip in the artifact). Budget used this month: 3 of 31. From October the
   daily job (about 31 requests) leaves no room for sweeps under the 31-request cap, so before then either fetch every
   second day or raise `monthly_request_limit` (still under the free plan's 50).
-- **Purchase property page (designed, awaiting the user's 5 answers):** `docs/plans/purchase-analysis.md` has four options (recommended: a
-  Purchase plan tab), the cost data the tool already has, and a paste-ready prompt.
+- **Purchase and Saved tabs are built on staging** (`docs/plans/purchase-analysis.md`). Follow-ups: 12-month cash calendar, printable view or
+  Excel export, more custom costs presets, and wiring the Formulas info markers into each line. Staging is published with the `db`
+  capability, so it is organisation-internal.
 - **Formulas feature (planned, not started; now includes deep-dive pages per formula):** `docs/plans/formulas-tab.md` has the design, the phases and a paste-ready
   prompt for a new window (info marker on every number, formula inspector panel, Formulas tab, backend-authored registry).
 - FRED is live (mortgage rate, 10-year Treasury, FHFA New York price index). Rotate the FRED key at some point: it appeared

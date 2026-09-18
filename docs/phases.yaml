@@ -202,3 +202,11 @@ phases:
       - path: backend/app/pipeline/listings.py
         contains: "def unmark_sold"
       - path: docs/plans/purchase-analysis.md
+      - path: backend/app/valuation/purchase.py
+        contains: "def plan"
+      - path: backend/tests/test_purchase.py
+        contains: "same_numbers_as_the_backend"
+      - path: docs/artifact/staging.html
+        contains: "function purchasePlan"
+      - path: docs/artifact/staging.html
+        contains: "function svRender"

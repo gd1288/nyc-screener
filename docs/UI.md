@@ -36,6 +36,8 @@ Backend and agent changes are recorded elsewhere (see "Where each kind of change
 | Market strip `#mkt` / `mkt()` | deal card, always (when `MARKET` is embedded) | Live 30-yr mortgage, 10-yr Treasury, spread, 5-yr range; "Use market rate" button. Data from FRED via `embed_screener.py`. |
 | Reality check `#wreal` / `wreal()` | Stress test, under the scenario summary | Harshest scenario's exit-value cut vs New York's worst real price fall since 1975 (FHFA via FRED). Compares severity, not the same measure. |
 | Sold & off market view `#soldBar` / `soldRender()` | screener drawer, "Sold & off market" switch | Mirrors the Next.js /sold page: All / Sold / Off market / Withdrawn tabs, stats (confirmed sales, median sale vs last ask, median days on market), table with status chip, last ask, sold price, vs ask, date, Links. Data: `SOLD` block from `embed_screener.py` (the backend's closed listings). |
+| Purchase tab `#p-pu` / `pu()` | fifth tab (after Assumptions); "Purchase property" button in the deal header | Scenario picker (live in it / rent it out / live in it and rent a room / live first, rent later), summary strip, itemised cash to close, monthly obligations, year-by-year life of ownership with chart, sale, editable assumptions, your own costs, and a "not included" list. Math is `purchasePlan` (marked `/*PURCHASE-START*/`), a line-for-line mirror of `backend/app/valuation/purchase.py`; `tests/test_purchase.py` runs both in Node and Python on the same inputs. |
+| Saved tab `#p-sv` / `svRender()` | sixth tab; "Save" in the header, on screener rows and on the Purchase tab | Tracks properties with a status (Watching, Interested, Offer made, Under contract, Bought, Passed), notes, the scenario and amended inputs, a compare view (up to 4), add-your-own, and a text backup/restore. Stored in the platform `db` capability (`saved/<id>`) so it syncs across devices; falls back to browser storage, then to session memory, and says which one is in use. |
 | Found listing page (row "Listing ↗" and top of the links menu) | screener rows, links menu | From `listing_urls` (Perplexity search, validated); shown only when found. Fields `lu` (URL) and `ll` (unit/building) in `LISTINGS`. Labeled as a search result that may be stale. |
 | Links menu `#lkm` / `openLinks()` | "Links" on every screener row, and in the deal header for a pulled listing | Official records (ZoLa, ACRIS), maps, listing-site search links; save your own listing URL (session memory plus localStorage when allowed). Links are built, never fetched. |
 | Input provenance row `#dsrc` and model comparison `#pnote` | under the deal terms, only for a pulled listing | Price, rent, property tax, common charges marked listed or estimated; backend IRR/cap/cash-on-cash shown beside this tool's. `loadSample()` restores 421 Harris. |
@@ -61,13 +63,13 @@ To change staging:
    console for errors, and run `docs/artifact/checks/staging_sweep.js` (expect exc 0, nanCases 0, orderViolations 0,
    badLinks 0, sample restored to 13.0%). For phone width, test inside a 400px iframe: the pane's resize preset does not
    change layout width reliably.
-5. Publish to staging only: the Artifact tool with the URL in `.claude/artifacts.json`. If it refuses because a newer
+5. Publish to staging only: the Artifact tool with the URL in `.claude/artifacts.json`. Staging has the `db` capability (saved properties): leave `capabilities` out on a republish to keep it; passing `{}` would clear it and break saving. If it refuses because a newer
    version exists, read the saved live copy fully, merge, and publish again; never force.
 6. Update the Components table and Changelog below in the same commit, run `pytest`, `ruff`, `app.cli status` and
    `python3 scripts/promote_artifact.py`, then commit.
 
 ## Locked (never change without the user's approval)
-Four tabs and their order; the 18 scenarios; Conditions, Events, resolved assumptions, IRR range and
+The first four tabs and their order (Purchase and Saved were added after them, with the user's approval); the 18 scenarios; Conditions, Events, resolved assumptions, IRR range and
 diff table on Stress test. Additions only. The screener is a drawer, not a fifth tab, so the four tabs stay as they were.
 
 ## How to add a UI feature (checklist)
@@ -106,3 +108,4 @@ diff table on Stress test. Additions only. The screener is a drawer, not a fifth
 - 2026-09-18: Sold & off market view in the screener drawer (mirrors the Next.js Sold page), fed by a `SOLD` block. Empty until the backend marks listings sold, off market or withdrawn.
 - 2026-09-18: "not in last check" chip on screener rows whose listing missed the last complete feed check (`ms` field from `missed_fetches`); it moves to Sold & off market after a second miss.
 - 2026-09-18: deal-header actions now wrap inside the card at narrow widths (the "Click a figure to amend" label was being squeezed into a column of letters and pushed outside the card). Found by viewing the page in the browser pane.
+- 2026-09-18: Purchase tab (scenario-based cost of ownership) and Saved tab (property tracker with statuses, notes, compare, add-your-own, backup). Segmented controls now wrap on narrow screens. Published with the `db` capability.

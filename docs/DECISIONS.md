@@ -5,6 +5,16 @@ Add an entry (and update `docs/NEXT.md`) in the same session any such change is 
 what is built are NOT recorded here; run `app.cli status`.
 
 ## 2026-09-18
+- **Purchase plan built (option 1 of docs/plans/purchase-analysis.md), driven by how the property is used.** Every scenario is one
+  calculation with `phases` (from year N, a share of the property is rented: 0 live in all of it, 1 all rented, one bedroom of
+  three = 0.33, or live-then-rent). The backend (`app/valuation/purchase.py`) is the source of truth; the artifact carries a
+  line-for-line JavaScript mirror and a Node-vs-Python parity test. It reports pre-tax figures and, for scenarios where you
+  live in part of it, the rent you avoid paying, so "versus renting" is a fair comparison (without it, living in a home
+  looked like a large loss).
+- **Saved properties live in the platform `db` capability** (shared documents under `saved/<id>`, so they sync across
+  devices and Claude can read them), with browser-storage and in-memory fallbacks and a plain-text backup. The staging artifact
+  is now published with `capabilities: {db: {}}`, which makes it organisation-internal (it cannot be shared by public link).
+  The tab strip now has six tabs; the first four are unchanged.
 - **Stale listings: ACRIS fixed, RentCast recent-only sweep added.** The sold check no longer matches likely co-ops or
   deeds recorded before the listing date (it produced a false sale). RentCast has 8,472 active Manhattan-circle condos, so
   full sweeps are unaffordable on the free plan; `rentcast_sweep` asks only for the last 45 days (tracked listings are
