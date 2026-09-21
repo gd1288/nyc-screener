@@ -1,0 +1,24 @@
+{
+  "slug": "bls-laus",
+  "name": "BLS Local Area Unemployment Statistics (LAUS)",
+  "url": "https://www.bls.gov/lau/",
+  "date_evaluated": "2026-09-21",
+  "coverage": "national (all US states, counties, and many cities/metro areas)",
+  "granularity": "county and city, rolls up to metro area, state, census region/division",
+  "update_frequency": "monthly, with an annual benchmark revision",
+  "history": "decades of history available (varies by series, commonly back to the 1990s or earlier for most counties)",
+  "license": {
+    "free": true,
+    "login_required": false,
+    "commercial_use_clear": true,
+    "notes": "US federal agency (Bureau of Labor Statistics) statistical product, public domain. The Public Data API v1 works with no registration; v2 (registration, still free) just raises the daily query cap and adds net/percent-change fields."
+  },
+  "cost": "free; v1 API unregistered cap is low (25 queries/day, max 10 years per query), registering for v2 (still free) raises it to 500 queries/day and a 20-year window",
+  "gap_addressed": "The growth score's 'demographics' pillar (neighborhood.py) currently only has census_acs.py (income/population/education, refreshed twice a year off ACS 5-year estimates -- slow-moving). County-level monthly unemployment would be a faster-moving, independent economic-growth signal for the same pillar or a new one.",
+  "correlation": {
+    "computed": false,
+    "notes": "evaluate_series.py doesn't exist yet. Worth flagging: BLS itself states county-level LAUS is not seasonally adjusted, so a naive month-over-month read is noisy and would need a trailing-12-month or year-over-year transform before it's a usable input -- more preprocessing than the other candidates need."
+  },
+  "recommendation": "Usable but the weakest of this batch on a value/effort basis. It's genuinely free and national, but NYC (5 counties, effectively one series each) gets little marginal signal from county-level unemployment versus the more granular ACS demographics already in place, the not-seasonally-adjusted data needs extra smoothing to be usable, and BLS series IDs have to be looked up per geography (more adapter complexity than a bulk CSV pull). Would matter more once the project has non-NYC neighborhoods with real county-level variation. Recommend holding this one rather than implementing now.",
+  "verdict": "do_not_recommend"
+}

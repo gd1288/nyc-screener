@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data source research candidate",
+  "description": "One evaluated candidate produced by the research-sources procedure. File name is research/candidates/<slug>.json.",
+  "type": "object",
+  "required": ["slug", "name", "url", "date_evaluated", "coverage", "granularity", "update_frequency",
+    "history", "license", "cost", "gap_addressed", "correlation", "recommendation", "verdict"],
+  "properties": {
+    "slug": {"type": "string", "description": "kebab-case id, matches the file name"},
+    "name": {"type": "string"},
+    "url": {"type": "string", "format": "uri"},
+    "date_evaluated": {"type": "string", "format": "date"},
+    "coverage": {"type": "string", "description": "geographic extent, e.g. 'national', 'NYC only'"},
+    "granularity": {"type": "string", "description": "e.g. tract, ZCTA, county, MSA, state, national"},
+    "update_frequency": {"type": "string"},
+    "history": {"type": "string", "description": "how far back data goes"},
+    "license": {
+      "type": "object",
+      "required": ["free", "login_required", "commercial_use_clear", "notes"],
+      "properties": {
+        "free": {"type": "boolean"},
+        "login_required": {"type": "boolean", "description": "account/API key signup, distinct from a paywall"},
+        "commercial_use_clear": {"type": "boolean", "description": "false if ToS language is ambiguous or restrictive"},
+        "notes": {"type": "string"}
+      }
+    },
+    "cost": {"type": "string", "description": "should be 'free' after confirming license.free; note any rate limit here"},
+    "gap_addressed": {"type": "string", "description": "what existing coverage gap or hardcoded assumption this fills"},
+    "correlation": {
+      "type": ["object", "null"],
+      "description": "null if app/research/evaluate_series.py doesn't exist yet (quantitative step skipped)",
+      "properties": {
+        "computed": {"type": "boolean"},
+        "notes": {"type": "string"}
+      }
+    },
+    "recommendation": {"type": "string", "description": "one paragraph"},
+    "verdict": {"type": "string", "enum": ["recommend", "recommend_with_caveat", "do_not_recommend"]}
+  }
+}
