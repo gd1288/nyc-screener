@@ -1,0 +1,24 @@
+{
+  "slug": "hud-fmr",
+  "name": "HUD Fair Market Rents (FMR)",
+  "url": "https://www.huduser.gov/portal/dataset/fmr-api.html",
+  "date_evaluated": "2026-09-21",
+  "coverage": "national (all US counties and metro FMR areas, ~4,700-4,800 areas/year)",
+  "granularity": "county and HUD metro FMR area (a HUD-defined metro/submetro geography, not standard MSA)",
+  "update_frequency": "annual (new fiscal-year FMRs published each October)",
+  "history": "FY2018 through current fiscal year available via the API; older years exist as static files back further",
+  "license": {
+    "free": true,
+    "login_required": true,
+    "commercial_use_clear": true,
+    "notes": "US federal agency (HUD) data, public domain. The API requires a free account + access token at huduser.gov (same pattern as the project's existing CENSUS_API_KEY requirement for census_acs.py), not a paid tier or a commercial-use restriction."
+  },
+  "cost": "free (token-gated API, no dollar cost or documented rate limit found)",
+  "gap_addressed": "Zillow ZORI (zillow_research.py) is the only rent series in the project today, and it's ZIP-level with materially thinner coverage outside Zillow's core metros. FMR is HUD's official 40th-percentile gross-rent estimate for every US county, so it would give the gross_rent_yield metric (neighborhood.py's valuation pillar) and investment.py's rent assumptions a national fallback where Zillow ZORI is missing or thin -- useful as the project generalizes past NYC condos.",
+  "correlation": {
+    "computed": false,
+    "notes": "evaluate_series.py doesn't exist yet, so no correlation against ZORI/HPI was computed. Worth checking correlation with existing Zillow ZORI in NYC (where both exist) before relying on FMR elsewhere, since FMR targets the 40th percentile of gross rent for standard-quality units -- a deliberately different statistic than ZORI's median asking rent, so they won't track exactly even where both cover the same area."
+  },
+  "recommendation": "Reasonable candidate as a national rent-coverage backstop, but it's a fallback for gaps in Zillow ZORI rather than a clear upgrade over it where both exist -- FMR measures 40th-percentile rent for voucher-program purposes, a different (generally lower) statistic than ZORI's median asking rent, so the two aren't directly interchangeable. Recommend approving only once the project actually needs rent coverage outside Zillow's footprint (i.e. once it expands past NYC/major metros); implementing it today for NYC condos would add an adapter with little marginal value over ZORI.",
+  "verdict": "recommend_with_caveat"
+}

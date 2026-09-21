@@ -1,0 +1,24 @@
+{
+  "slug": "fema-nri",
+  "name": "FEMA National Risk Index (NRI)",
+  "url": "https://www.fema.gov/about/openfema/data-sets/national-risk-index-data",
+  "date_evaluated": "2026-09-21",
+  "coverage": "national (all US counties and census tracts)",
+  "granularity": "census tract and county (also state and tribal-area rollups)",
+  "update_frequency": "periodic full-dataset releases (roughly annual/biennial revisions), not a live feed",
+  "history": "current snapshot only -- NRI is a point-in-time composite risk score, not a time series",
+  "license": {
+    "free": true,
+    "login_required": false,
+    "commercial_use_clear": true,
+    "notes": "US federal agency (FEMA) product on OpenFEMA, public domain, direct CSV/Shapefile/File-Geodatabase downloads by state or nationally, no account needed."
+  },
+  "cost": "free, no rate limit (bulk file download)",
+  "gap_addressed": "livability.py's future_floodplain source is NYC-only (pulls a single NYC Open Data GeoJSON, dataset 27ya-gqtm, flood risk only). NRI covers all 18 natural-hazard types (flood, wildfire, hurricane, heat wave, winter weather, earthquake, etc.), for every US county and tract, which is what the project's stated 'generalizing to any US neighborhood' goal actually needs once it looks past NYC. Would slot into the same climate-risk-penalty role as future_floodplain_pct in neighborhood.py but nationally.",
+  "correlation": {
+    "computed": false,
+    "notes": "Not applicable in the usual sense -- NRI is a risk composite, not a growth/appreciation predictor, so it wouldn't be run through evaluate_series.py's HPI/ZORI correlation check the way a growth signal would. Its evaluation criterion is coverage/completeness, not predictive correlation."
+  },
+  "recommendation": "Solid candidate, but scope it correctly: it's a risk-penalty input (like the existing flood pillar), not a growth signal, so it doesn't compete with or need the correlation check the other candidates in this batch do. Recommend approving specifically as a national replacement/complement for future_floodplain_pct once the project starts covering neighborhoods outside NYC; for NYC-only usage today it's redundant with the existing, more NYC-specific flood source, so there's no urgency to implement it before the project actually expands geographically.",
+  "verdict": "recommend_with_caveat"
+}

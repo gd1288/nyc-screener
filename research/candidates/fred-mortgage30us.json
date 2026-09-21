@@ -1,0 +1,24 @@
+{
+  "slug": "fred-mortgage30us",
+  "name": "FRED MORTGAGE30US (30-Year Fixed Rate Mortgage Average, sourced from Freddie Mac PMMS)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "date_evaluated": "2026-09-21",
+  "coverage": "national (single US-wide weekly series, not geographically disaggregated)",
+  "granularity": "national only",
+  "update_frequency": "weekly",
+  "history": "back to April 1971",
+  "license": {
+    "free": true,
+    "login_required": true,
+    "commercial_use_clear": false,
+    "notes": "FRED's own API Terms of Use page repeatedly surfaces 'personal, non-commercial use' language for the free API tier, with commercial use requiring separate review/contact with the FRED team; could not fetch fred.stlouisfed.org directly to read the full clause verbatim (blocked by this environment's network egress policy). The underlying data originates from Freddie Mac's Primary Mortgage Market Survey (PMMS, freddiemac.com/pmms), whose archive states data 'may be used with proper attribution' but doesn't clearly document a bulk CSV/API endpoint or explicitly bless redistribution inside a product. Net: usable for internal reference use (e.g. a default investment.py assumption a user can already override), but NOT confirmed clean for redistributing the raw series to end users -- needs a human to actually read fred.stlouisfed.org/docs/api/terms_of_use.html (or email the FRED team) before this ships. Flagged low-confidence: not verified against the primary source."
+  },
+  "cost": "free API key (same signup pattern as CENSUS_API_KEY), 120 calls/minute limit",
+  "gap_addressed": "backend/app/scoring/investment.py's Assumptions.interest_rate defaults to a hardcoded 0.065 with no live update path -- every per-property return projection (npv, cap rate, cash flow) runs off that stale constant until a user manually overrides it. A weekly-updated national mortgage-rate series would let that default track reality without code changes.",
+  "correlation": {
+    "computed": false,
+    "notes": "Not a growth/appreciation predictor in the HPI/ZORI sense -- it's a financing-cost input to investment.py's math, not a neighborhood-scoring metric, so the usual correlation-vs-HPI check doesn't apply. Its evaluation criterion is 'does it track the actual prevailing rate,' which by construction it does (it IS the prevailing rate benchmark)."
+  },
+  "recommendation": "Real gap (the hardcoded 6.5% assumption), single cheap scalar to store, no geographic mapping problem since it's national -- low implementation cost if it clears licensing. But the license status is the one open question in this whole batch: FRED's ToS language on commercial/product use is ambiguous and I could not verify it against the primary source (egress-blocked), and Freddie Mac's own archive terms don't clearly cover programmatic redistribution either. Recommend approving conditionally: before an add-data-source pass, a human should read fred.stlouisfed.org/docs/api/terms_of_use.html directly (or email the FRED team) to confirm this project's use is covered, since the app republishes the value to users rather than keeping it purely internal.",
+  "verdict": "recommend_with_caveat"
+}

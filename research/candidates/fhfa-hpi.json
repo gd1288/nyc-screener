@@ -1,0 +1,24 @@
+{
+  "slug": "fhfa-hpi",
+  "name": "FHFA House Price Index (HPI)",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "date_evaluated": "2026-09-21",
+  "coverage": "national (all 50 states + DC, all metro areas, most counties)",
+  "granularity": "national, census division, state, MSA, county, ZIP code, and census tract (tract-level via the Expanded-Data HPI)",
+  "update_frequency": "quarterly (national/state/MSA), annual for some county/tract cuts",
+  "history": "All-Transactions index back to 1975; Purchase-Only index back to 1991",
+  "license": {
+    "free": true,
+    "login_required": false,
+    "commercial_use_clear": true,
+    "notes": "US federal agency (Federal Housing Finance Agency) statistical product, public domain (17 U.S.C. 105), no login wall, plain CSV/XLSX downloads."
+  },
+  "cost": "free, no rate limit (bulk file download, not a rate-limited API)",
+  "gap_addressed": "Project currently has no national appreciation-trend series at all -- Zillow ZHVI/ZORI (zillow_research.py) is the only value-history source and it's ZIP-level with much shorter, patchier history outside a handful of metros. FHFA HPI is also the exact benchmark the research-sources skill names for the (not-yet-built) evaluate_series.py backtest step ('FHFA tract HPI growth'), so adding it as a real source also unblocks that Phase 4 tool. Directly extends the growth-score 'valuation' pillar's price-momentum logic beyond NYC.",
+  "correlation": {
+    "computed": false,
+    "notes": "app/research/evaluate_series.py does not exist yet in this repo (Phase 4 not built), so the quantitative correlation/lead-lag step in the research-sources skill was skipped. Qualitative case: FHFA HPI purchase-only index is the standard academic/industry benchmark for MSA-level appreciation and is what backtest.py's docstring gestures at needing eventually."
+  },
+  "recommendation": "Strong candidate. Highest-confidence pick of this batch: unambiguous public-domain license, genuinely national coverage down to county/tract (unlike Zillow's ZIP-level, metro-skewed data), 50 years of history for the all-transactions series, and it directly serves a benchmark the project's own research tooling already expects to use. Implementation would be a straightforward CSV/XLSX-pull adapter in the same style as zillow_research.py -- no API key, no scraping. Caveat not yet checked (out of search budget): the HPI is built primarily from single-family repeat-sales transactions; confirm whether the purchase-only/all-transactions index actually includes condo sales before treating it as a direct comparator for this project's condo-specific scoring -- it may be better used as a regional appreciation-trend/backtest benchmark than a like-for-like condo price series. Recommend approving for an add-data-source pass, with that check as the first implementation step.",
+  "verdict": "recommend"
+}

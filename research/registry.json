@@ -1,0 +1,10 @@
+{
+  "_comment": "Dedup registry for the research-sources procedure. Read at the start of each run; skip anything listed here that was evaluated within the last 90 days.",
+  "evaluated": [
+    {"slug": "fhfa-hpi", "date": "2026-09-21", "verdict": "recommend"},
+    {"slug": "fema-nri", "date": "2026-09-21", "verdict": "recommend_with_caveat"},
+    {"slug": "hud-fmr", "date": "2026-09-21", "verdict": "recommend_with_caveat"},
+    {"slug": "bls-laus", "date": "2026-09-21", "verdict": "do_not_recommend"},
+    {"slug": "fred-mortgage30us", "date": "2026-09-21", "verdict": "recommend_with_caveat"}
+  ]
+}
