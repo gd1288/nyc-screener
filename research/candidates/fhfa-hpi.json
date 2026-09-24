@@ -1,0 +1,17 @@
+{
+  "name": "FHFA House Price Index (HPI)",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "measures": "Repeat-sales home price index tracking appreciation of properties financed with conforming mortgages. Whether the standard HPI variant includes condo transactions specifically, or only single-family, is UNVERIFIED this pass -- confirm before implementing, since that determines whether this is usable as-is for a condo screener.",
+  "coverage": "national (all US states, MSAs, and most counties)",
+  "granularity": "national / census division / state / MSA / county / ZIP / census tract (varies by index variant)",
+  "update_frequency": "quarterly (some variants monthly)",
+  "history_start": "1975 (national/state); varies by geography for MSA/county variants",
+  "license": "US federal government work (FHFA is a federal agency) -- public domain, no login wall, ASCII/CSV bulk download, no API key. NOTE: fhfa.gov was not directly reachable from this session (egress blocked), so this is from search-engine summaries of FHFA's own pages, not a direct read -- confirm before implementing.",
+  "cost": "free",
+  "auth": "none",
+  "rate_limit": "n/a (static file downloads, refreshed quarterly)",
+  "correlation_results": null,
+  "gap_addressed": "backend/app/scoring/backtest.py currently validates the Growth Score against NYC-specific appreciation data (DOF condo sales, Zillow ZHVI via zillow_research.py, which is NYC-filtered in this codebase -- df is restricted to NYC_COUNTIES even though Zillow's underlying ZHVI/ZORI data is national). FHFA HPI is not currently ingested anywhere in backend/ (verified by grep). Its real advantage over just dropping the NYC filter on the existing Zillow adapter isn't being 'the only national source' -- it's the public-domain license (no ToS ambiguity, unlike Zillow's research-data terms), the repeat-sales methodology (controls for property mix better than a median), and county/tract granularity. It's also the exact benchmark series research-sources/SKILL.md names for evaluate_series.py once that tool exists.",
+  "recommendation": "recommend",
+  "recommendation_notes": "Strongest candidate of the three: genuinely national coverage down to county/MSA, no auth, no rate limit, public-domain license with zero redistribution risk, and 50 years of quarterly history -- comfortably enough for a meaningful backtest. Its distinguishing value is licensing cleanliness and repeat-sales rigor, not being the only way to get non-NYC data (Zillow's own data is national; this codebase just filters it to NYC today). Main integration cost is picking the right index variant/geography level, confirming condo coverage in that variant, and the file format is fixed-width/ASCII rather than JSON, so the adapter needs a small parser -- ordinary work, not a blocker."
+}

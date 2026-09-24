@@ -1,0 +1,17 @@
+{
+  "name": "FRED 30-Year Fixed Rate Mortgage Average (MORTGAGE30US)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "measures": "Weekly average interest rate on 30-year fixed-rate mortgages in the US, sourced from Freddie Mac's Primary Mortgage Market Survey.",
+  "coverage": "national (single US-wide series)",
+  "granularity": "national",
+  "update_frequency": "weekly",
+  "history_start": "UNVERIFIED -- two searches this pass gave conflicting dates (1954-07-01 and 1971-04-02); confirm the actual start date from the FRED series page before implementing. Either way, decades of weekly history are available, well past what's needed for a 'current rate' use case.",
+  "license": "FRED (St. Louis Fed) terms permit personal, non-commercial, educational use freely; commercial use and redistribution of raw series as a competing data feed require additional review. Whether this specific series (Freddie Mac PMMS data, distributed via FRED) carries additional source-specific copyright beyond FRED's own terms is UNVERIFIED this pass -- fred.stlouisfed.org was not directly reachable from this session (egress blocked), so this comes from search-engine summaries, not a direct read of https://fred.stlouisfed.org/legal. Confirm before implementing.",
+  "cost": "free, no paid tier",
+  "auth": "free API key (instant self-serve registration at https://fred.stlouisfed.org/docs/api/api_key.html)",
+  "rate_limit": "not confirmed in this pass; FRED API is generally generous (documented limits apply per key, no meaningful constraint for a single weekly-refreshed series)",
+  "correlation_results": null,
+  "gap_addressed": "backend/app/scoring/investment.py hardcodes Assumptions.interest_rate = 0.065 as a static default. A live national mortgage-rate series would let the investment model use the actual current rate instead of a stale constant, improving cash-flow and return projections for every property, in every market -- directly serves the 'generalizing to any US neighborhood' goal since it's a single national series with no per-metro plumbing needed.",
+  "recommendation": "recommend_with_caveats",
+  "recommendation_notes": "High value for low integration cost: one national series, weekly cadence, feeds directly into an existing hardcoded assumption (investment.py's interest_rate default) rather than requiring new scoring logic. The catch is the ToS -- FRED's terms restrict commercial redistribution of raw series data. This project's use (reading one current value to set a default assumption, not republishing the historical series) is very likely fine under 'non-commercial/personal/educational' or ordinary application use, but a human should confirm that reading before implementing, since CLAUDE.md's licensing bar is 'no clause blocking commercial/product use' and FRED's clause is nuanced rather than a flat commercial ban. Requires a free API key, which is a new secret to manage (parallel to the existing RentCast key pattern in .env)."
+}

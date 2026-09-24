@@ -1,0 +1,17 @@
+{
+  "name": "HUD Fair Market Rents (FMR) API",
+  "url": "https://www.huduser.gov/portal/dataset/fmr-api.html",
+  "measures": "Estimated gross rent (base rent + essential utilities) by bedroom count (efficiency through 4-bedroom) for every US county/metro area, used to set Housing Choice Voucher payment standards.",
+  "coverage": "national (every US county and metro fair market rent area)",
+  "granularity": "county / metro FMR area (Small Area FMRs go to ZIP code in some metros)",
+  "update_frequency": "annual",
+  "history_start": "multi-year history available via API by fiscal year; check exact earliest year at implementation time",
+  "license": "HUD USER API Terms of Service (https://www.huduser.gov/portal/dataset/api-terms-of-service.html) -- federal government data, standard public-data terms, no clause blocking commercial/product use found in this pass; a human should still skim the ToS page before implementing since it wasn't directly fetchable in this session (egress to huduser.gov was blocked from this environment; findings here are from search-engine summaries, not a direct read of the ToS text).",
+  "cost": "free",
+  "auth": "free bearer token (self-serve registration + email confirmation at https://www.huduser.gov/hudapi/public/register)",
+  "rate_limit": "1,200 requests/minute per token (per third-party summaries; not independently confirmed by reading HUD's own docs this session)",
+  "correlation_results": null,
+  "gap_addressed": "backend/app/scoring/investment.py's PropertyInputs.neighborhood_rent is sourced from Zillow ZORI (zillow_research.py), which only has usable coverage in the larger metros Zillow tracks. HUD FMR covers every US county, so it's the natural fallback/supplement for neighborhood_rent in markets where ZORI has no data -- directly serves the 'any US neighborhood' generalization goal, and BEDROOM_RENT_FACTOR in investment.py already models bedroom-count rent scaling, which FMR's per-bedroom breakdown would let this project source directly instead of approximating.",
+  "recommendation": "recommend",
+  "recommendation_notes": "Solid complementary candidate to ZORI rather than a replacement: it's annual (coarser than ZORI's presumed monthly/frequent cadence) but has universal US county coverage, which ZORI lacks. Best framed as a fallback for neighborhood_rent when ZORI has no data for a given market, and as a natural per-bedroom rent source that avoids the estimated BEDROOM_RENT_FACTOR multiplier. Integration is straightforward (documented REST API, free token, generous rate limit) but this session could not directly read HUD's own ToS/API docs pages (egress blocked to huduser.gov) -- confirm the ToS text directly before implementing, since the assessment above is secondhand via search summaries only."
+}

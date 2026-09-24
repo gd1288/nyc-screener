@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Data source candidate",
+  "type": "object",
+  "required": ["name", "url", "coverage", "granularity", "update_frequency", "license", "cost", "recommendation"],
+  "properties": {
+    "name": { "type": "string", "description": "Short human-readable name" },
+    "url": { "type": "string", "description": "Primary docs/API URL" },
+    "measures": { "type": "string", "description": "What the series/dataset measures" },
+    "coverage": { "type": "string", "description": "Geographic scope, e.g. 'national (all US counties)' or 'NYC only'" },
+    "granularity": { "type": "string", "description": "Geographic granularity: tract/ZCTA/county/MSA/state/national" },
+    "update_frequency": { "type": "string" },
+    "history_start": { "type": "string", "description": "Earliest available date/period, if known" },
+    "license": { "type": "string", "description": "License/ToS summary, incl. any commercial-use or redistribution caveats" },
+    "cost": { "type": "string", "description": "Confirmed cost, e.g. 'free, requires free API key' " },
+    "auth": { "type": "string", "description": "Auth mechanism: none / free API key / free bearer token" },
+    "rate_limit": { "type": "string" },
+    "correlation_results": {
+      "type": ["object", "null"],
+      "description": "Output of app/research/evaluate_series.py against FHFA HPI / Zillow ZORI, if that tool exists and was run; null if not computed"
+    },
+    "gap_addressed": { "type": "string", "description": "What existing gap in the screener this would fill" },
+    "recommendation": { "type": "string", "enum": ["recommend", "recommend_with_caveats", "do_not_recommend"] },
+    "recommendation_notes": { "type": "string", "description": "One-paragraph rationale" }
+  }
+}
