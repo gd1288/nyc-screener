@@ -1,0 +1,19 @@
+{
+  "name": "BLS Local Area Unemployment Statistics (LAUS), county unemployment rate",
+  "slug": "bls-laus-county-unemployment",
+  "url": "https://www.bls.gov/lau/",
+  "api_endpoint": "https://api.bls.gov/publicAPI/v2/timeseries/data/ (POST, series IDs like LAUCN360610000000003 for New York County)",
+  "measures": "Monthly county-level unemployment rate and labor force size (not seasonally adjusted at the county level -- BLS only seasonally adjusts state-and-above).",
+  "coverage": "National -- every US county, so it fits the project's stated goal of generalizing beyond NYC. For NYC specifically: the 5 boroughs are themselves counties (New York/Kings/Queens/Bronx/Richmond, FIPS 005/047/061/081/085 -- the same county list already hardcoded in app/sources/census_acs.py), so coverage is complete but coarse (one value per borough, not per neighborhood).",
+  "granularity": "county",
+  "update_frequency": "monthly",
+  "history": "LAUS county series commonly extend back to the 1990s (varies slightly by area); comfortably enough for a 5/10-year momentum comparison.",
+  "license": "Free, US federal government work -- public domain, no restriction on commercial/product use. API v1 needs no key (capped at 25 queries/day, 10 years/request); v2 needs a free email-registered key (500 queries/day, 20 years/request). At 5 boroughs x 1 series/month this app would use v1's headroom easily, but v2 is a trivial upgrade if more series are added later.",
+  "cost": "free",
+  "rate_limits": "v1: 25 queries/day, 25 series/query, 10yr/request. v2 (free key): 500/day, 50 series/query, 20yr/request.",
+  "fits_existing_source_kind": "neighborhood",
+  "correlation": "Not computed -- app/research/evaluate_series.py (Phase 4) does not exist yet in this repo. Should be checked once available: labor-market strength is a plausible but unproven leading indicator here relative to the demographics pillar's existing income_cagr_10y (ACS, annual, lagged) and momentum pillar's zhvi/zori CAGRs.",
+  "existing_overlap": "Partial, at the concept level. The demographics pillar (backend/app/scoring/neighborhood.py) already has income_cagr_10y from Census ACS, which moves slowly (5-year rolling estimates, released annually). This would be a faster-moving, monthly complement -- not a duplicate -- but the borough-level granularity is much coarser than every other metric in that pillar, which is tract-derived and rolled up to ~195 individual NTAs. Every NTA within a borough would carry the identical value.",
+  "recommendation": "recommend-with-caveats",
+  "recommendation_notes": "Real signal, real gap (nothing in this codebase currently tracks employment), and trivially free/public-domain -- but the granularity mismatch is a genuine weakness for NYC: one number shared across ~40 NTAs per borough dilutes it next to metrics resolved at the individual-neighborhood level, and it would likely contribute little to a Growth Score that already differentiates within a borough via development/transit/demographics pillars. It's a notably better fit for the project's stated 'generalizing to any US neighborhood' goal, where county-level IS the natural resolution in many non-NYC markets (a small city or suburb may not have anything like NTAs). Recommend holding this until the area-model migration mentioned in backend/CLAUDE.md ('today: all NYC neighborhoods; after the area-model migration: the area's CBSA') lands, at which point county-level BLS data becomes a first-class fit rather than a diluted one; re-evaluate with evaluate_series.py once it exists to see if the monthly cadence actually earns its coefficient over ACS income growth."
+}
