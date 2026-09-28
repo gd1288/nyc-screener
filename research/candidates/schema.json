@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data source candidate",
+  "description": "One proposed free data source for the screener, written by the research-sources skill. Purely descriptive/evaluative — never implemented from here.",
+  "type": "object",
+  "required": ["name", "url", "measures", "coverage", "granularity", "update_frequency", "history", "license", "cost", "recommendation"],
+  "properties": {
+    "name": { "type": "string", "description": "Short human name, e.g. 'FRED 30-Year Fixed Mortgage Rate'" },
+    "slug": { "type": "string", "description": "Filename slug, matches research/candidates/<slug>.json and the memo" },
+    "url": { "type": "string", "description": "Canonical docs/landing page for the dataset or API" },
+    "api_endpoint": { "type": "string", "description": "The actual data endpoint, if different from url" },
+    "measures": { "type": "string", "description": "What the series/dataset measures" },
+    "coverage": { "type": "string", "description": "Geographic scope: national / state / a named metro or county list / NYC-specific" },
+    "granularity": { "type": "string", "description": "national | state | county | tract | zcta | msa | point, etc." },
+    "update_frequency": { "type": "string" },
+    "history": { "type": "string", "description": "How far back data goes, and whether that's enough for backtest.py to mean anything" },
+    "license": { "type": "string", "description": "Cost, login/registration requirement, ToS restrictions on commercial/product use" },
+    "cost": { "type": "string" },
+    "rate_limits": { "type": "string" },
+    "fits_existing_source_kind": {
+      "type": "string",
+      "enum": ["boundaries", "neighborhood", "sales", "listings", "sold_check", "none - needs new kind"],
+      "description": "Which app.sources.base.Source.kind this would use, per backend/CLAUDE.md; 'none' flags an architecture gap"
+    },
+    "correlation": {
+      "type": ["object", "string"],
+      "description": "Output of app/research/evaluate_series.py against FHFA tract HPI growth and Zillow ZORI, if that tool exists yet; otherwise a note that it wasn't run and why"
+    },
+    "existing_overlap": { "type": "string", "description": "What's already covered in backend/sources.yaml / app/sources/ that this would duplicate, if anything" },
+    "recommendation": { "type": "string", "enum": ["recommend", "recommend-with-caveats", "do-not-recommend"] },
+    "recommendation_notes": { "type": "string" }
+  }
+}
