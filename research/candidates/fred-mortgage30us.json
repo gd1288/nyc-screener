@@ -1,0 +1,19 @@
+{
+  "slug": "fred-mortgage30us",
+  "name": "FRED MORTGAGE30US (Freddie Mac Primary Mortgage Market Survey, 30-Year Fixed Rate)",
+  "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=MORTGAGE30US",
+  "measures": "US average 30-year fixed-rate mortgage rate, as published weekly by Freddie Mac PMMS and mirrored by FRED.",
+  "coverage": "national",
+  "granularity": "national (single series, no geographic breakdown)",
+  "update_frequency": "weekly (Thursdays)",
+  "history": "1971-present",
+  "license": "FRED data is public domain / freely redistributable for an underlying series like this one (St. Louis Fed's terms of use permit free use with attribution); the series itself originates from Freddie Mac PMMS, which FRED republishes under an open license. No login or API key needed for the CSV endpoint.",
+  "cost": "Free. No rate limit on the plain CSV endpoint (fredgraph.csv); only the full FRED API requires a free key, and only for other request types this project wouldn't use.",
+  "requires_login": false,
+  "verified": "search_only",
+  "verification_note": "fred.stlouisfed.org is egress-blocked by this sandbox's network policy (confirmed via both WebFetch and a direct curl through the session's HTTPS proxy, which returned a 403 CONNECT rejection). The URL, format, free-no-key access, and 1971-present history are corroborated by multiple independent search results (FRED's own CSV-gateway documentation and third-party write-ups that all point at the same official fredgraph.csv endpoint), not a live fetch this session. census_acs already reaches an external .gov-adjacent host in production, so this is a sandbox restriction, not evidence the source itself is unreachable in the app's actual runtime.",
+  "existing_overlap": "None. backend/app/scoring/investment.py:21 currently hardcodes `interest_rate: float = 0.065` as a fixed assumption used in every mortgage/cash-flow projection (investment.py:142,184). No source in sources.yaml supplies a market rate today.",
+  "correlation": null,
+  "recommend": true,
+  "recommendation": "Recommend. This is the one candidate with a concrete, already-identified consumer in the codebase: the investment engine's interest-rate assumption is currently a hardcoded constant, not a live figure, so every return projection is anchored to a rate that will drift stale. MORTGAGE30US is a single national value (not a per-neighborhood metric), so it isn't a 'growth predictor' to correlate against FHFA HPI/ZORI the way a neighborhood-level candidate would be -- it's an investment-assumption input, and should be evaluated on that basis rather than against the Phase 4 correlation bar. It's free, weekly, no key, 55 years of history, and about as low-risk an ingest as exists (one national scalar, no geocoding, no entity matching). Recommended next step if approved: a small adapter that fetches the latest value and perhaps a trailing series into a new global-assumptions table, used to default (not hardcode) `Assumptions.interest_rate`."
+}

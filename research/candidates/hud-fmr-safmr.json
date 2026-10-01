@@ -1,0 +1,19 @@
+{
+  "slug": "hud-fmr-safmr",
+  "name": "HUD Fair Market Rents / Small Area FMRs (SAFMR)",
+  "url": "https://www.huduser.gov/portal/datasets/fmr.html",
+  "measures": "HUD's administratively-set 'fair market rent' used to set Section 8 payment standards, published by county/metro (FMR) and, where designated, by individual ZIP code (Small Area FMR).",
+  "coverage": "national",
+  "granularity": "ZIP (Small Area FMR, in SAFMR-designated metros) / county / metro (standard FMR everywhere else)",
+  "update_frequency": "annual (fiscal year)",
+  "history": "bulk history files published back to 1983 per HUD's own dataset page",
+  "license": "US federal / public domain data, listed as free to download with no signup for the bulk Excel/CSV/ZIP files on huduser.gov/portal/datasets/fmr.html.",
+  "cost": "Free for the bulk download files (no login). Note: search results also surfaced a separate HUD FMR/Income Limits REST API (huduser.gov/hudapi/public/fmr) that does require a free API token -- that's a different access path from the no-login bulk files and this project should use the bulk files, consistent with the 'prefer bulk downloads over API-key services' preference in this skill's procedure.",
+  "requires_login": false,
+  "verified": "search_only",
+  "verification_note": "huduser.gov is egress-blocked by this sandbox's network policy; could not fetch the datasets page or confirm the exact current-fiscal-year file URL. Corroborated via search results referencing HUD's own dataset page and its documented 1983-present bulk history.",
+  "existing_overlap": "Partial. backend/app/sources/zillow_research.py's ZillowResearch source already ingests Zillow ZORI (observed asking rents) at ZIP level, currently filtered to NYC counties. FMR/SAFMR is a different kind of number (an administratively-set benchmark rent for housing-voucher purposes, not an observed-market rent) and, more importantly, has guaranteed ZIP coverage for essentially every US ZIP code every year, whereas ZORI only publishes for ZIPs with enough listing volume -- smaller and mid-size markets are often missing from ZORI entirely.",
+  "correlation": null,
+  "recommend": "conditional",
+  "recommendation": "Conditional -- not needed for NYC today since ZORI already has solid ZIP coverage there, but worth adding once the project scores smaller non-NYC metros where ZORI's listing-volume threshold leaves gaps. FMR/SAFMR's appeal is coverage completeness and long stable history, not predictive power (it's a regulatory benchmark, updated annually, so it will lag and smooth relative to market rents) -- it would function best as a fallback/backstop for rent estimates in markets ZORI doesn't reach, not as a replacement for ZORI where both exist. Hold until a non-NYC market is actually being onboarded."
+}

@@ -1,0 +1,19 @@
+{
+  "slug": "bls-laus-unemployment",
+  "name": "BLS Local Area Unemployment Statistics (LAUS) — county/metro unemployment rate and labor force",
+  "url": "https://download.bls.gov/pub/time.series/la/",
+  "measures": "Monthly unemployment rate, labor force, employment, and unemployment counts for ~7,500 areas: states, metropolitan areas, counties, and some sub-county cities.",
+  "coverage": "national",
+  "granularity": "county / metropolitan statistical area (not tract or ZIP)",
+  "update_frequency": "monthly",
+  "history": "flat files are split by decade; combined coverage runs from the 1990s to present (exact earliest year not confirmed this run)",
+  "license": "US federal statistical data, public domain, no restriction on reuse.",
+  "cost": "Free. The flat files under download.bls.gov/pub/time.series/la/ require no API key or login (direct file download, not an API call). The BLS Public Data API also exists for programmatic series lookup but needs a free registration key above a low daily query threshold -- the flat files avoid that entirely.",
+  "requires_login": false,
+  "verified": "search_only",
+  "verification_note": "download.bls.gov is egress-blocked by this sandbox's network policy; could not fetch the directory listing or confirm the current file-naming scheme (older write-ups reference files split by 5-year ranges like la.data.0.CurrentU90-94 that may since have been reorganized). Everything here is corroborated by search snippets and BLS's own documented LAUS methodology, not a live fetch.",
+  "existing_overlap": "None directly. The screener has no employment/labor-market source today.",
+  "correlation": null,
+  "recommend": "conditional",
+  "recommendation": "Conditional -- not recommended as an immediate NYC priority, but worth revisiting once the screener generalizes past NYC. At county granularity, NYC collapses to 5 boroughs, so this would add at most 5 distinct values citywide; it can't discriminate between NTAs the way the screener's other neighborhood-growth signals do, and a 5-point series isn't meaningful input to the per-neighborhood Growth Score. Its real value is as a nationwide demand-side signal (employment growth drives housing demand) once the project scores non-NYC metros, where county-level unemployment is a standard and well-validated input. Don't implement now; keep in the backlog for the US-generalization phase, and prefer pairing it with a metro that actually has sub-county variation worth modeling."
+}
