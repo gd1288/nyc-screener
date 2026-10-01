@@ -1,0 +1,19 @@
+{
+  "slug": "census-bps-permits",
+  "name": "Census Bureau Building Permits Survey (BPS) — county/CBSA new residential permits",
+  "url": "https://www.census.gov/construction/bps/",
+  "measures": "Count of new privately-owned residential building permits authorized, by number of units in structure, at state/CBSA/county/place level.",
+  "coverage": "national",
+  "granularity": "county / CBSA (metro) / place",
+  "update_frequency": "monthly, with an annual cumulative release",
+  "history": "county/place-level files back to 1980 per Census's own description; monthly files further back at coarser geography",
+  "license": "US federal statistical data, public domain.",
+  "cost": "Free, ASCII/comma-delimited files, no key or login.",
+  "requires_login": false,
+  "verified": "search_only",
+  "verification_note": "census.gov is egress-blocked by this sandbox's network policy; could not fetch the actual file index or confirm current file paths. Corroborated via search results pointing at Census's own census.gov/permits page and its documented ASCII file offerings by state/CBSA/county/place.",
+  "existing_overlap": "Significant for NYC specifically: backend/app/sources/development.py's HousingDatabase source already ingests NYC DCP's Housing Database (completed units by year, filed/approved/permitted pipeline) at 2020-NTA granularity -- finer than county/CBSA, and NYC-specific. For NYC, BPS at county level would only reproduce a coarser (5-borough) version of a signal the screener already has at neighborhood grain.",
+  "correlation": null,
+  "recommend": false,
+  "recommendation": "Don't recommend for now. The gap this would fill -- new-construction/supply signal -- is already covered for NYC, and covered better, by the existing HousingDatabase source at NTA granularity; adding BPS today would be a strictly coarser duplicate for the project's only currently-scored market. Its only genuine value is as the supply-side counterpart to BLS LAUS for non-NYC metros once the project generalizes nationally (BPS is the standard source other screeners use for that). Revisit alongside BLS LAUS when a second metro is being onboarded, not before."
+}

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Data source research candidate",
+  "description": "One evaluated candidate from the research-sources procedure (see .claude/skills/research-sources/SKILL.md). Written to research/candidates/<slug>.json.",
+  "type": "object",
+  "required": [
+    "slug",
+    "name",
+    "url",
+    "coverage",
+    "granularity",
+    "update_frequency",
+    "history",
+    "license",
+    "cost",
+    "verified",
+    "correlation",
+    "recommend",
+    "recommendation",
+    "evaluated_at",
+    "evaluated_by"
+  ],
+  "properties": {
+    "slug": {
+      "type": "string",
+      "description": "Filename-safe identifier, matches the JSON filename and the memo slug."
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable dataset name."
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Canonical, official (non-third-party-mirror) URL for the dataset or API."
+    },
+    "measures": {
+      "type": "string",
+      "description": "What the series actually measures, in one sentence."
+    },
+    "coverage": {
+      "type": "string",
+      "enum": ["national", "nyc_only", "regional"],
+      "description": "Geographic scope. 'national' is preferred per the project's US-wide goal."
+    },
+    "granularity": {
+      "type": "string",
+      "description": "Finest geographic unit available, e.g. 'tract', 'zcta', 'county', 'cbsa/metro', 'state', 'national'."
+    },
+    "update_frequency": {
+      "type": "string",
+      "description": "e.g. 'weekly', 'monthly', 'quarterly', 'annual'."
+    },
+    "history": {
+      "type": "string",
+      "description": "How far back the series goes, e.g. '1971-present'."
+    },
+    "license": {
+      "type": "string",
+      "description": "License / terms of use, and whether there's any login wall or commercial-use restriction."
+    },
+    "cost": {
+      "type": "string",
+      "description": "Confirmation of free access and any rate limit."
+    },
+    "requires_login": {
+      "type": "boolean"
+    },
+    "verified": {
+      "type": "string",
+      "enum": ["fetched", "search_only", "unverified"],
+      "description": "How the above fields were confirmed this run. 'fetched' = a live request succeeded against the official domain this session. 'search_only' = corroborated only via web search snippets/official docs pages, no live fetch (e.g. the domain was egress-blocked in this sandbox). 'unverified' = could not be confirmed at all."
+    },
+    "verification_note": {
+      "type": "string",
+      "description": "Free-text caveat, e.g. naming which domain was egress-blocked and why that's a sandbox policy, not a property of the source."
+    },
+    "existing_overlap": {
+      "type": "string",
+      "description": "Any existing source in backend/sources.yaml that already covers similar ground, and how this candidate differs."
+    },
+    "correlation": {
+      "type": ["object", "null"],
+      "description": "Output of app/research/evaluate_series.py against FHFA tract HPI growth / Zillow ZORI, if that tool exists and was run. null if the tool doesn't exist yet (Phase 4 not built) or doesn't apply (e.g. a single national series that can't be correlated against per-neighborhood ranking)."
+    },
+    "recommend": {
+      "type": ["boolean", "string"],
+      "description": "true, false, or 'conditional' (worth adding later / under a specific condition, not now)."
+    },
+    "recommendation": {
+      "type": "string",
+      "description": "One-paragraph recommend/don't-recommend writeup."
+    },
+    "evaluated_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "evaluated_by": {
+      "type": "string"
+    }
+  }
+}
