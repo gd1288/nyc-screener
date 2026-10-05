@@ -1,0 +1,24 @@
+{
+  "slug": "fred-mortgage30us",
+  "name": "FRED: 30-Year Fixed Rate Mortgage Average in the United States (MORTGAGE30US)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "proposed_use": "Replace the hardcoded `interest_rate: float = 0.065` default in backend/app/scoring/investment.py's Assumptions dataclass with a live national rate, refreshed on a schedule instead of going stale as rates move. Not a per-neighborhood metric — a single national macro input shared across all properties.",
+  "coverage": "national (single series, not geography-sliced)",
+  "granularity": "national",
+  "update_frequency": "weekly (as of Thursday)",
+  "history_start": "1971-04-02",
+  "license": "Public domain: data sourced from Freddie Mac's Primary Mortgage Market Survey and redistributed by the St. Louis Fed under FRED's terms of use, which explicitly permit commercial/product reuse with attribution. No login wall for a human browsing the page; API access needs a free registered key.",
+  "cost": "Free, no paid tier exists for this series.",
+  "api_key_required": true,
+  "api_key_notes": "Free key via https://fredaccount.stlouisfed.org/apikeys, same pattern this repo already uses for census_api_key (CensusAcs) and the RentCast key — add as a new `requires: [fred_api_key]` setting, not a new kind of credential-handling.",
+  "rate_limit": "FRED's general API rate limit (120 requests/minute) is far above what a weekly single-series pull needs.",
+  "evaluated_date": "2026-10-05",
+  "correlation": null,
+  "recommendation": "Strong recommend. This directly patches an identified gap: investment.py currently hardcodes the mortgage rate assumption as a constant (0.065) that the code comments flag as reviewable but that never updates. A weekly pull of MORTGAGE30US is a single time series, trivial to ingest (one HTTP call, no geo-joins), has 50+ years of history, and the same free-API-key pattern is already established in this codebase for Census and RentCast. It doesn't become a NeighborhoodMetric — it would need a new small 'global assumption' concept (e.g. a one-row config table or a settings-like cache) rather than fitting the existing `kind: neighborhood` adapter contract as-is, which the add-data-source skill should account for.",
+  "recommend": true,
+  "sources_checked": [
+    "https://fred.stlouisfed.org/series/MORTGAGE30US",
+    "https://fred.stlouisfed.org/docs/api/fred/",
+    "https://fredaccount.stlouisfed.org/apikeys"
+  ]
+}

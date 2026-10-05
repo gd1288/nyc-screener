@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data source research candidate",
+  "description": "One evaluated candidate from the research-sources procedure. Proposal only — never implies the source has been wired into app/sources/.",
+  "type": "object",
+  "required": [
+    "slug", "name", "url", "proposed_use", "coverage", "granularity",
+    "update_frequency", "history_start", "license", "cost", "api_key_required",
+    "evaluated_date", "correlation", "recommendation", "recommend"
+  ],
+  "properties": {
+    "slug": { "type": "string", "description": "Matches the candidate's filename stem and its memo's slug." },
+    "name": { "type": "string" },
+    "url": { "type": "string", "format": "uri", "description": "Primary docs/download page, not a deep API endpoint." },
+    "proposed_use": { "type": "string", "description": "What in this codebase it would feed (a metric, an assumption default, a new pillar, etc)." },
+    "coverage": { "type": "string", "description": "Geographic extent, e.g. 'national', 'national (counties)', 'NYC only'." },
+    "granularity": { "type": "string", "description": "Smallest geography the series is published at, e.g. county, CBSA/MSA, ZCTA, tract." },
+    "update_frequency": { "type": "string" },
+    "history_start": { "type": "string", "description": "Earliest date/year of available history, or null if point-in-time only." },
+    "license": { "type": "string", "description": "Public domain / ToS summary; must note any clause restricting commercial or product use." },
+    "cost": { "type": "string", "description": "Must confirm genuinely free, not a trial, and note any rate limit." },
+    "api_key_required": { "type": "boolean" },
+    "api_key_notes": { "type": "string" },
+    "rate_limit": { "type": "string" },
+    "evaluated_date": { "type": "string", "format": "date" },
+    "correlation": {
+      "type": ["object", "null"],
+      "description": "Quantitative evaluation against FHFA HPI growth / Zillow ZORI via app/research/evaluate_series.py. Null when that tool doesn't exist yet — evaluation is then qualitative only, and the memo must say so plainly.",
+      "properties": {
+        "method": { "type": "string" },
+        "results": { "type": "string" }
+      }
+    },
+    "recommendation": { "type": "string", "description": "One-paragraph recommendation." },
+    "recommend": { "type": "boolean" },
+    "sources_checked": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" }
+    }
+  }
+}
