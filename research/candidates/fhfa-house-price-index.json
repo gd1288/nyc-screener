@@ -1,0 +1,24 @@
+{
+  "slug": "fhfa-house-price-index",
+  "name": "FHFA House Price Index (HPI) — state/MSA quarterly, county annual",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "proposed_use": "A second, independent national appreciation series to cross-check and extend Zillow ZHVI (zillow_research.py) — especially valuable once the screener generalizes past NYC, since Zillow's condo-tier ZHVI thins out in smaller metros while FHFA HPI covers every state and most MSAs/counties. Also a natural ground-truth series for backtest.py and for the 'FHFA tract HPI growth' benchmark the research-sources skill itself names as an evaluation target.",
+  "coverage": "national (all states; most MSAs; counties via the annual 'Developmental Index')",
+  "granularity": "state and MSA quarterly; county annual (not tract — the skill's mention of 'tract HPI' is aspirational/inaccurate, FHFA's finest published geography is county)",
+  "update_frequency": "quarterly (state/MSA); annual (county)",
+  "history_start": "1975 (state); varies by MSA/county, many back to the 1980s-90s",
+  "license": "US government work, public domain. Master CSV is openly downloadable with no API key and no login.",
+  "cost": "Free, no key, no rate limit beyond ordinary fair-use HTTP fetching of a static file.",
+  "api_key_required": false,
+  "api_key_notes": "None needed — simplest ingestion of any candidate here, just a scheduled CSV pull.",
+  "rate_limit": "None published; it's a static file download.",
+  "evaluated_date": "2026-10-05",
+  "correlation": null,
+  "recommendation": "Strong recommend, and the easiest to ship of the four candidates here: zero credentials, zero rate-limit logic, a single master CSV (https://www.fhfa.gov/hpi/download/monthly/hpi_master.csv per FHFA's datasets page). The catch is geographic granularity — county-level is annual only, not quarterly, so it complements rather than replaces Zillow ZHVI's monthly ZIP-level series for NYC itself. Its real value is generalization: when this screener is pointed at a metro where Zillow's condo-tier series is thin or absent, FHFA HPI is the one series guaranteed to exist for that county. Worth implementing specifically to de-risk the multi-market expansion, not to improve NYC accuracy.",
+  "recommend": true,
+  "sources_checked": [
+    "https://www.fhfa.gov/data/hpi/datasets",
+    "https://www.fhfa.gov/data/hpi/summary-tables",
+    "https://catalog.data.gov/dataset/fhfa-house-price-indexes-hpis"
+  ]
+}

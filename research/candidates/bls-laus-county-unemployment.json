@@ -1,0 +1,24 @@
+{
+  "slug": "bls-laus-county-unemployment",
+  "name": "BLS Local Area Unemployment Statistics (LAUS) — county unemployment rate",
+  "url": "https://www.bls.gov/lau/",
+  "proposed_use": "A new local-economic-health signal for the Growth Score — currently nothing in neighborhood.py tracks employment/labor-market trend, only Census ACS's slower-moving demographic/income snapshot (every ~5-10yr comparison). County-level unemployment trend would add a monthly-cadence leading indicator.",
+  "coverage": "national — 7,500+ areas including every county/county-equivalent",
+  "granularity": "county (plus state, metro, and sub-state city/town)",
+  "update_frequency": "monthly, not seasonally adjusted at the county level (only state-and-above gets seasonal adjustment)",
+  "history_start": "varies by area, generally 1990-present for county series",
+  "license": "US government work, public domain, no commercial-use restriction.",
+  "cost": "Free. Bulk flat files (e.g. bls.gov/lau/laucnty24.xlsx) need no key. The BLS Public Data API v2 needs a free registered key for the higher daily query quota (500 queries/day and up to 50 series per request vs. 25/day unkeyed).",
+  "api_key_required": true,
+  "api_key_notes": "Registration at https://data.bls.gov/registrationEngine/ is free and immediate, same pattern as the other keyed sources already in this repo. A new bls_api_key setting would be needed.",
+  "rate_limit": "25 queries/day without a key; 500/day with one. A single monthly refresh across ~3,000 counties would need batching (the API allows up to 50 series per request), so a full county sweep takes multiple calls spread over the scheduled run — worth noting as the main implementation cost, not a blocker.",
+  "evaluated_date": "2026-10-05",
+  "correlation": null,
+  "recommendation": "Moderate recommend — weakest of the four candidates here, not because the data is bad but because the signal's marginal value over what's already tracked is less certain, and not seasonally adjusting county-level series means the pipeline would need its own 12-month rolling-average smoothing before this is usable as a trend input (raw month-over-month swings are mostly seasonal noise, not signal). Worth a smaller follow-up: before implementing, run it through app/research/evaluate_series.py (once built) against FHFA HPI growth/Zillow ZORI to confirm it actually leads or correlates with appreciation before spending the batching/smoothing effort — this is exactly the kind of 'sounds useful, unproven' candidate the procedure says to flag rather than talk up.",
+  "recommend": true,
+  "sources_checked": [
+    "https://www.bls.gov/lau/",
+    "https://www.bls.gov/lau/lauov.htm",
+    "https://www.bls.gov/developers/api_signature_v2.htm"
+  ]
+}

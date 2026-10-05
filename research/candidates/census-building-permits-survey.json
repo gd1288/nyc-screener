@@ -1,0 +1,24 @@
+{
+  "slug": "census-building-permits-survey",
+  "name": "Census Bureau Building Permits Survey (BPS)",
+  "url": "https://www.census.gov/construction/bps/",
+  "proposed_use": "National generalization of the 'development' growth-score pillar currently fed by NYC DOB-specific data in app/sources/development.py (HousingDatabase, Rezonings — both scoped to NYC's own permit/filing systems). New-unit permit counts by county/place would give any US metro a supply-pipeline signal for the Growth Score without depending on a city having its own open-data portal for development filings.",
+  "coverage": "national — every US county and permit-issuing place",
+  "granularity": "county and permit-issuing place (sub-county); also state and CBSA roll-ups",
+  "update_frequency": "monthly, with annual county-level files",
+  "history_start": "detailed county/place files 2019-present on the current site; state/MSA text files back to 1995",
+  "license": "US government work, public domain. No ToS restriction on commercial/product use.",
+  "cost": "Free. Direct CSV/Excel downloads need no key; the Census Bureau's general API (for programmatic pulls) needs a free key, same pattern as census_api_key already used by CensusAcs.",
+  "api_key_required": false,
+  "api_key_notes": "Bulk CSV downloads (census.gov/construction/bps) need no key at all. A key is only needed if pulling through the generic data.census.gov API instead of the BPS site's own flat files — this repo's census_api_key would cover that path too if preferred.",
+  "rate_limit": "None published for the flat-file downloads.",
+  "evaluated_date": "2026-10-05",
+  "correlation": null,
+  "recommendation": "Recommend, with a scoping caveat. Genuinely free, national, no new credential type, and it fills a real gap: right now 'development momentum' only exists for NYC because HousingDatabase/Rezonings are built against NYC-specific DOB/DCP open-data endpoints. BPS permit counts are a weaker, coarser proxy for the same idea (raw new-unit permits vs. NYC's richer filing-status/rezoning detail) but they're the only version of this signal available everywhere. Implement this as the generic/national fallback development signal, not a replacement for the NYC-specific sources, which should stay as the higher-fidelity path when available.",
+  "recommend": true,
+  "sources_checked": [
+    "https://www.census.gov/construction/bps/",
+    "https://www.census.gov/library/stories/2023/05/building-permit-tool.html",
+    "https://www.census.gov/data/developers.html"
+  ]
+}
