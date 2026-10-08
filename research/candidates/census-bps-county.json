@@ -1,0 +1,26 @@
+{
+  "slug": "census-bps-county",
+  "name": "Census Bureau Building Permits Survey (BPS) — county-level new housing permits",
+  "url": "https://www.census.gov/construction/bps/",
+  "measures": "Number and valuation of new privately-owned housing units authorized by building permits, by permitting jurisdiction.",
+  "coverage": "national (collects from ~20,000 local permitting jurisdictions)",
+  "granularity": "county-level files exist, but only a subset of jurisdictions (roughly half) are surveyed monthly — the rest report annually — so a county-monthly series has real gaps; clean county-level time series are built from the annual files, not the monthly ones",
+  "update_frequency": "monthly (preliminary ~12th workday, revised ~18th workday) for the subset surveyed monthly; annual for the rest, with final annual data published the following May",
+  "history": "county-level annual files available for many years; monthly county coverage is partial",
+  "cost": "free",
+  "access": {
+    "api_key_required": "unclear — the national/regional/state series is exposed via the Census timeseries API (api.census.gov/data/timeseries/eits/bps), but county-level geography was not confirmed to be available through that same API in this research pass",
+    "login_required": false,
+    "method": "county-level files are published as downloadable ASCII/comma-delimited files on census.gov/construction/bps; the FAQ directs people to call or email the Census Residential Construction Branch for some geography/format combinations, which suggests the clean self-serve path isn't fully documented"
+  },
+  "license": "US federal government work; public domain by default, no login or paid tier found.",
+  "fits_gap": "Would be a national analog to the NYC-only Housing Database / rezonings sources backing the 'development' pillar (pipeline_units_pct, new_units_5y_pct in neighborhood.py), which is needed for the stated US-wide generalization goal.",
+  "correlation": {
+    "computed": false,
+    "note": "Not evaluated quantitatively; app/research/evaluate_series.py doesn't exist yet.",
+    "results": null
+  },
+  "recommendation": "weak",
+  "recommendation_rationale": "The underlying idea (a national permits series for the development pillar) is sound and the data is free and public-domain, but this research pass could not confirm a clean, documented, no-key programmatic path to county-level monthly data — the authoritative county files appear to require pulling annual ASCII/CSV releases (with real monthly-coverage gaps) rather than a tidy API call. Worth a second, deeper look specifically at whether api.census.gov's timeseries/eits/bps endpoint (or the County Business Patterns / SOCDS mirrors) exposes county geography before committing engineering time — don't implement on the strength of this pass alone.",
+  "evaluated_date": "2026-10-08"
+}

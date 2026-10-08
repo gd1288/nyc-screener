@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data source candidate",
+  "description": "One evaluated candidate from the research-sources skill. One file per candidate at research/candidates/<slug>.json.",
+  "type": "object",
+  "required": [
+    "slug", "name", "url", "measures", "coverage", "granularity",
+    "update_frequency", "history", "cost", "access", "license",
+    "fits_gap", "correlation", "recommendation", "recommendation_rationale",
+    "evaluated_date"
+  ],
+  "properties": {
+    "slug": {"type": "string", "description": "Matches the filename stem and the memo filename stem."},
+    "name": {"type": "string"},
+    "url": {"type": "string", "format": "uri"},
+    "measures": {"type": "string", "description": "What the series/dataset measures."},
+    "coverage": {"type": "string", "description": "Geographic coverage, e.g. 'national', 'nyc-only'."},
+    "granularity": {"type": "string", "description": "e.g. tract, zcta, county, msa/cbsa, national."},
+    "update_frequency": {"type": "string"},
+    "history": {"type": "string", "description": "How far back usable history goes."},
+    "cost": {"type": "string", "description": "Confirmed free/paid, and any rate limit."},
+    "access": {
+      "type": "object",
+      "properties": {
+        "api_key_required": {"type": "boolean"},
+        "login_required": {"type": "boolean"},
+        "method": {"type": "string", "description": "e.g. bulk CSV download, REST API, manual request."}
+      }
+    },
+    "license": {"type": "string", "description": "License/ToS summary, including any restriction on commercial/product use."},
+    "fits_gap": {"type": "string", "description": "What existing gap in sources.yaml / scoring this would fill, and where it would plug in."},
+    "correlation": {
+      "type": ["object", "null"],
+      "description": "Quantitative evaluation against FHFA tract HPI growth / Zillow ZORI, once app/research/evaluate_series.py exists. Null with a note until then.",
+      "properties": {
+        "computed": {"type": "boolean"},
+        "note": {"type": "string"},
+        "results": {"type": ["object", "null"]}
+      }
+    },
+    "recommendation": {"type": "string", "enum": ["recommend", "weak", "not_recommended"]},
+    "recommendation_rationale": {"type": "string"},
+    "evaluated_date": {"type": "string", "format": "date"}
+  }
+}

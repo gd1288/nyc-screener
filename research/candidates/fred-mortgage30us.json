@@ -1,0 +1,26 @@
+{
+  "slug": "fred-mortgage30us",
+  "name": "FRED series MORTGAGE30US — Freddie Mac 30-Year Fixed Rate Mortgage Average (PMMS)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "measures": "Weekly average 30-year fixed-rate conforming mortgage rate, US national, from Freddie Mac's Primary Mortgage Market Survey, republished on FRED.",
+  "coverage": "national",
+  "granularity": "national (single series, not geographically disaggregated)",
+  "update_frequency": "weekly (Thursdays)",
+  "history": "back to 1971",
+  "cost": "free; FRED's own API needs a free registered key (one request/sec soft rate limit), but the plain graph CSV endpoint (fredgraph.csv?id=MORTGAGE30US) returns the series without any key or login",
+  "access": {
+    "api_key_required": false,
+    "login_required": false,
+    "method": "bulk CSV download via fredgraph.csv (no key); FRED's full REST API is also available with a free key for more flexible querying"
+  },
+  "license": "FRED republishes this with Freddie Mac's permission; FRED pages carry 'Copyright Freddie Mac. Reprinted with permission.' Freddie Mac's Content Use Policy grants a limited, non-exclusive, non-transferable, royalty-free license to show automatically-updated PMMS data, but separately prohibits selling/republishing Freddie Mac *content* generally and bars use of the Freddie Mac name/logo in commercial promotion without consent. Using the rate as one numeric input into our own amortization calculation (not redisplaying their chart or dataset as a product) is the common, low-risk use pattern every mortgage calculator on the web relies on; cite 'Freddie Mac, 30-Year FRM via FRED' near the figure rather than branding it as our own data product.",
+  "fits_gap": "backend/app/scoring/investment.py:21 hardcodes Assumptions.interest_rate = 0.065 with no path to a current market rate. This series would replace that default with an actual, auto-updating national rate, used identically for every property (it is not a per-neighborhood scoring metric, so it does not enter neighborhood.py's percentile machinery).",
+  "correlation": {
+    "computed": false,
+    "note": "Not a neighborhood metric, so the Growth Score backtest (FHFA HPI / ZORI correlation) doesn't apply. The relevant check is a sanity comparison against investment.py's existing hardcoded 0.065 and a couple of known historical weekly values — not built, app/research/evaluate_series.py does not exist yet.",
+    "results": null
+  },
+  "recommendation": "recommend",
+  "recommendation_rationale": "Directly replaces a hardcoded placeholder with a real, free, no-key, weekly-updated national series with 50+ years of history. The one open item is the Freddie Mac content-use caveat above; worth a quick confirmation from whoever implements this that 'calculation input, not redistribution' is an acceptable reading before shipping, but it should not block adding the adapter.",
+  "evaluated_date": "2026-10-08"
+}

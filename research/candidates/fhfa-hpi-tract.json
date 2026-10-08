@@ -1,0 +1,26 @@
+{
+  "slug": "fhfa-hpi-tract",
+  "name": "FHFA House Price Index — tract-level Developmental Index and county/metro All-Transactions Index",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "measures": "Repeat-sales/repeat-transactions house price index. Several products at different geographies: the quarterly/annual county and MSA 'All-Transactions' indexes (purchase + refi appraisals), and an annual tract-level 'Developmental Index' (hpi_at_bdl_tract.csv, 2020 Census tract boundaries) built with the same repeat-transactions methodology.",
+  "coverage": "national (all US counties/MSAs; tract-level covers tracts with enough repeat-sales volume, so sparse-transaction tracts may be missing)",
+  "granularity": "tract (developmental/annual) and county/MSA (standard, quarterly)",
+  "update_frequency": "quarterly for the standard county/MSA index; annual for the tract-level developmental index",
+  "history": "county/MSA index back to the 1970s-1980s depending on area; tract-level developmental series is newer and explicitly labeled experimental, with tract boundaries pinned to the 2020 Census",
+  "cost": "free",
+  "access": {
+    "api_key_required": false,
+    "login_required": false,
+    "method": "bulk CSV/JSON/XML/SQL download directly from fhfa.gov/data/hpi/datasets, e.g. hpi_master.csv (all geographies) and hpi_at_bdl_tract.csv (tract-level)"
+  },
+  "license": "FHFA is a US federal agency; data.gov's catalog entry doesn't state an explicit license but attributes authorship to FHFA staff as a U.S. Government Work, which is public-domain by default. No login wall, no commercial-use restriction found. Worth a final check of fhfa.gov's own terms page before shipping, but nothing found suggests a blocker.",
+  "fits_gap": "This is literally the benchmark the research-sources skill names for evaluating any new neighborhood signal ('FHFA tract HPI growth') — we don't currently have it loaded as our own data at all, we'd just be computing correlations against an unfetched external target. Loading it as a real source also gives the momentum pillar (zhvi_cagr_5y/10y, condo_repeat_sales_cagr in neighborhood.py) a non-NYC-specific analog to Zillow ZHVI / DOF repeat-sales, which is exactly what's needed to generalize the screener beyond NYC per the project's stated goal — ZHVI and DOF sales are not available nationwide, FHFA HPI is.",
+  "correlation": {
+    "computed": false,
+    "note": "app/research/evaluate_series.py (Phase 4) doesn't exist yet, so no correlation/lead-lag numbers computed. This candidate would effectively *become* one leg of that comparison (it's the backtest target the skill references) rather than being tested against it — evaluating it against itself isn't meaningful. Its value case rests on methodology/coverage fit, not a correlation study.",
+    "results": null
+  },
+  "recommendation": "recommend",
+  "recommendation_rationale": "Free, no-login, public-domain-by-authorship, national, long-history repeat-sales index that fills the single biggest gap for this project's stated US-wide ambition (current momentum/valuation metrics are NYC-only: Zillow ZHVI/ZORI city series, DOF condo sales). Caveat: the tract-level product is explicitly 'developmental'/experimental and may have sparse coverage in low-transaction tracts, so treat county/MSA-level All-Transactions HPI as the reliable backbone and the tract file as a bonus where available.",
+  "evaluated_date": "2026-10-08"
+}
