@@ -12,17 +12,19 @@ project -- census tract, matching the project's existing tract-to-NTA aggregatio
 - **URL:** https://www.huduser.gov/apps/public/usps/home
 - **Granularity:** census tract.
 - **Update frequency:** quarterly.
-- **History:** roughly 2005-2006 onward, with a known discontinuity from USPS's "Move to
-  Competitive" delivery-point program that HUD's own FAQ flags as complicating longitudinal
-  comparisons.
+- **History:** HUD's own FAQ flags a known discontinuity from USPS's "Move to Competitive"
+  delivery-point program that complicates longitudinal comparisons. The commonly-cited 2005-2006
+  start date is from general knowledge, not confirmed by a source this run -- moot anyway since
+  access is disqualifying regardless of history length.
 
 ## Why it was rejected
 Access is gated: HUD's sublicense agreement with USPS restricts this dataset to **registered
 government entities and non-profit organizations only**, for the stated purpose in that sublicense
 agreement. This project does not qualify for registration at all -- this isn't a "sign up for a
 free key" gate like FRED or Census, it's an eligibility gate this project fails outright, on top of
-requiring a login. That's a direct violation of CLAUDE.md's "no login wall" hard rule, so this was
-rejected on access grounds without reaching a cost/license/correlation evaluation.
+requiring a login. That fails step 3 of `.claude/skills/research-sources/SKILL.md` ("no login wall,
+no clause blocking commercial/product use"), so this was rejected on access grounds without reaching
+a cost/license/correlation evaluation.
 
 ## Evaluation
 Not run -- disqualified on access before any further evaluation was attempted.

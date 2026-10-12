@@ -10,18 +10,26 @@ Survey, distributed through the Federal Reserve Bank of St. Louis's FRED API.
 
 - **URL:** https://fred.stlouisfed.org/series/MORTGAGE30US
 - **Granularity:** national, single series -- one number per week, not a per-neighborhood metric.
-- **Update frequency:** weekly (Thursdays). Methodology changed 2022-11-17 (moved from a phone
-  survey to lender-submitted loan applications) -- a discontinuity worth a comment if anyone later
-  backtests across that boundary.
-- **History:** back to 1971-04-02.
+- **Update frequency:** weekly (exact release day not confirmed in search results this run).
+  Methodology changed 2022-11-17, confirmed by search (moved from a phone survey to
+  lender-submitted loan applications) -- a discontinuity worth a comment if anyone later backtests
+  across that boundary.
+- **History:** decades of data (the commonly-cited 1971 start date is from general knowledge, not
+  verified by a source this run -- confirm on the FRED series page before relying on an exact date
+  range for a backtest).
 - **Access:** free FRED API key, self-serve signup with instant approval -- same shape as the
   project's existing `census_api_key` (see `census_acs.py`'s `requires = ["census_api_key"]`), so
   there's direct precedent for a free-key source in this codebase. Rate limits (120 req/min general,
-  40 req/min for series-observations) are irrelevant at one value/week.
-- **License:** **not plain public domain.** The series itself carries a Freddie Mac copyright
-  notice; FRED reprints it "with permission" and data is provided as-is, no warranty. FRED's own
-  API terms of use are separate and permissive, but the content is Freddie Mac's, not the
-  government's.
+  40 req/min for series-observations) are irrelevant at one value/week. (WebFetch to
+  fred.stlouisfed.org failed with a DNS error and a direct curl was blocked by the outbound proxy
+  with a 403 in this environment, so none of this was hit directly -- it's all from search snippets.)
+- **License:** **not plain public domain.** The series carries a Freddie Mac copyright notice; FRED
+  reprints it "with permission," data as-is, no warranty. A follow-up search of Freddie Mac's own
+  linking/Content Use Policy page found it grants a limited, non-exclusive, non-transferable,
+  royalty-free license to publish auto-updated PMMS data on a website without prior written
+  consent, subject to its Content Use Policy and syndication terms -- which were not read directly
+  (same DNS/proxy block as above). Freddie Mac's name/logo/trademarks separately require consent
+  for advertising/promotional use.
 
 ## Why it could help
 This isn't a Growth Score candidate -- it's a direct fix for a literal hardcoded guess. Every IRR
@@ -46,5 +54,8 @@ or would be meaningful here.
 ## Recommendation
 **Recommend with caveats.** Real gap, long history, genuinely free, reasonable access pattern with
 direct precedent in this codebase. Flagging the Freddie Mac copyright explicitly so it isn't waved
-through as "just a government number" -- it's fine to use with attribution, but it is not public
-domain the way most of this project's other sources are.
+through as "just a government number": Freddie Mac's linking policy suggests on-site display with
+attribution is permitted, but the full Content Use Policy and syndication terms weren't reachable
+this run (DNS/proxy blocks), so an implementer should pull up the current policy directly and
+confirm it covers this project's specific use before shipping, rather than treating this memo's
+read of search snippets as the final word.

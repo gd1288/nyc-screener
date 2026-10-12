@@ -3,8 +3,8 @@
   "slug": "epa-walkability-index",
   "url": "https://www.epa.gov/smartgrowth/smart-location-mapping",
   "gap": "US-wide replacement for the NYC-only infrastructure/transit pillar (subway_access, planned_catalysts are NYC MTA-specific and have no fallback outside NYC).",
-  "coverage": "National (all 50 states + DC + PR), every census block group.",
-  "granularity": "Census block group (finer than the tract/ZCTA floor this project needs; aggregates cleanly to NTA or any other area unit).",
+  "coverage": "National (all 50 states + DC + PR per the data.gov catalog description; not independently re-verified this run).",
+  "granularity": "Census block group (finer than the tract/ZCTA floor this project needs). Does NOT aggregate cleanly to this project's NTAs, though: this vintage is built on 2010-Census block-group geography (per the EPA Smart Location Database), while the project's NTAs are the 2020 vintage (per census_acs.py's docstring) -- the block-group IDs won't nest directly into 2020 NTA codes. A spatial/area-weighted join using the index's shapefile geometries (shapely is already a dependency) would be needed, not a plain code lookup.",
   "update_frequency": "Irregular / infrequent. Current vintage is built on 2019 Census block groups; EPA's own catalog metadata was last touched Feb 2025 but the underlying index itself does not appear to have had a newer vintage since. Acceptable for a built-environment metric (walkability/transit proximity changes slowly), not acceptable if treated as a timely signal.",
   "history": "No real time series — this is a point-in-time structural index (one vintage), not a growth-rate input. Pairs with transit/density metrics already in the 'infrastructure' pillar rather than the 'momentum' pillar.",
   "license": "US government work, public domain. No redistribution restriction found.",
@@ -12,11 +12,11 @@
   "access": "no_key_no_login",
   "correlation": {
     "computed": false,
-    "reason_not_computed": "app/research/evaluate_series.py does not exist yet (Phase 4 per the research-sources skill). Not computed by hand because the dataset is a single static index, not a time series suited to the script's lead/lag correlation design against FHFA HPI / ZORI growth.",
+    "reason_not_computed": "app/research/evaluate_series.py does not exist yet (Phase 4 per the research-sources skill), and wasn't run by hand this run. Note this IS testable once ingested, just not with evaluate_series.py's lead/lag design built for a growth-rate series: as a static level it should instead be tested cross-sectionally against later ZHVI/ZORI growth, the same way backtest.py already tests the valuation-gap level against next-period appreciation (see the Spearman-correlation comment on DEFAULT_WEIGHTS in neighborhood.py). That test hasn't been run -- this is a note on how to evaluate it, not a result.",
     "results": null
   },
-  "recommendation": "Recommend. This is the strongest fit for the stated gap: it is the only candidate found that is free, no-login, block-group granularity, and genuinely national -- a real substitute for subway_access/planned_catalysts once the project has non-NYC neighborhoods to score. Caveat: it's a composite index (density, diversity, design, transit proximity sub-scores bundled into one 1-20 score), so an implementer should decide whether to ingest the composite or pull the sub-scores separately for transparency with the project's existing per-MetricDef percentile approach. Also note it's a static snapshot, not a yearly-refreshable feed, so it should be a one-time/rare-cadence source (similar cadence to nta_boundaries' yearly schedule) rather than a frequent-refresh one.",
-  "verdict": "recommend",
+  "recommendation": "Recommend with caveats. This is the strongest fit found for the stated gap: free, no-login, block-group granularity, and genuinely national -- a real substitute for subway_access/planned_catalysts once the project has non-NYC neighborhoods to score. But it's not an unqualified 'clears every bar' pick: (1) it's a single static snapshot with no refreshable time series, so there's no appreciation-correlation evidence behind it yet -- that would need the cross-sectional backtest described above before leaning on it heavily; (2) its block-group geography is 2010-vintage and won't line up with this project's 2020 NTAs without a spatial join; (3) it's a composite index (density, diversity, design, transit sub-scores bundled into one 1-20 score), so an implementer should decide whether to ingest the composite or the sub-scores separately for consistency with this project's one-MetricDef-per-signal style.",
+  "verdict": "recommend_with_caveats",
   "evaluated_on": "2026-10-12",
   "evaluated_by": "research-analyst routine (via .claude/skills/research-sources/SKILL.md — .claude/agents/research-analyst.md does not exist in this repo)"
 }

@@ -6,7 +6,7 @@
   "coverage": "National, by census tract.",
   "granularity": "Census tract.",
   "update_frequency": "Quarterly.",
-  "history": "Available back to roughly 2005-2006 per HUD's published series, with a known discontinuity from USPS's 'Move to Competitive' delivery-point changes that complicates longitudinal comparison (HUD's own FAQ flags this).",
+  "history": "HUD's own FAQ flags a known discontinuity from USPS's 'Move to Competitive' delivery-point changes that complicates longitudinal comparison. The commonly-cited 2005-2006 start is from general knowledge, not confirmed by a source this run -- moot anyway since access is disqualifying regardless of history length.",
   "license": "Not reached -- access is gated before any license terms would apply (see access field).",
   "cost": "Unknown -- never reached a cost determination because the registration gate stops evaluation first.",
   "access": "login_required",
@@ -15,7 +15,7 @@
     "reason_not_computed": "Disqualified on access before correlation evaluation was attempted.",
     "results": null
   },
-  "recommendation": "Reject. HUD's sublicense agreement with USPS restricts this dataset to registered government entities and non-profit organizations, for the stated purpose in that sublicense agreement -- this project (an individual's / small commercial screener) does not qualify for registration at all, let alone without a login wall. This directly violates CLAUDE.md's 'no login wall' hard rule, so it's rejected on access grounds alone without evaluating data quality. Noting it here so it isn't re-proposed: this was genuinely the best-fitting granularity (tract-level, quarterly) of everything evaluated this run, and the only thing wrong with it is eligibility -- worth re-checking only if the project's status changes (e.g. a university/non-profit research affiliation) or if HUD changes the sublicense terms.",
+  "recommendation": "Reject. HUD's sublicense agreement with USPS restricts this dataset to registered government entities and non-profit organizations, for the stated purpose in that sublicense agreement -- this project (an individual's / small commercial screener) does not qualify for registration at all, let alone without a login wall. This fails step 3 of .claude/skills/research-sources/SKILL.md ('no login wall, no clause blocking commercial/product use'), so it's rejected on access grounds alone without evaluating data quality. Noting it here so it isn't re-proposed: this was genuinely the best-fitting granularity (tract-level, quarterly) of everything evaluated this run, and the only thing wrong with it is eligibility -- worth re-checking only if the project's status changes (e.g. a university/non-profit research affiliation) or if HUD changes the sublicense terms.",
   "verdict": "reject",
   "evaluated_on": "2026-10-12",
   "evaluated_by": "research-analyst routine (via .claude/skills/research-sources/SKILL.md — .claude/agents/research-analyst.md does not exist in this repo)"

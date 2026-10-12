@@ -22,7 +22,7 @@
     "access": {
       "type": "string",
       "enum": ["no_key_no_login", "free_key_no_login", "login_required", "paid"],
-      "description": "no_key_no_login: open download/API with no registration. free_key_no_login: free API key via self-serve signup, no approval/login wall. login_required: gated behind account approval/registration (disqualifying per CLAUDE.md). paid: not free."
+      "description": "no_key_no_login: open download/API with no registration. free_key_no_login: free API key via self-serve signup, no approval/login wall. login_required: gated behind account approval/registration (disqualifying per step 3 of .claude/skills/research-sources/SKILL.md: 'no login wall'). paid: not free."
     },
     "correlation": {
       "type": ["object", "null"],
