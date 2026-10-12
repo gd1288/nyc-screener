@@ -1,0 +1,22 @@
+{
+  "name": "EPA National Walkability Index",
+  "slug": "epa-walkability-index",
+  "url": "https://www.epa.gov/smartgrowth/smart-location-mapping",
+  "gap": "US-wide replacement for the NYC-only infrastructure/transit pillar (subway_access, planned_catalysts are NYC MTA-specific and have no fallback outside NYC).",
+  "coverage": "National (all 50 states + DC + PR), every census block group.",
+  "granularity": "Census block group (finer than the tract/ZCTA floor this project needs; aggregates cleanly to NTA or any other area unit).",
+  "update_frequency": "Irregular / infrequent. Current vintage is built on 2019 Census block groups; EPA's own catalog metadata was last touched Feb 2025 but the underlying index itself does not appear to have had a newer vintage since. Acceptable for a built-environment metric (walkability/transit proximity changes slowly), not acceptable if treated as a timely signal.",
+  "history": "No real time series — this is a point-in-time structural index (one vintage), not a growth-rate input. Pairs with transit/density metrics already in the 'infrastructure' pillar rather than the 'momentum' pillar.",
+  "license": "US government work, public domain. No redistribution restriction found.",
+  "cost": "Free. No rate limit found — delivered as a one-time bulk ZIP/shapefile download (EPA Smart Location Mapping page) or an ArcGIS REST MapServer endpoint (geodata.epa.gov) for querying without downloading the whole file.",
+  "access": "no_key_no_login",
+  "correlation": {
+    "computed": false,
+    "reason_not_computed": "app/research/evaluate_series.py does not exist yet (Phase 4 per the research-sources skill). Not computed by hand because the dataset is a single static index, not a time series suited to the script's lead/lag correlation design against FHFA HPI / ZORI growth.",
+    "results": null
+  },
+  "recommendation": "Recommend. This is the strongest fit for the stated gap: it is the only candidate found that is free, no-login, block-group granularity, and genuinely national -- a real substitute for subway_access/planned_catalysts once the project has non-NYC neighborhoods to score. Caveat: it's a composite index (density, diversity, design, transit proximity sub-scores bundled into one 1-20 score), so an implementer should decide whether to ingest the composite or pull the sub-scores separately for transparency with the project's existing per-MetricDef percentile approach. Also note it's a static snapshot, not a yearly-refreshable feed, so it should be a one-time/rare-cadence source (similar cadence to nta_boundaries' yearly schedule) rather than a frequent-refresh one.",
+  "verdict": "recommend",
+  "evaluated_on": "2026-10-12",
+  "evaluated_by": "research-analyst routine (via .claude/skills/research-sources/SKILL.md — .claude/agents/research-analyst.md does not exist in this repo)"
+}

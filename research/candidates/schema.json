@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Research candidate",
+  "description": "One evaluated data-source candidate from the research-sources procedure (.claude/skills/research-sources/SKILL.md). One file per candidate at research/candidates/<slug>.json.",
+  "type": "object",
+  "required": [
+    "name", "slug", "url", "gap", "coverage", "granularity", "update_frequency",
+    "history", "license", "cost", "access", "correlation", "recommendation", "verdict",
+    "evaluated_on", "evaluated_by"
+  ],
+  "properties": {
+    "name": { "type": "string", "description": "Human-readable source name." },
+    "slug": { "type": "string", "description": "Matches the JSON/memo filename stem." },
+    "url": { "type": "string", "description": "Primary docs/landing page for the dataset." },
+    "gap": { "type": "string", "description": "The stated gap this candidate was evaluated against." },
+    "coverage": { "type": "string", "description": "Geographic scope, e.g. national, NYC-only, specific states." },
+    "granularity": { "type": "string", "description": "Finest geographic unit available, e.g. census tract, block group, county, CBSA, national single series." },
+    "update_frequency": { "type": "string" },
+    "history": { "type": "string", "description": "How far back the series/dataset goes." },
+    "license": { "type": "string", "description": "License/ToS summary: attribution requirements, redistribution limits, copyright holder if not the publishing agency." },
+    "cost": { "type": "string", "description": "Confirmation it is actually free, and any rate limit." },
+    "access": {
+      "type": "string",
+      "enum": ["no_key_no_login", "free_key_no_login", "login_required", "paid"],
+      "description": "no_key_no_login: open download/API with no registration. free_key_no_login: free API key via self-serve signup, no approval/login wall. login_required: gated behind account approval/registration (disqualifying per CLAUDE.md). paid: not free."
+    },
+    "correlation": {
+      "type": ["object", "null"],
+      "description": "Output of app/research/evaluate_series.py against FHFA tract HPI / Zillow ZORI, if that script exists and was run. Null with a reason if not computed.",
+      "properties": {
+        "computed": { "type": "boolean" },
+        "reason_not_computed": { "type": ["string", "null"] },
+        "results": { "type": ["object", "null"] }
+      }
+    },
+    "recommendation": { "type": "string", "description": "One-paragraph recommend / don't-recommend, with the key reason." },
+    "verdict": { "type": "string", "enum": ["recommend", "recommend_with_caveats", "provisional", "reject"] },
+    "evaluated_on": { "type": "string", "format": "date" },
+    "evaluated_by": { "type": "string" }
+  }
+}

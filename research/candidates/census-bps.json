@@ -1,0 +1,22 @@
+{
+  "name": "Census Bureau Building Permits Survey (BPS)",
+  "slug": "census-bps",
+  "url": "https://www.census.gov/construction/bps/",
+  "gap": "US-wide replacement for the NYC-only development pillar (housing_database, rezonings pull from NYC DOB/DCP and have no equivalent outside NYC).",
+  "coverage": "National.",
+  "granularity": "State, CBSA, county, and permit-issuing place. No tract/block-group level found. This is coarser than the project's current NTA-level comparison set -- within one NYC borough it would only ever distinguish a handful of county-level values, which backend/CLAUDE.md's 'every metric is a percentile within its comparison set' rule would make close to meaningless at NTA granularity. It only becomes useful once the project's planned area-model migration lands and the comparison set becomes the area's CBSA (per backend/CLAUDE.md) -- at CBSA/county granularity across many metros, it's a legitimate signal.",
+  "update_frequency": "Monthly (preliminary), revised monthly figures on the 18th workday of each month, plus annual totals.",
+  "history": "Decades (the survey has run continuously since the 1960s/1970s depending on series).",
+  "license": "US government work, public domain, no restriction found.",
+  "cost": "Free. No official JSON API confirmed at api.census.gov for this specific dataset -- data is published as bulk text/CSV files under www2.census.gov/econ/bps/, same bulk-file pattern this project already uses for zillow_research.py, so a plain file fetch would work without needing the Census API or a key at all for this particular source (unlike census_acs.py, which does use the keyed API for ACS).",
+  "access": "no_key_no_login",
+  "correlation": {
+    "computed": false,
+    "reason_not_computed": "app/research/evaluate_series.py does not exist yet. Also, as a county/CBSA-level series it can't be correlated against this project's current NTA-level FHFA/ZORI comparison without first building the area-model migration's CBSA-level frame.",
+    "results": null
+  },
+  "recommendation": "Provisional -- don't implement yet. The source itself is clean (free, no login, public domain, long history, monthly cadence), but it doesn't fit the project's current geographic grain: NYC NTAs are far finer than county/CBSA, so BPS would add almost no discriminating signal if forced into the existing 'development' pillar today (a handful of NYC counties/boroughs all sharing one BPS value). Revisit this specific candidate once the area-model/CBSA migration mentioned in backend/CLAUDE.md actually lands -- at that point it becomes one of the stronger national options for the development pillar outside NYC, and should be re-evaluated instead of re-researched from scratch.",
+  "verdict": "provisional",
+  "evaluated_on": "2026-10-12",
+  "evaluated_by": "research-analyst routine (via .claude/skills/research-sources/SKILL.md — .claude/agents/research-analyst.md does not exist in this repo)"
+}

@@ -1,0 +1,22 @@
+{
+  "name": "FRED MORTGAGE30US (Freddie Mac Primary Mortgage Market Survey, 30-yr fixed rate, via FRED API)",
+  "slug": "fred-mortgage30us",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "gap": "backend/app/scoring/investment.py:21 hardcodes `interest_rate: float = 0.065` with no data behind it -- every IRR/cash-flow projection in the investment model uses a static guess instead of a live financing assumption.",
+  "coverage": "National, single series (one number per week) -- this is an input to Assumptions, not a per-neighborhood metric.",
+  "granularity": "National single series. Does NOT fit as a Growth Score MetricDef -- per backend/CLAUDE.md every metric must become a percentile within a comparison set, and a national constant is identical for every neighborhood, so it can't be ranked. This is purely a feed for `Assumptions.interest_rate`'s default (or a future `FactorDef.market_estimate()` in app/valuation/), not a neighborhood_metrics row.",
+  "update_frequency": "Weekly (Thursdays). Methodology changed 2022-11-17 (now based on lender-submitted loan applications rather than the older phone survey) -- a discontinuity to note if anyone later back-tests against pre-2022 values.",
+  "history": "Back to 1971-04-02. Far more than enough for any backtest use.",
+  "license": "Copyrighted by Freddie Mac (Primary Mortgage Market Survey); FRED reprints it 'with permission.' Data provided as-is, no warranty. FRED's own API terms are separate and permissive, but the series content itself carries Freddie Mac's copyright notice and FRED asks users to check each series' notes before republishing. Required: cite Freddie Mac (and FRED as retrieval source) wherever the number is shown, e.g. a footnote on the assumptions panel -- do not present it as the project's own figure.",
+  "cost": "Free. Requires a FRED API key (self-serve signup, instant approval, no human review) -- same shape as the project's existing census_api_key precedent (census_acs.py). Rate limit: 120 req/min general API, 40 req/min for series-observations endpoint specifically -- trivial for a single weekly value.",
+  "access": "free_key_no_login",
+  "correlation": {
+    "computed": false,
+    "reason_not_computed": "Not applicable -- this isn't a Growth Score predictor to correlate against HPI/ZORI growth. Its only use is as a financing-cost input to the investment model's cash-flow math, which isn't what evaluate_series.py is designed to test.",
+    "results": null
+  },
+  "recommendation": "Recommend with caveats. This directly fixes a real, named gap (a hardcoded 6.5% guess) with an authoritative, long-history, genuinely free series. It is not a Growth Score candidate and should not be wired through sources.yaml/NeighborhoodMetric at all -- an implementer should instead have it refresh `Assumptions.interest_rate`'s default (e.g. a small settings-backed value refreshed on a schedule, the same no-key-leak pattern as other sources) and must add the Freddie Mac/FRED attribution anywhere the rate is displayed. Flagging the copyright notice explicitly so this isn't waved through as 'just a government number' -- Freddie Mac is the actual rights holder, FRED is just the distributor.",
+  "verdict": "recommend_with_caveats",
+  "evaluated_on": "2026-10-12",
+  "evaluated_by": "research-analyst routine (via .claude/skills/research-sources/SKILL.md — .claude/agents/research-analyst.md does not exist in this repo)"
+}
