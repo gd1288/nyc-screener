@@ -1,0 +1,14 @@
+{
+  "name": "EPA National Walkability Index (built from the EPA Smart Location Database)",
+  "url": "https://edg.epa.gov/EPADataCommons/public/OA/WalkabilityIndex.zip",
+  "gap_addressed": "The project's only access/mobility signal is subway_access (transit.py), which is NYC-subway-specific and doesn't generalize to any other US market -- a direct conflict with the project's stated goal of generalizing beyond NYC. EPA's walkability index is a national, block-group-level mobility/access score that could serve as a transit_access-equivalent livability factor anywhere in the US.",
+  "coverage": "national -- every Census block group in the US",
+  "granularity": "census block group (2019 vintage)",
+  "update_frequency": "infrequent / largely static -- EPA's page describes the current version as a 2021 update built on 2019 Census block group boundaries and 4 underlying SLD variables; this is a one-time or rarely-refreshed bulk file, not a live feed",
+  "history_available": "single current vintage only (2019-based); an older 2010-based version exists but is superseded -- no real time series for trend analysis",
+  "license": "Federal government data (EPA), U.S. Government Work -- data.gov's listing doesn't state an explicit license but this status implies public domain in the usual government-data sense",
+  "cost": "free, direct ZIP download, no key/account",
+  "correlation_results": null,
+  "status": "recommend",
+  "recommendation": "Recommend as a livability-factor candidate, not a growth-score trend input -- it's static (no update cadence to speak of), so it can't feed a backtest or a 'is this neighborhood improving' signal the way the other three candidates can. Its value is as a one-time national baseline that replaces the NYC-only subway_access factor when scoring neighborhoods outside NYC. Lower priority than FHFA HPI or HUD FMR this run, but worth a look specifically for the US-generalization goal."
+}

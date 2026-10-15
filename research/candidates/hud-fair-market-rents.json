@@ -1,0 +1,14 @@
+{
+  "name": "HUD Fair Market Rents (FMR)",
+  "url": "https://www.huduser.gov/PORTAL/datasets/fmr.html",
+  "gap_addressed": "Rent estimates in this project come from RentCast (hard-capped at 31 requests/month, per app/sources/rentcast.py) and Zillow ZORI (zillow_research.py, limited metro coverage). HUD FMR gives a free, national, annually-updated rent benchmark at metro/county granularity that could backfill neighborhood_rent in investment.py for areas RentCast's budget can't reach and ZORI doesn't cover -- directly useful for the US-wide generalization goal.",
+  "coverage": "national -- every OMB metropolitan area (and HUD-defined metro subdivisions) plus every non-metropolitan county",
+  "granularity": "metro area / HUD metro subdivision / non-metro county",
+  "update_frequency": "annual (new fiscal-year FMRs published each year, e.g. FY2026 release already out)",
+  "history_available": "HUD publishes a 2-bedroom FMR history file back to 1983",
+  "license": "Federal government data (HUD), effectively public domain -- a HackerNoon write-up of the FY2026 release and an Apify tool listing both describe the bulk files as free, no signup required. HUD's *API* (for programmatic per-address lookups) does require creating a free account and access token, but the bulk county/metro files on the FMR dataset page download directly with no account.",
+  "cost": "free; the direct file route avoids any signup. Current full county-level release is published as an Excel workbook (XLSX) rather than CSV -- the 2-bedroom historical file is CSV, but the all-bedroom-size county table needs an XLSX reader (openpyxl), which isn't a blocker but is a small adapter-design note.",
+  "correlation_results": null,
+  "status": "recommend",
+  "recommendation": "Recommend. Free, no login, genuinely national, and fills a real gap (RentCast's 31-request budget and ZORI's metro-only coverage both leave large parts of the country without a rent estimate). Annual cadence is coarse but fine for a rent benchmark/fallback rather than a trend signal. Implementation note for whoever picks this up: confirm the exact current-year file name/format on the FMR dataset page before writing the adapter, since HUD's bulk file format (XLSX for county-level) differs from its historical CSV file."
+}
