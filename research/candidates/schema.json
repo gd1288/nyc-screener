@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data source research candidate",
+  "type": "object",
+  "required": ["name", "url", "coverage", "granularity", "update_frequency", "license", "cost", "status", "recommendation"],
+  "properties": {
+    "name": {"type": "string", "description": "Human-readable name of the dataset/series"},
+    "url": {"type": "string", "description": "Canonical source/documentation URL"},
+    "gap_addressed": {"type": "string", "description": "What gap in the current screener this would fill"},
+    "coverage": {"type": "string", "description": "Geographic/topical coverage, e.g. 'national', 'NYC-specific'"},
+    "granularity": {"type": "string", "description": "Finest geographic unit available, e.g. 'census tract', 'county', 'MSA'"},
+    "update_frequency": {"type": "string"},
+    "history_available": {"type": "string", "description": "How far back usable history goes"},
+    "license": {"type": "string", "description": "License/ToS summary; note any clause blocking commercial/product use or local caching"},
+    "cost": {"type": "string", "description": "Confirm actually free; note any rate limits or signup requirements"},
+    "correlation_results": {
+      "type": ["object", "null"],
+      "description": "Output of app/research/evaluate_series.py against FHFA HPI / Zillow ZORI, if that tool exists and was run; null otherwise"
+    },
+    "status": {"type": "string", "enum": ["recommend", "reject"]},
+    "recommendation": {"type": "string", "description": "One-paragraph recommend/don't-recommend rationale"}
+  }
+}

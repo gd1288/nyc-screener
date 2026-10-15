@@ -1,0 +1,14 @@
+{
+  "name": "FRED series MORTGAGE30US (Freddie Mac Primary Mortgage Market Survey, 30-yr fixed, via Federal Reserve Economic Data)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "gap_addressed": "backend/app/scoring/investment.py Assumptions.interest_rate is a hardcoded constant (0.065) used in every mortgage payment / cash-flow / Opportunity Score calculation. A live weekly national mortgage-rate series would let the investment model reflect actual current financing cost instead of a stale assumption.",
+  "coverage": "national, single series (no sub-national breakout)",
+  "granularity": "national",
+  "update_frequency": "weekly",
+  "history_available": "multi-decade (methodology changed Nov 2022 when Freddie Mac moved from a lender survey to application data; pre/post-2022 values aren't strictly comparable, but this doesn't block using the current value)",
+  "license": "FRED API Terms of Use, updated June 2024. Confirmed via FRED's own announcement (news.research.stlouisfed.org/2024/06/weve-updated-our-terms-of-use-action-requested): the updated terms add explicit API prohibitions on (a) storing, caching, or archiving any portion of FRED Content, and (b) using the API in connection with developing or training any software/ML/AI system. Could not fetch the literal clause text directly (fred.stlouisfed.org was unreachable from this environment), so this is based on FRED's own summary of the change, not the raw legal text.",
+  "cost": "free; requires a free API key (same pattern as Census ACS, already used in this project) but no paid tier or login wall beyond that",
+  "correlation_results": null,
+  "status": "reject",
+  "recommendation": "Don't implement, despite being the single best fit for the gap. This project's source adapters write every ingested series into backend/data/screener.db (SQLite) for later querying/scoring -- that is exactly the 'storing/caching/archiving FRED Content' the 2024 ToS update prohibits, which alone disqualifies it under the project's 'no clause blocking commercial/product use' bar. (The same update's separate ML/AI-training prohibition is about using FRED content as training data for a model, not about an AI tool writing the adapter code, so it isn't being relied on here -- the storage/caching clause is reason enough on its own.) This run couldn't fetch the literal clause text (fred.stlouisfed.org was unreachable), so the rejection rests on FRED's own public summary of the change, not the raw legal text -- worth a direct re-check if this gets revisited. If a live mortgage-rate input is still wanted, look at alternatives that don't carry FRED's redistribution restriction (e.g. Freddie Mac's own PMMS page, or another public rate index not gated through FRED) as a follow-up -- not evaluated here, over the search budget for this run."
+}

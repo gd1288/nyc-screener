@@ -1,0 +1,14 @@
+{
+  "name": "BLS Local Area Unemployment Statistics (LAUS)",
+  "url": "https://download.bls.gov/pub/time.series/la/",
+  "gap_addressed": "The project's Growth Score (scoring/neighborhood.py) and census_acs.py adapter cover demographics but not labor-market trend. County-level unemployment/labor-force trend is a standard leading indicator for neighborhood economic health and could strengthen the growth signal, especially outside NYC where census_acs alone is thinner.",
+  "coverage": "national -- states, metro areas, counties, and cities",
+  "granularity": "county (and county-equivalent) -- coarser than the NTA neighborhoods this project's `neighborhood_metrics` are keyed to (nta_boundaries.py): NYC has 5 counties/boroughs against roughly 190 NTAs, so a county-level unemployment figure would be shared across many NTAs within a borough, not a per-neighborhood signal",
+  "update_frequency": "monthly",
+  "history_available": "BLS LAUS bulk files go back decades; exact start year for county series not confirmed this run",
+  "license": "Federal government data (BLS), public domain by convention; no license restriction found",
+  "cost": "free. The documented API requires a free registration key for higher query volume, but BLS also publishes the raw LAUS flat files for bulk download at download.bls.gov/pub/time.series/la/ with no key or account at all.",
+  "correlation_results": null,
+  "status": "recommend",
+  "recommendation": "Recommend, with lower confidence than FHFA/HUD because this run didn't verify the county series-ID naming convention or confirm history depth against the bulk files directly (search-budget-limited). The signal itself (county unemployment trend) is a well-established real-estate growth/risk factor and the bulk-file route is genuinely free and keyless, so it clears the bar on cost/license. But county granularity is materially coarser than this project's NTA-level neighborhood_metrics (5 NYC boroughs vs. ~190 NTAs), so it would land as a city/metro-wide economic trend input, not a per-neighborhood differentiator -- worth implementing for that purpose, not as a replacement for a finer-grained signal."
+}

@@ -1,0 +1,14 @@
+{
+  "name": "FHFA House Price Index (HPI) -- Master HPI dataset",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "gap_addressed": "The project already ingests Zillow's ZHVI (zillow_research.py) for appreciation signal, but Zillow's city/metro coverage thins out outside major markets, which cuts against the project's explicit goal of 'generalizing to any US neighborhood and property type.' FHFA HPI gives repeat-sales-based appreciation at county/MSA/ZIP granularity nationwide, and is also the natural backtest benchmark the research-sources skill itself names ('FHFA tract HPI growth').",
+  "coverage": "national -- all 50 states, 400+ metro areas, every county with enough repeat-sales volume",
+  "granularity": "the quarterly/monthly 'Master HPI' file is confirmed at national / census-division / state / metro-area level; county, ZIP5, and census-tract breakouts appear to be separate files, likely annual and (per FHFA) developmental for the tract level -- this run did not fetch the download page directly and could not confirm the exact file-to-granularity mapping, so treat county/ZIP5/tract availability and cadence as unverified until the FHFA datasets page is checked directly",
+  "update_frequency": "quarterly/monthly confirmed for the Master HPI (national/state/MSA); county/tract file cadence not confirmed this run",
+  "history_available": "repeat-sales transactions back to January 1975 at the national/state/MSA level -- the longest history of any candidate considered this run; not confirmed whether county-level series share the same start date",
+  "license": "Published by a federal agency (FHFA); data.gov lists its access level as public. Per search results (the FHFA download page itself was not fetched in this run), no account, key, or click-through license is mentioned for the CSV/JSON/XML/SQL bulk download.",
+  "cost": "free, no API key, no rate limit encountered (bulk file download, not a metered API)",
+  "correlation_results": null,
+  "status": "recommend",
+  "recommendation": "Recommend as the top candidate this run. It's free with no signup and no restrictive ToS found (unlike FRED), and the Master HPI's national/state/MSA history back to 1975 is the deepest of anything considered. Primary use: either (a) a second appreciation series alongside ZHVI in neighborhood scoring, or (b) the backtest benchmark once app/research/evaluate_series.py exists (it doesn't yet). Caveat: this run did not confirm county/ZIP5/tract granularity or cadence directly against the FHFA datasets page -- before implementing, fetch fhfa.gov/data/hpi/datasets and confirm which file actually gives county-level data and at what frequency; the tract-level file in particular is explicitly labeled developmental/experimental by FHFA and shouldn't be leaned on without flagging that."
+}
