@@ -1,0 +1,22 @@
+{
+  "name": "FRED - 30-Year Fixed Rate Mortgage Average (MORTGAGE30US, Freddie Mac PMMS via FRED)",
+  "slug": "fred-mortgage30us",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "gap": "backend/app/scoring/investment.py's Assumptions.interest_rate defaults to a hardcoded 0.065 with no live data behind it -- every cash-on-cash, cap-rate, and amortization calculation in the investment analysis rests on a number someone has to remember to update by hand.",
+  "coverage": "national (single US-wide weekly series; Freddie Mac PMMS doesn't break out by region)",
+  "granularity": "national",
+  "update_frequency": "weekly",
+  "history_available": "from 1971 to present (methodology changed Nov 2022 -- Freddie Mac switched to a lender-application-based survey, worth noting in any ingestion code as a regime change, not a data error)",
+  "license": "FRED API requires a free API key (instant self-service signup, no approval wait, no cost); FRED's general terms mention 'personal, non-commercial use' in places but the API Terms of Use (fred.stlouisfed.org/docs/api/terms_of_use.html) separately govern programmatic access and explicitly contemplate building applications on top of the API -- commercial-use language should be re-read in full before shipping, see caveat below. Separately, MORTGAGE30US is sourced from Freddie Mac's PMMS, not an original Federal Reserve series -- FRED's standard attribution requirement (cite the source, preserve copyright notices) likely applies on top of whatever the API terms say, and that attribution/copyright question is distinct from the API-key terms and should be checked separately",
+  "cost": "Free; a single weekly series needs at most one request per refresh cycle, well within any plausible rate limit -- the specific requests-per-minute ceiling was not confirmed against FRED's own docs this run (see caveat) but isn't material at this call volume",
+  "access_method": "FRED REST API (api.stlouisfed.org/fred/series/observations) with a free key, JSON or XML; a no-key CSV convenience endpoint also exists (fredgraph.csv) but that's undocumented/unofficial and shouldn't be relied on for a production adapter",
+  "correlation_results": null,
+  "verification_caveats": [
+    "Could not fetch fred.stlouisfed.org directly this run (sandbox DNS/proxy issue) -- the commercial-use language in FRED's Terms of Use needs a direct read before implementing, not just the FAQ snippet surfaced by search, since the project's hard rule is 'no clause blocking commercial/product use'",
+    "The requests-per-minute rate limit number in an earlier draft of this candidate ('around 120/minute') was not actually sourced from any search result -- removed; confirm the real limit against fred.stlouisfed.org/docs/api/ if it ever matters (it won't at weekly-refresh volume)",
+    "Freddie Mac PMMS attribution/copyright requirements are a separate question from the FRED API key terms and need their own check",
+    "This is a single national number, not a neighborhood-level metric -- it would plug into scoring/investment.py as a live default for Assumptions.interest_rate, not into neighborhood.py's percentile scoring, so it doesn't fit the usual 'neighborhood_metric' adapter shape and may need a small new 'macro' kind or a settings-level refresh instead of the usual Source subclass"
+  ],
+  "recommendation": "recommend",
+  "recommendation_note": "Directly replaces a hardcoded assumption with a real, weekly-updating number, which is exactly the kind of low-effort/high-value fix this project's own CLAUDE.md implies (don't hand-maintain numbers that have a free live source). Recommend, conditional on confirming the API Terms of Use commercial-use language directly against fred.stlouisfed.org (not just search snippets) before an implementer touches it -- flagging that check rather than skipping it, per the license hard rule."
+}

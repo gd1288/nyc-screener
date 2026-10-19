@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Research candidate",
+  "description": "One proposed data source, written by the research-sources skill/routine. Evaluation only — never implies implementation.",
+  "type": "object",
+  "required": ["name", "slug", "url", "coverage", "granularity", "update_frequency", "license", "cost", "recommendation"],
+  "properties": {
+    "name": { "type": "string", "description": "Human-readable source name" },
+    "slug": { "type": "string", "description": "Filename-safe id, matches research/candidates/<slug>.json" },
+    "url": { "type": "string", "description": "Primary official URL (docs or data portal), not a scraper/third-party mirror" },
+    "gap": { "type": "string", "description": "Which stated gap or hardcoded assumption this addresses" },
+    "coverage": { "type": "string", "description": "Geographic scope, e.g. national, NYC-only" },
+    "granularity": { "type": "string", "description": "tract | zcta | county | msa | state | national" },
+    "update_frequency": { "type": "string" },
+    "history_available": { "type": "string", "description": "How far back usable history goes" },
+    "license": { "type": "string", "description": "Login/key requirement and any usage restrictions found" },
+    "cost": { "type": "string", "description": "Confirmed free/not-a-trial, rate limits" },
+    "access_method": { "type": "string", "description": "API, bulk CSV/XLSX download, GIS service, etc." },
+    "correlation_results": { "type": ["object", "null"], "description": "Output of app/research/evaluate_series.py if it was run; null if that tool doesn't exist yet" },
+    "verification_caveats": { "type": "array", "items": { "type": "string" }, "description": "Claims from web search that weren't confirmed against the primary source and should be re-checked before implementation" },
+    "recommendation": { "type": "string", "enum": ["recommend", "lean-recommend", "do-not-recommend"] },
+    "recommendation_note": { "type": "string" }
+  }
+}

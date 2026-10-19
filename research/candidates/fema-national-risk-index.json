@@ -1,0 +1,21 @@
+{
+  "name": "FEMA National Risk Index (NRI)",
+  "slug": "fema-national-risk-index",
+  "url": "https://hazards.fema.gov/nri/data-resources",
+  "gap": "app/sources/livability.py's FutureFloodplain is NYC Open Data only (dataset 27ya-gqtm, a single 2050s floodplain projection layer) -- it has no equivalent anywhere else in the US, which blocks the stated goal of 'generalizing to any US neighborhood' the moment someone points the screener outside NYC. There's also no non-flood climate/hazard signal (wildfire, heat, wind, winter weather, etc.) at all.",
+  "coverage": "national (50 states + DC + territories)",
+  "granularity": "county and census tract (18 individual hazard-type scores plus one composite Risk Index score at each level)",
+  "update_frequency": "periodic re-releases rather than a fixed cadence -- most recent confirmed release found in search was dated March 2023; need to check hazards.fema.gov/nri directly for whether a newer vintage has shipped since",
+  "history_available": "not a time series -- each release is a point-in-time composite risk score, not a backdated history, so it isn't useful for the backtest the way FHFA HPI is; it's a cross-sectional risk layer, not a growth predictor",
+  "license": "Public domain federal data; downloadable with no login from the Data Resources/Data Archive pages; the public ArcGIS Online layers (FEMA_NationalRiskIndex) are also queryable with no key",
+  "cost": "Free, no rate limit on the bulk download (geodatabase/shapefile/CSV), reasonable for a periodic refresh",
+  "access_method": "Bulk geodatabase/shapefile/CSV download of the full tract+county dataset, or the public ArcGIS REST feature service for line-item queries",
+  "correlation_results": null,
+  "verification_caveats": [
+    "Could not confirm update cadence or current release vintage directly (fema.gov DNS unreachable from this sandbox this run) -- before implementing, check hazards.fema.gov/nri for whatever release is current, since the one confirmed date (March 2023) may be stale",
+    "Shapefiles use -9999 as a null sentinel per FEMA's own documentation -- an adapter must filter that out explicitly or it will silently corrupt percentile scoring in neighborhood.py",
+    "This is cross-sectional risk, not a time series, so it can't be backtested against FHFA HPI/Zillow ZORI the way a growth predictor can -- its value is as an independent livability/risk pillar input, not a backtest candidate"
+  ],
+  "recommendation": "recommend",
+  "recommendation_note": "Strong fit for generalizing the livability pillar beyond NYC: it's the natural national superset of FutureFloodplain (flood is one of its 18 hazard types) plus wildfire, heat, wind, and more, at a finer grain (tract) than most of this project's current national-aspiration sources. Recommend, with the update-cadence caveat above resolved before implementation, and note it slots in as a cross-sectional risk pillar rather than a backtest input."
+}
