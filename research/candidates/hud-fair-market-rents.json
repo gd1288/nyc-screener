@@ -1,0 +1,20 @@
+{
+  "name": "HUD Fair Market Rents (FMR) / Small Area FMRs (SAFMR)",
+  "slug": "hud-fair-market-rents",
+  "url": "https://www.huduser.gov/portal/datasets/fmr.html",
+  "gap": "scoring/investment.py's estimate_rent() falls back to Zillow ZORI x a fixed bedroom factor whenever there's no live listing rent, and the only other rent signal in the system is rentcast_listings, which is hard-capped at 31 requests/month and 5 NYC-only search areas (sources.yaml). Outside those 5 areas -- i.e. anywhere the project's stated US-wide ambition actually points -- there is currently no rent data source at all.",
+  "coverage": "national (every US metro area and nonmetro county)",
+  "granularity": "metro area / nonmetro county for standard FMRs; ZIP code (5-digit) for Small Area FMRs (SAFMRs), which HUD publishes for all metro areas as of recent fiscal years",
+  "update_frequency": "annual (new fiscal-year FMRs published each fall for the following federal fiscal year)",
+  "history_available": "HUD publishes current + prior-year FMR files; a true back-series requires stitching together each year's archived file (available back many years on huduser.gov), so history exists but isn't a single downloadable time series the way FHFA's is",
+  "license": "Public HUD data, no login needed to download the published XLSX/CSV files from huduser.gov; HUD also exposes a programmatic FMR API that appears to require a free API key based on third-party client library behavior (e.g. the R 'hudr' package reads a key from an environment variable) -- not confirmed directly against HUD's own API docs this run",
+  "cost": "Free either way (bulk file download or keyed API); no commercial-use restriction found",
+  "access_method": "Bulk XLSX/CSV download by fiscal year (simplest, no key) or HUD's FMR REST API (needs a free key) for programmatic/ZIP-level SAFMR lookups",
+  "correlation_results": null,
+  "verification_caveats": [
+    "Could not reach huduser.gov directly this run (sandbox DNS/proxy issue) -- confirm the API key requirement and exact SAFMR ZIP-level file structure against HUD's own API docs before implementing, rather than relying on a third-party R package's behavior as a proxy",
+    "Annual update cadence means this is a coarser rent signal than a live listing -- best used as the Zillow-ZORI-style fallback basis for estimate_rent() outside NYC, not as a replacement for rentcast_listings where that budget is available"
+  ],
+  "recommendation": "lean-recommend",
+  "recommendation_note": "Solid, free, genuinely national rent benchmark that would let estimate_rent() work in any US county without touching the RentCast budget -- directly serves the stated US-wide generalization goal. Rated lean-recommend rather than recommend because it's annual and metro/county-grain for the free bulk files (ZIP-level SAFMR needs the keyed API, unconfirmed this run), so it's a reasonable fallback tier rather than a high-resolution replacement for existing rent signals in NYC specifically."
+}

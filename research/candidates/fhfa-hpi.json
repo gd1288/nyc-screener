@@ -1,0 +1,21 @@
+{
+  "name": "FHFA House Price Index (HPI)",
+  "slug": "fhfa-hpi",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "gap": "This is NOT a 'no repeat-sales signal exists' gap -- it doesn't: app/sources/dof_sales.py already computes condo_repeat_sales_cagr per NTA from actual NYC DOF condo sale pairs, and writes it as a neighborhood_metric. The real gap is coverage and independence. That repeat-sales signal is NYC-DOF-only (building_class_category filters are NYC tax-lot categories; the source hits data.cityofnewyork.us) and requires >=15 qualifying sale pairs per NTA, so it's unavailable or sparse the moment the project points outside NYC -- exactly where its stated US-wide goal points. FHFA HPI is the only candidate here that gives this same kind of transaction-based appreciation signal nationally, at MSA grain, with no NYC-specific scraping. Separately, scoring/backtest.py currently validates the growth score only against Zillow ZHVI history (hist_zhvi_%); it has no independent, transaction-based series to cross-check against, and the research-sources skill's own evaluation step names 'FHFA tract HPI growth' as the benchmark it expects candidates to be checked against -- yet FHFA is ingested nowhere (confirmed: `grep -rni fhfa backend/` returns zero hits).",
+  "coverage": "national (all 50 states + 400+ cities/MSAs)",
+  "granularity": "state, MSA (top 100 have a dedicated tool), 3-digit and 5-digit ZIP (developmental, purchase-only index only); no census-tract-level series was found in this run's sources, which conflicts with the research-sources skill's own phrase 'FHFA tract HPI growth' -- treat that skill wording as imprecise (MSA, not tract, appears to be FHFA's finest non-developmental granularity) and re-verify directly against fhfa.gov/data/hpi/datasets before relying on either description",
+  "update_frequency": "quarterly (monthly index also published)",
+  "history_available": "US/census-division/state series from 1975Q1; MSA all-transactions series start dates vary by metro (several from the mid-1990s); purchase-only series generally from 1991Q1; ZIP-level series are developmental and shorter",
+  "license": "Public, no login or API key needed for the CSV/JSON/XML/SQL downloads; FHFA is a federal agency and the HPI is treated as public-domain government statistical output -- no commercial-use restriction found",
+  "cost": "Free, no registration, no rate limit (it's a static bulk file, not a rate-limited API)",
+  "access_method": "Bulk CSV/JSON/XML/SQL download of the 'Master HPI' file (appends quarterly+monthly data); also a browser HPI calculator and ZIP/MSA-specific extract files",
+  "correlation_results": null,
+  "verification_caveats": [
+    "app/research/evaluate_series.py doesn't exist yet (Phase 4 not built), so no quantitative correlation/lead-lag was computed this run -- only qualitative fit assessed",
+    "ZIP-level ('developmental') coverage and its all-transactions vs. purchase-only distinction should be re-confirmed against the FHFA data dictionary before an adapter is written -- search results were not fully consistent on which ZIP flavor has the longer history",
+    "Could not directly WebFetch fhfa.gov this run (sandbox DNS/proxy issue to that host) -- the above is from secondary search results plus general knowledge of the series; re-verify the exact file layout against fhfa.gov/data/hpi/datasets before building an adapter"
+  ],
+  "recommendation": "recommend",
+  "recommendation_note": "Highest-priority candidate. It's free, no-login, and truly national in a way the project's existing repeat-sales signal (dof_sales.py's condo_repeat_sales_cagr) is not -- that one only works inside NYC DOF data. FHFA HPI gives the same kind of transaction-based appreciation evidence everywhere in the US, and separately lets scoring/backtest.py validate the growth score against an independent series instead of Zillow ZHVI alone, which is the benchmark the research-sources skill itself names but the codebase never actually ingests. Recommend as a new 'neighborhood'-kind source via a plain quarterly CSV bulk pull (not Socrata -- FHFA isn't a Socrata portal), MSA-level to start (NYC maps to the New York-Newark-Jersey City MSA)."
+}

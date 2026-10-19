@@ -1,0 +1,20 @@
+{
+  "name": "BLS Local Area Unemployment Statistics (LAUS)",
+  "slug": "bls-laus",
+  "url": "https://www.bls.gov/lau/",
+  "gap": "The neighborhood growth pillar (scoring/neighborhood.py) currently draws on development/rezoning activity, transit access, planned catalysts, crime, and Census ACS demographics (census_acs.py), but has no direct local-labor-market signal -- employment growth and unemployment rate are standard leading indicators for housing demand that aren't represented anywhere in the current metric set.",
+  "coverage": "national (~7,600 areas: counties, cities, metro areas, metro divisions, states)",
+  "granularity": "county, metropolitan area/division, state, place",
+  "update_frequency": "monthly (plus annual-average revisions)",
+  "history_available": "BLS LAUS series generally extend back to the 1990s or earlier depending on area, available via bulk time-series files",
+  "license": "Public domain US government data; bulk flat files and the Series Report tool need no login; the full BLS Public Data API needs a free registration key for higher query limits, but a smaller number of daily queries works unregistered",
+  "cost": "Free; registered API keys get materially higher daily query limits than unregistered access (specific numbers not independently confirmed against bls.gov/developers this run)",
+  "access_method": "BLS Public Data API (v2, JSON, optional free key) for series by ID, or bulk downloadable flat files for broader pulls",
+  "correlation_results": null,
+  "verification_caveats": [
+    "Could not reach bls.gov directly this run (sandbox DNS/proxy issue) -- confirm the exact registered vs. unregistered query limits and the current API terms before implementing",
+    "No quantitative correlation against FHFA HPI/Zillow ZORI was run (evaluate_series.py doesn't exist yet) -- unemployment/employment-growth as a leading indicator for housing appreciation is a reasonable prior but unverified for this project's specific markets"
+  ],
+  "recommendation": "lean-recommend",
+  "recommendation_note": "A legitimate gap-filler for the neighborhood growth pillar and genuinely national, but it's the weakest of the five candidates here: it's one more general-economy input alongside several the project already has (ACS demographics, development/rezoning activity), rather than fixing a concrete hardcoded assumption or missing pillar the way the other four do. Worth a future look, but lower priority than FHFA HPI, FRED mortgage rates, FEMA NRI, or HUD FMR."
+}
