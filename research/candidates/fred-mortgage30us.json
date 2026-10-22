@@ -1,0 +1,21 @@
+{
+  "slug": "fred-mortgage30us",
+  "name": "FRED MORTGAGE30US (Freddie Mac 30-Year Fixed Mortgage Rate, via FRED API)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "proposed_date": "2026-10-22",
+  "measures": "Weekly average 30-year fixed-rate mortgage commitment rate (Freddie Mac Primary Mortgage Market Survey), republished by the Federal Reserve Bank of St. Louis.",
+  "coverage": "national",
+  "granularity": "national (single series; no sub-national breakdown)",
+  "update_frequency": "weekly (Thursdays)",
+  "history_available": "1971-04-02 to present",
+  "cost": "Free. FRED API key is free and immediate on registration, no trial/paywall. Documented rate limiting exists (third-party sources cite ~120 req/min); FRED's own docs just say 'contact us' if you need more. A weekly series pulled at most daily is nowhere near any plausible limit.",
+  "license": "Attribution required: FRED's Terms of Use require citing FRED as source, preserving any copyright notices on the underlying data (Freddie Mac PMMS), and not implying FRED/St. Louis Fed endorsement. No commercial-use prohibition surfaced in search, but the exact copyright terms on the MORTGAGE30US series specifically should be confirmed at adapter-build time rather than assumed from the general FRED ToU.",
+  "api_type": "rest_api",
+  "auth": "free registration key (api_key param)",
+  "evaluated_quantitatively": false,
+  "correlation_results": null,
+  "relevant_gap": "backend/app/scoring/investment.py hardcodes Assumptions.interest_rate = 0.065 as a static default. This series would let that default track the actual prevailing rate at run time instead of a stale constant, and could backfill a historical rate series to sanity-check rate assumptions used in past backtests.",
+  "existing_overlap": "None found — grep across backend/app/ turns up no FRED/BLS/FHFA source today; interest_rate is the only rate input and it's a hardcoded float.",
+  "recommendation": "Strong recommend. This directly fixes a real, visible gap (a hardcoded 6.5% mortgage rate assumption) with a few lines of code: one series, no sub-national geocoding/matching needed, free key, 55 years of history, official government-adjacent data via the Fed. Lowest-effort, clearest-value candidate in this batch.",
+  "verdict": "recommend"
+}

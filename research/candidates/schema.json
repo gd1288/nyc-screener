@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Data source candidate",
+  "description": "One researched candidate data source, written by the research-sources skill to research/candidates/<slug>.json. Mirrors the fields the add-data-source skill needs to decide whether to build an adapter.",
+  "type": "object",
+  "required": [
+    "slug", "name", "url", "proposed_date", "measures", "coverage", "granularity",
+    "update_frequency", "history_available", "cost", "license", "api_type",
+    "evaluated_quantitatively", "recommendation", "verdict"
+  ],
+  "properties": {
+    "slug": {"type": "string", "description": "Matches the candidate's filename stem and its memo's slug."},
+    "name": {"type": "string"},
+    "url": {"type": "string", "format": "uri", "description": "Primary documentation or dataset landing page."},
+    "proposed_date": {"type": "string", "format": "date"},
+    "measures": {"type": "string", "description": "What the series/dataset actually captures."},
+    "coverage": {"type": "string", "description": "Geographic scope, e.g. 'national', 'NYC-only'."},
+    "granularity": {"type": "string", "description": "e.g. tract, ZCTA, county, MSA, national."},
+    "update_frequency": {"type": "string"},
+    "history_available": {"type": "string", "description": "How far back usable history goes."},
+    "cost": {"type": "string", "description": "Confirmation it's actually free, plus any rate limit."},
+    "license": {"type": "string", "description": "License/ToS summary, incl. any commercial-use or attribution clause."},
+    "api_type": {"type": "string", "enum": ["rest_api", "bulk_download", "both", "none_found"]},
+    "auth": {"type": "string", "description": "e.g. 'none', 'free registration key'."},
+    "evaluated_quantitatively": {
+      "type": "boolean",
+      "description": "Whether app/research/evaluate_series.py was run against this candidate. False if that tool doesn't exist yet."
+    },
+    "correlation_results": {
+      "type": ["object", "null"],
+      "description": "Correlation/lead-lag vs FHFA tract HPI growth and Zillow ZORI, if computed."
+    },
+    "relevant_gap": {"type": "string", "description": "Which existing scoring/investment input this would feed or improve."},
+    "existing_overlap": {"type": "string", "description": "What's already covered in backend/app/sources/ that this would duplicate, if anything."},
+    "recommendation": {"type": "string", "description": "One-paragraph recommend / don't-recommend rationale."},
+    "verdict": {"type": "string", "enum": ["recommend", "conditional", "do_not_recommend"]}
+  }
+}

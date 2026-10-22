@@ -1,0 +1,21 @@
+{
+  "slug": "hud-fair-market-rents",
+  "name": "HUD Fair Market Rents (FMR) / Small Area FMRs",
+  "url": "https://www.huduser.gov/portal/dataset/fmr-api.html",
+  "proposed_date": "2026-10-22",
+  "measures": "HUD's benchmark gross rent estimates by bedroom count. Standard FMRs are county/metro-area; Small Area FMRs (SAFMRs) are calculated at the 5-digit ZIP level for many metros (including the NYC metro).",
+  "coverage": "national",
+  "granularity": "county/metro (standard FMR); ZIP5 (Small Area FMR, where published)",
+  "update_frequency": "annual (federal fiscal year)",
+  "history_available": "annual files available back many years on huduser.gov, but each year is a point estimate, not a continuous time series — weaker for backtesting than a true monthly/quarterly series",
+  "cost": "Free. Official HUD USER API requires a free account and access token (one-screen signup); no paid tier found.",
+  "license": "US government public data; no commercial-use restriction found on huduser.gov.",
+  "api_type": "rest_api",
+  "auth": "free registration token",
+  "evaluated_quantitatively": false,
+  "correlation_results": null,
+  "relevant_gap": "Checked backend/app/sources/rentcast.py and scoring/investment.py: actual asking rents come from RentCast listings (budget-capped at 31 req/month) and Zillow ZORI (zillow_research.py) already covers rent trends. FMR would mainly serve as a free, unlimited sanity-check/floor for rent assumptions in neighborhoods or price points where RentCast's thin monthly budget hasn't surfaced a comparable listing — a backstop, not a primary signal.",
+  "existing_overlap": "Meaningful overlap with zillow_research.py (ZORI) and rentcast.py on the 'what's market rent here' question. FMR is HUD's administrative/voucher-program benchmark rather than a market-rate observation, so it tends to run below true market rent in strong neighborhoods — using it as a direct rent estimate would understate cash flow in exactly the gentrifying areas this screener is built to catch.",
+  "recommendation": "Do not recommend as a primary rent input — the existing ZORI + RentCast combination already covers market rent, and FMR's voucher-program basis makes it a biased estimator for condo market rent specifically. Could be revisited narrowly as a last-resort rent floor for neighborhoods with zero RentCast/ZORI coverage, but that's a thin, speculative use case not worth the adapter and auth-token setup right now.",
+  "verdict": "do_not_recommend"
+}
