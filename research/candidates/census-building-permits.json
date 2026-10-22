@@ -1,0 +1,21 @@
+{
+  "slug": "census-building-permits",
+  "name": "Census Building Permits Survey (BPS), county-level",
+  "url": "https://www.census.gov/construction/bps/",
+  "proposed_date": "2026-10-22",
+  "measures": "New privately-owned housing units authorized by building permits — count and valuation, a leading indicator of future housing supply.",
+  "coverage": "national",
+  "granularity": "county and permit-issuing-place (since a 2022 methodology change made county estimates complete rather than sample-based)",
+  "update_frequency": "monthly (preliminary ~12th workday, revised with county detail ~17th–18th workday)",
+  "history_available": "monthly county series available for many years; completeness only guaranteed since the Jan 2022 cutoff-sample change",
+  "cost": "Free, no account needed for the file downloads.",
+  "license": "US government public data, no restriction found.",
+  "api_type": "bulk_download",
+  "auth": "none",
+  "evaluated_quantitatively": false,
+  "correlation_results": null,
+  "relevant_gap": "All existing growth signals (rezonings, housing_database, subway_access, planned_catalysts in development.py/transit.py) are either demand-side or policy/infrastructure signals. BPS would be the one direct supply-side signal: more permits filed now can mean more competing inventory 2–3 years out, which cuts the other way from most of today's 'growth' metrics (which treat more development as unambiguously positive).",
+  "existing_overlap": "Read backend/app/sources/development.py directly: HousingDatabase already pulls NYC DCP's Housing Database (Socrata kyz5-72x5), itself built from DOB job filings, and writes a `pipeline_units_pct` metric from filed+approved+permitted units per NTA, plus `new_units_5y_pct` completions. That's the same underlying concept BPS measures (permits authorizing new housing units) — real overlap, not speculative. The difference is scope: HousingDatabase is NYC-only, while BPS is the one candidate in this batch that would actually serve this project's stated goal of generalizing to any US neighborhood, where no DCP-equivalent exists.",
+  "recommendation": "Do not recommend for NYC itself — confirmed real overlap with the existing HousingDatabase source's pipeline_units_pct/new_units_5y_pct metrics, so adding BPS there would be redundant. The only scenario where it earns its keep is the national-generalization goal, and even there the access path is a blocker: I could not confirm a documented county-level REST API (Census's api.census.gov/data/timeseries/eits catalog covers national indicators like bfs/m3/ftd, but no 'bps' entry surfaced there; county BPS data appears to live in the separate census.gov/construction/bps bulk file system, meaning fixed-width/CSV text parsing instead of a clean API). Revisit specifically for non-NYC regions once the area-model migration (noted in backend/CLAUDE.md) is further along, not as a near-term NYC addition.",
+  "verdict": "do_not_recommend"
+}

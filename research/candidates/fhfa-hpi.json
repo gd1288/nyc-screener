@@ -1,0 +1,21 @@
+{
+  "slug": "fhfa-hpi",
+  "name": "FHFA House Price Index (HPI) — county / 5-digit ZIP / tract annual files",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "proposed_date": "2026-10-22",
+  "measures": "Repeat-sales house price index (appreciation), the official benchmark built from conforming mortgage data. Published at national/census-division/state/MSA (quarterly) and county/ZIP5/tract ('developmental', lower-frequency) levels.",
+  "coverage": "national",
+  "granularity": "county and 5-digit ZIP annual files; tract-level CSV also published; state/MSA available quarterly",
+  "update_frequency": "quarterly for state/MSA; annual for the county/ZIP/tract 'developmental' files",
+  "history_available": "state/national back to 1975; county/ZIP/tract files have shorter but still multi-decade history (varies by geography, FHFA flags low-volume areas as unreliable)",
+  "cost": "Free, no account, no rate limit observed — these are static file downloads (XLSX/CSV/JSON/XML), not a metered API.",
+  "license": "US government public data, no login wall or usage restriction found on fhfa.gov.",
+  "api_type": "bulk_download",
+  "auth": "none",
+  "evaluated_quantitatively": false,
+  "correlation_results": null,
+  "relevant_gap": "This project's own evaluation methodology (research-sources skill, step 4) names 'FHFA tract HPI growth' as one of the two series a new candidate should be correlated against — but no FHFA data is actually in the codebase yet. Verified against backend/app/scoring/backtest.py: it builds both its price-pillar predictors (valuation gap, momentum) and its outcome (future growth) entirely from Zillow ZHVI history (`hist_zhvi_*` metrics) — the non-price pillars (permits, census, crime) aren't backtested at all per that module's own docstring. So today there is exactly one series in the loop, used on both sides of the predictor/outcome split, and zero independently-sourced appreciation benchmark. FHFA HPI, built from actual mortgage transactions rather than Zillow's modeled Zestimates, would be the first outside check on that.",
+  "existing_overlap": "backend/app/sources/zillow_research.py already provides a Zillow home-value series. FHFA HPI is a different, officially-sourced repeat-sales index — complementary rather than redundant, since it draws from actual mortgage transactions rather than Zestimate-style modeling.",
+  "recommendation": "Recommend. This isn't just 'another growth signal' — it fills the specific backtest-validation role this project's own research process already assumes exists. The developmental county/ZIP/tract files are noisier and lower-frequency than the state/MSA series (FHFA says so explicitly), so adapter should prefer the sturdier county-level file over tract where coverage is thin, and treat it as a secondary benchmark alongside Zillow rather than a replacement.",
+  "verdict": "recommend"
+}

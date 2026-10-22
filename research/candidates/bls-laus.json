@@ -1,0 +1,21 @@
+{
+  "slug": "bls-laus",
+  "name": "BLS Local Area Unemployment Statistics (LAUS), county-level",
+  "url": "https://www.bls.gov/lau/",
+  "proposed_date": "2026-10-22",
+  "measures": "Monthly employment, unemployment, and unemployment-rate estimates for ~7,600 areas including every US county, via series IDs like LAUCN360610000000004 (New York County example).",
+  "coverage": "national",
+  "granularity": "county",
+  "update_frequency": "monthly",
+  "history_available": "multi-decade for most counties (varies by series; the BLS Public Data API v2 allows up to 20 years per request)",
+  "cost": "Free. v1 (no key) is rate-limited to light/unregistered use; a free v2 registration key raises the daily query/series limits. No paid tier.",
+  "license": "US government public-domain economic data, no commercial-use restriction found.",
+  "api_type": "rest_api",
+  "auth": "free registration key (v2); v1 works unauthenticated at lower limits",
+  "evaluated_quantitatively": false,
+  "correlation_results": null,
+  "relevant_gap": "backend/app/scoring/neighborhood.py (Growth Score) currently has no local employment/labor-market input — its growth signals are development/rezoning/transit/demographic (census_acs), not jobs. County-level unemployment and employment trends are a standard, well-studied leading indicator of local housing demand.",
+  "existing_overlap": "census_acs.py pulls ACS demographics (which includes some employment-status fields at a slower, annual-release cadence) but not a dedicated monthly unemployment time series. Complementary, not duplicate.",
+  "recommendation": "Recommend, with a caveat: LAUS is county-level, and NYC's growth score currently operates at NTA (neighborhood tabulation area) granularity — every neighborhood in a borough would get the same county-wide unemployment number, which is a real information loss for a screener whose unit of analysis is the neighborhood. Still worth adding as a borough/county-level macro input (same pattern as a future FRED rate series), since no finer-grained free employment series exists. Correlation against FHFA/Zillow appreciation should be checked once evaluate_series.py exists before this becomes a scored input rather than just a displayed stat.",
+  "verdict": "conditional"
+}
