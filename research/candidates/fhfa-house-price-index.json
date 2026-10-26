@@ -1,0 +1,22 @@
+{
+  "slug": "fhfa-house-price-index",
+  "name": "FHFA House Price Index (HPI) — county and census-tract annual files",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "proposed_date": "2026-10-26",
+  "gap": "national price-momentum coverage to generalize beyond NYC, and the project's own stated need (in the research-sources skill text) for an FHFA HPI series to evaluate candidates against",
+  "measures": "Repeat-sales house price appreciation index, built from Fannie Mae/Freddie Mac mortgage data (the 'All-Transactions' / purchase-only HPI). FHFA publishes a Master file (national/state/MSA, CSV/JSON/XML) plus 'HPI@BDL' local files down to county (.xlsx) and census tract (.csv) level, annual.",
+  "coverage": "national",
+  "granularity": "census tract and county (local HPI@BDL files); MSA and state in the master file",
+  "update_frequency": "quarterly for the master national/state/MSA series; annual for the county and tract local files",
+  "history": "County series since ~1975 (released 2016, backdated); tract series released more recently with a shorter backdated run — depth not confirmed (see verification_note)",
+  "cost": "free-no-signup",
+  "license": "U.S. government work; FHFA's own download pages describe the data as open and free. A third-party catalog mentions an 'FHFA API Terms of Service' but this wasn't independently confirmed.",
+  "verified": false,
+  "verification_note": "Could not fetch fhfa.gov directly in this session (403 connect_rejected from the egress proxy on every candidate host tried, not FHFA-specific). WebSearch found the FAQ page naming hpi_at_bdl_county.xlsx and hpi_at_bdl_tract.csv but could not confirm exact tract-file history depth or the API ToS text. Verify both before building the adapter.",
+  "correlation": {
+    "not_run_reason": "app/research/evaluate_series.py doesn't exist in this repo yet. More importantly, this series is the one the research-sources skill names as the evaluation *benchmark* for other candidates ('FHFA tract HPI growth'), not a predictor to be benchmarked itself — see recommendation for the circularity this creates."
+  },
+  "fits_existing_gap_in_code": "app/scoring/backtest.py currently uses Zillow ZHVI (NYC ZIP-level, condo-tier only) as both the neighborhood price series and the backtest outcome variable. FHFA tract HPI would be a second, methodologically different, nationally-available price series — useful either as an independent check on the Zillow-based backtest, or as the actual 'momentum' pillar input once the project generalizes past NYC (per CLAUDE.md's stated goal), since Zillow's condo-tier ZHVI doesn't exist for most of the country.",
+  "recommend": true,
+  "recommendation": "Recommend, with a framing caveat rather than a quality concern: the skill text treats FHFA tract HPI as the ground-truth benchmark to evaluate *other* candidates against ('correlation and lead/lag of the candidate series against FHFA tract HPI growth'). That makes it foundational infrastructure, not itself a backtested predictor — don't run evaluate_series.py on this one against itself. Its actual value here is twofold: (1) it gives app/scoring/backtest.py a second, non-Zillow outcome series to validate against (reducing single-source risk), and (2) because it's measured by repeat-sales mortgage data rather than Zillow's ZIP-level model, it's available for essentially any US county/tract, which is what the project's stated 'generalizing to any US neighborhood' goal needs that Zillow's condo-tier ZHVI cannot provide outside a handful of dense markets. Confirm the tract file's backdated history length before treating it as a strong backtest input — a short tract series would only support the county-level roll-up for now."
+}

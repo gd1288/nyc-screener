@@ -1,0 +1,22 @@
+{
+  "slug": "fred-mortgage30us",
+  "name": "FRED series MORTGAGE30US (Freddie Mac PMMS 30-Year Fixed Mortgage Rate)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "proposed_date": "2026-10-26",
+  "gap": "a better mortgage-rate series (named explicitly in the research-sources skill as an example gap)",
+  "measures": "National average 30-year fixed mortgage rate, from Freddie Mac's Primary Mortgage Market Survey, published weekly (Thursdays) since April 1971.",
+  "coverage": "national",
+  "granularity": "national (single series, no sub-national breakdown)",
+  "update_frequency": "weekly",
+  "history": "1971-present (54+ years) — plenty for any backtest window the project uses",
+  "cost": "free-no-signup",
+  "license": "FRED (Federal Reserve Bank of St. Louis) data is public and free for any use, including commercial, with attribution requested but not required; no ToS clause found blocking product use. A full FRED API key (free, instant registration) is needed to use the JSON/XML API, but the plain CSV endpoint (fredgraph.csv?id=MORTGAGE30US) is documented by third parties as working without a key.",
+  "verified": false,
+  "verification_note": "This session's egress policy returns 403 connect_rejected for fred.stlouisfed.org, fhfa.gov, bls.gov, huduser.gov and data.gov alike (confirmed via curl against all five) — it blocks the whole set of candidate hosts, not any one in particular. All facts above come from WebSearch result summaries, not a direct fetch. Before implementing, add-data-source must independently fetch https://fred.stlouisfed.org/docs/api/fred/ and confirm the keyless CSV endpoint still works and whether a key is in fact required for routine automated pulls (rate limits differ for keyed vs keyless access).",
+  "correlation": {
+    "not_run_reason": "app/research/evaluate_series.py (skill step 4) does not exist in this repo yet, so no quantitative lead/lag or correlation against FHFA HPI / Zillow ZORI was computed. This candidate is not proposed as a neighborhood-ranking predictor anyway (see recommendation) so that evaluation would not be the right test for it regardless."
+  },
+  "fits_existing_gap_in_code": "backend/app/scoring/investment.py:21 hardcodes `interest_rate: float = 0.065` as the Assumptions default used in every cash-flow/IRR projection (monthly_payment, loan_balance, _project). This is a stale, undated constant driving every Opportunity Score calculation. A tiny adapter that pulls the current MORTGAGE30US value (or a short trailing average) and either (a) updates Assumptions.interest_rate's default on refresh, or (b) is surfaced to the frontend as the 'as of' rate assumption, would remove a silent staleness risk with almost no engineering cost.",
+  "recommend": true,
+  "recommendation": "Recommend. This is a one-series, single-value national constant, not a neighborhood metric, so it can't move anything in the percentile-ranked Growth Score and doesn't need the evaluate_series.py backtest treatment the skill describes for predictors. Its value is narrow but concrete and already identified by the project's own skill text and by a real hardcoded value (investment.py's interest_rate: float = 0.065) that has no date attached and will drift stale. Implementation would be small: a weekly cron pulling one CSV row, written as an AppSetting or similar rather than a NeighborhoodMetric. Lowest-risk, highest-certainty candidate in this batch, precisely because it's the smallest. Confirm keyless-vs-keyed access during add-data-source, since that wasn't verified here."
+}

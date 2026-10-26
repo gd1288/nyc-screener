@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data source research candidate",
+  "description": "One evaluated candidate from the research-sources skill. File name: research/candidates/<slug>.json",
+  "type": "object",
+  "required": [
+    "slug", "name", "url", "proposed_date", "gap", "measures", "coverage", "granularity",
+    "update_frequency", "history", "cost", "license", "verified", "correlation", "recommendation",
+    "recommend"
+  ],
+  "properties": {
+    "slug": {"type": "string", "description": "lowercase-hyphenated, matches the filename stem"},
+    "name": {"type": "string"},
+    "url": {"type": "string", "description": "primary documentation/download page"},
+    "proposed_date": {"type": "string", "format": "date"},
+    "gap": {"type": "string", "description": "the gap this was searched for, verbatim from the run's instructions"},
+    "measures": {"type": "string", "description": "what the series/dataset actually measures"},
+    "coverage": {"type": "string", "enum": ["national", "nyc-only", "regional"]},
+    "granularity": {"type": "string", "description": "e.g. tract, county, MSA, ZCTA, national"},
+    "update_frequency": {"type": "string"},
+    "history": {"type": "string", "description": "how far back data goes, relevant to backtest usefulness"},
+    "cost": {"type": "string", "enum": ["free-no-signup", "free-with-signup", "paid", "unclear"]},
+    "license": {"type": "string", "description": "ToS / commercial-use summary and any attribution requirement"},
+    "verified": {
+      "type": "boolean",
+      "description": "true only if a direct fetch of the source's own page confirmed the facts above in this session; false if based on search-engine summaries of third-party pages only"
+    },
+    "verification_note": {"type": "string"},
+    "correlation": {
+      "type": ["object", "null"],
+      "description": "quantitative evaluation vs FHFA HPI / Zillow ZORI from app/research/evaluate_series.py; null if that script doesn't exist yet or wasn't run",
+      "properties": {
+        "method": {"type": "string"},
+        "result": {"type": "string"},
+        "not_run_reason": {"type": "string"}
+      }
+    },
+    "fits_existing_gap_in_code": {
+      "type": "string",
+      "description": "concrete pointer into the codebase this would plug into or fix, if any"
+    },
+    "recommend": {"type": "boolean"},
+    "recommendation": {"type": "string", "description": "one paragraph, explicit recommend/don't-recommend and why"}
+  }
+}
