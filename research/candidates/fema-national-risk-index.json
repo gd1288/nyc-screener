@@ -1,0 +1,22 @@
+{
+  "slug": "fema-national-risk-index",
+  "name": "FEMA National Risk Index (NRI)",
+  "url": "https://hazards.fema.gov/nri/data-resources",
+  "proposed_date": "2026-10-26",
+  "gap": "national generalization of the project's existing NYC-only climate/hazard signal (future_floodplain), explicitly in-scope per this run's instructions (FEMA listed)",
+  "measures": "A composite risk score per county and census tract combining expected annual loss, social vulnerability and community resilience across 18 natural hazards (flood, wildfire, heat, hurricane wind, etc.), not flood alone.",
+  "coverage": "national",
+  "granularity": "census tract and county",
+  "update_frequency": "periodic re-releases (not a continuous monthly/quarterly cadence) — it's closer to a static annual-ish snapshot than a running time series",
+  "history": "Not a backdated time series at all; each release is a point-in-time risk score, so there's no multi-year history to regress against future appreciation",
+  "cost": "free-no-signup",
+  "license": "data.gov catalog lists it under U.S. government public-domain terms; FEMA's own pages describe it as a free public tool with exportable data.",
+  "verified": false,
+  "verification_note": "hazards.fema.gov and catalog.data.gov both returned 403 connect_rejected from this session's egress proxy; findings are from WebSearch summaries of catalog/third-party pages, not a direct read of FEMA's current data-resources page. Confirm current download format (CSV/GDB/shapefile) and release cadence before implementing.",
+  "correlation": {
+    "not_run_reason": "Not applicable in the usual sense: NRI isn't a time series, so a lead/lag correlation against FHFA HPI growth or Zillow ZORI doesn't have an input to compute against. evaluate_series.py also doesn't exist yet in this repo."
+  },
+  "fits_existing_gap_in_code": "backend/app/sources/livability.py's FutureFloodplain source is NYC-specific (NYC Open Data dataset 27ya-gqtm, 2050s/100-year floodplain share). NRI would be the national equivalent referenced by CLAUDE.md's 'generalizing to any US neighborhood' goal, and it's broader than flood alone (wildfire, heat, wind), which NYC's own climate exposure (coastal flood, heat) only partly captures anyway.",
+  "recommend": false,
+  "recommendation": "Don't recommend for this cycle, despite being free, national and exactly the kind of government hazard dataset this run was asked to prioritize. The skill's own bar requires 'history available (need enough backdated history for the backtest to mean anything)', and NRI fails that outright — it's a cross-sectional risk score, not a time series, so there's nothing to backtest or correlate against future appreciation the way the other candidates allow. It would slot in as a static risk-penalty input (same role FutureFloodplain already plays for NYC) rather than a scored/validated predictor, which is a real but much smaller win than the other candidates here. Worth a future pass specifically for the area-model migration described in backend/CLAUDE.md (once scoring runs per-CBSA rather than NYC-only), not now."
+}

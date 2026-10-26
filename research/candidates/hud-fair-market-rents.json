@@ -1,0 +1,22 @@
+{
+  "slug": "hud-fair-market-rents",
+  "name": "HUD Fair Market Rents (FMR) API",
+  "url": "https://www.huduser.gov/portal/dataset/fmr-api.html",
+  "proposed_date": "2026-10-26",
+  "gap": "a national rent benchmark (HUD named explicitly in this run's instructions)",
+  "measures": "HUD's annual estimate of gross rent (by bedroom count) at the 40th percentile of a metro/county rental market, used to set Section 8 payment standards. Small-Area FMRs (SAFMR) exist at ZIP level for some metros.",
+  "coverage": "national",
+  "granularity": "metro (CBSA) or county for standard FMR; ZIP-level only where HUD designates Small-Area FMR (not confirmed whether NYC is one of those metros)",
+  "update_frequency": "annual",
+  "history": "Long-running HUD program (decades); exact machine-readable API history depth not confirmed",
+  "cost": "free-with-signup — HUD's own FMR dataset page states developers create a free account and get an access token via the API page",
+  "license": "HUD's API Terms of Service (huduser.gov/portal/dataset/api-terms-of-service.html, not independently fetched) reportedly requires a visible attribution notice ('uses the HUD User Data API but is not endorsed or certified by HUD User') in any app that uses it — an obligation, not a block, but add-data-source should confirm there's no commercial-use restriction beyond that.",
+  "verified": false,
+  "verification_note": "huduser.gov returned 403 connect_rejected from this session's proxy. Findings are from WebSearch summaries of HUD's dataset page and third-party API wrappers (hudpy, rhud, hudr), not a direct fetch of fmr-api.html or the ToS page. In particular, whether NYC has Small-Area (ZIP-level) FMR coverage, and the exact token registration URL, need confirming directly.",
+  "correlation": {
+    "not_run_reason": "app/research/evaluate_series.py does not exist in this repo yet, so no quantitative check against Zillow ZORI was run."
+  },
+  "fits_existing_gap_in_code": "app/sources/zillow_research.py already provides ZORI (Zillow Observed Rent Index) at ZIP level, rolled up to NTA by sale-weighted mapping, and investment.py's PropertyInputs.neighborhood_rent is fed from that. FMR would be a second, government rent benchmark — but for NYC specifically it would most likely only resolve to metro-level (one number for the whole city) unless NYC is confirmed as a Small-Area FMR metro, which would make it strictly coarser than what ZORI already gives this app today.",
+  "recommend": false,
+  "recommendation": "Don't recommend for the current NYC screener. ZORI already covers NYC rents at ZIP granularity (rolled up to NTA), and FMR's standard geography is metro/county — a single value for all of NYC unless Small-Area FMR applies here, which wasn't confirmed and would add a token-gated dependency for a signal this app already has at finer granularity. The genuine case for FMR is markets Zillow's ZORI doesn't cover well (smaller metros, where Zillow's ZIP series get thin), which only matters once the project generalizes past NYC per CLAUDE.md's stated goal — worth revisiting at that point, and worth confirming SAFMR coverage for NYC specifically before writing it off entirely, but it does not clear the bar as a priority add today."
+}

@@ -1,0 +1,22 @@
+{
+  "slug": "bls-qcew",
+  "name": "BLS Quarterly Census of Employment and Wages (QCEW)",
+  "url": "https://www.bls.gov/cew/",
+  "proposed_date": "2026-10-26",
+  "gap": "employment/wage growth as a demand-side predictor, no current equivalent in the screener (BLS named explicitly in this run's instructions)",
+  "measures": "Employment counts and average weekly wages by industry (NAICS), covering >95% of U.S. jobs reported by employers, at county/MSA/state/national level.",
+  "coverage": "national",
+  "granularity": "county (and MSA/state/national roll-ups) — no tract or ZIP breakdown",
+  "update_frequency": "quarterly, released ~6 months after quarter-end (e.g. Q1 2026 county data releases August 28, 2026 per BLS's posted schedule)",
+  "history": "Bulk CSV archives go back to the 1990s at least — long enough for a meaningful backtest window",
+  "cost": "free-no-signup for bulk CSV/ZIP downloads; a separate BLS Public Data API (v2.0) exists with a free registration key (500 queries/day registered vs 25 unregistered) — unclear whether QCEW is served through that same keyed API or only via the bulk files",
+  "license": "U.S. government work, no commercial-use restriction found.",
+  "verified": false,
+  "verification_note": "bls.gov and data.bls.gov both returned 403 connect_rejected from this session's egress proxy (confirmed by curl against the QCEW open-data CSV path). Everything above is from WebSearch summaries of bls.gov pages, not a direct read. Confirm the exact bulk-file URL pattern and whether the QCEW-specific Open Data API needs its own key (distinct from the general BLS Public Data API) during add-data-source.",
+  "correlation": {
+    "not_run_reason": "app/research/evaluate_series.py does not exist in this repo yet, so no correlation/lead-lag against FHFA HPI or Zillow ZORI was computed."
+  },
+  "fits_existing_gap_in_code": "No current source touches local employment or wages. The closest existing pillar is 'demographics' (census_acs.py: population, income, education, age), which is ACS income level/growth, not employment growth — QCEW would add a distinct, higher-frequency (quarterly vs ACS's 5-year rolling) jobs signal.",
+  "recommend": true,
+  "recommendation": "Lean recommend, with a granularity caveat. QCEW is free, government, long-history and exactly in the requested source list, but it's county-level — all five NYC boroughs are each their own county, so it gives only 5 distinct values across this app's 262 NTAs today, meaning it can't differentiate neighborhoods within a borough (it would either be dropped at NTA-percentile granularity or applied flatly per-borough, both weak). Its real payoff is for CLAUDE.md's stated 'generalizing to any US neighborhood' goal: in most of the country outside NYC, county is a normal and useful granularity for a local job-growth signal, and QCEW is the standard free source for it. Worth implementing once (or as part of) the area-model/CBSA migration mentioned in backend/CLAUDE.md, rather than as a priority add to the current NYC-NTA screener."
+}
