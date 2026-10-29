@@ -1,0 +1,20 @@
+{
+  "name": "FEMA National Risk Index (NRI)",
+  "slug": "fema-national-risk-index",
+  "url": "https://hazards.fema.gov/nri/data-resources",
+  "evaluated_date": "2026-10-29",
+  "coverage": "national, every US county and census tract",
+  "granularity": "tract",
+  "update_frequency": "versioned releases, roughly annual-ish (most recent cited in search results: December 2025, v1.20.0)",
+  "history": "point-in-time composite index, not a long time series; version-over-version comparison is possible but not designed as a trend series",
+  "license": "Public federal data (FEMA), free bulk download as geodatabase/shapefile/CSV at county and tract level, plus a keyless ArcGIS FeatureServer. FEMA's own metadata flags the index as intended 'for planning purposes only' — a caveat on interpretation, not a reuse/commercial-use restriction, and consistent with how this project already uses risk data (NypdFelonies, FutureFloodplain) for screening, not as the sole basis for a transaction decision.",
+  "cost": "Free. No API key for the bulk downloads or the ArcGIS FeatureServer.",
+  "correlation": {
+    "ran": false,
+    "notes": "Not a price/rent series, so FHFA/ZORI correlation testing doesn't apply. Would validate instead by comparing NRI's flood-hazard component for NYC tracts against the existing NYC Future Floodplain dataset as a sanity check before trusting it elsewhere."
+  },
+  "potential_use": "backend/app/scoring/neighborhood.py — FLOOD_RISK_PENALTY currently uses backend/app/sources/livability.py:FutureFloodplain, which pulls NYC Panel on Climate Change 2050s floodplain geometry (NYC Open Data dataset 27ya-gqtm). That dataset only exists for NYC and cannot generalize. NRI gives a nationally-consistent, multi-hazard (flood, wildfire, hurricane, tornado, winter weather, etc.) tract-level score covering the whole country, which is exactly what CLAUDE.md's 'generalizing to any US neighborhood' goal needs for the climate-risk pillar once the area-model migration lands.",
+  "recommendation": "recommend",
+  "recommendation_summary": "The single clearest fit for this project's stated national-generalization goal among the candidates reviewed: the existing flood_risk_penalty pillar is hard-wired to an NYC-only dataset and has no path to work anywhere else, while NRI is free, tract-level, and covers every county in the country out of the box. Recommend implementing as a NYC-first addition (validate its flood component against the existing NYC floodplain data as a sanity check) with an eye toward it fully replacing FutureFloodplain once other metros are added, since it is the only one of the five candidates that is itself a full national replacement for an existing NYC-only metric rather than a new metric.",
+  "memo": "research/memos/2026-10-29-fema-national-risk-index.md"
+}
