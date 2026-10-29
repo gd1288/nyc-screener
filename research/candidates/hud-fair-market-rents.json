@@ -1,0 +1,20 @@
+{
+  "name": "HUD Fair Market Rents (FMR)",
+  "slug": "hud-fair-market-rents",
+  "url": "https://www.huduser.gov/portal/datasets/fmr.html",
+  "evaluated_date": "2026-10-29",
+  "coverage": "national, every county/metro FMR area including small and rural markets Zillow doesn't cover",
+  "granularity": "county",
+  "update_frequency": "annual (effective each federal fiscal year, Oct 1)",
+  "history": "yearly files published for many past fiscal years on huduser.gov",
+  "license": "US Government (HUD) public domain data, free yearly files with no signup per secondary sources. A newer official API (noted by HUD's Office of Policy Development and Research) requires a free registration token for programmatic/current-year pulls; bulk yearly files don't need one.",
+  "cost": "Free for the bulk yearly files; free token registration for the API.",
+  "correlation": {
+    "ran": false,
+    "notes": "Not run — app/research/evaluate_series.py doesn't exist yet. Even without it, the structural mismatch below is a strong enough signal on its own."
+  },
+  "potential_use": "backend/app/scoring/neighborhood.py 'valuation' pillar's gross_rent_yield metric, currently fed by Zillow ZORI (ZIP-level, monthly). Would only add coverage in counties where Zillow has no ZORI series.",
+  "recommendation": "do-not-recommend",
+  "recommendation_summary": "For NYC today this is strictly worse than what's already in use: annual cadence versus Zillow ZORI's monthly, county-level versus ZIP-level, and by design FMR targets the 40th percentile of gross rent for Section-8 payment standards rather than true market rent — mixing it into gross_rent_yield would introduce a systematic downward bias relative to the market-rate ZORI series already in production. Its only real use case is filling Zillow ZORI's rural/small-market coverage gaps once the area-model migration adds non-metro areas — worth a second look then, but not a fit for the app as it stands.",
+  "memo": "research/memos/2026-10-29-hud-fair-market-rents.md"
+}

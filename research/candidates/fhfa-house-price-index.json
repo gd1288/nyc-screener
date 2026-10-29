@@ -1,0 +1,20 @@
+{
+  "name": "FHFA House Price Index (HPI)",
+  "slug": "fhfa-house-price-index",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "evaluated_date": "2026-10-29",
+  "coverage": "national, with products at national/state/MSA (quarterly, ~1975-present) and county/ZIP/tract (annual, shorter and more sparse history per secondary sources)",
+  "granularity": "mixed",
+  "update_frequency": "quarterly for national/state/MSA; annual for county/ZIP/tract products",
+  "history": "national/state/MSA back to 1975; county-level products are annual and generally shorter",
+  "license": "US Government (FHFA) public data, free CSV/JSON/XML/SQL bulk downloads, no login or API key found in the official download page per secondary sources. Could not independently re-verify fhfa.gov directly — the session's network policy blocks www.fhfa.gov, so this is based on search-result summaries and an ALFRED (FRED's vintage-data sibling) mirror, not a first-hand read of FHFA's own page.",
+  "cost": "Free per all sources found; no key required for bulk files.",
+  "correlation": {
+    "ran": false,
+    "notes": "This is itself the backtest benchmark research-sources/SKILL.md names ('FHFA tract HPI growth') for evaluating other candidates once app/research/evaluate_series.py exists — so for FHFA itself the relevant question is less 'does it correlate' and more 'is it worth adding as a live metric,' addressed in the memo."
+  },
+  "potential_use": "Two distinct uses: (1) as the backtest ground-truth series app/scoring/backtest.py and the not-yet-built evaluate_series.py would compare future candidates against, replacing an ad-hoc choice of benchmark; (2) as a national momentum/valuation-pillar metric for metros where DOF repeat-sales data and Zillow ZHVI don't exist (DOF is NYC-only; Zillow ZHVI by ZIP has gaps in smaller/rural markets).",
+  "recommendation": "recommend-deferred",
+  "recommendation_summary": "Genuinely useful but not urgent: for NYC today it adds nothing over the existing DOF repeat-sales index (more granular, NYC-specific) and Zillow ZHVI (ZIP-level, already covers all 5 boroughs well) — FHFA's own NYC-area coverage is coarser (MSA/county) than what's already in the app. Its value shows up once the area-model migration lands and the screener needs a nationally-available price series for metros with no DOF-equivalent sales feed, and separately as the formal backtest benchmark once evaluate_series.py is built. Recommend revisiting at that point rather than implementing now; don't want a second price series with no near-term beneficiary ahead of sources that add genuinely new coverage today (FRED rate, FEMA NRI, BLS LAUS).",
+  "memo": "research/memos/2026-10-29-fhfa-house-price-index.md"
+}

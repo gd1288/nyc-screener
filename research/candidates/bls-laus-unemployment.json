@@ -1,0 +1,20 @@
+{
+  "name": "BLS Local Area Unemployment Statistics (LAUS)",
+  "slug": "bls-laus-unemployment",
+  "url": "https://www.bls.gov/developers/",
+  "evaluated_date": "2026-10-29",
+  "coverage": "national — every county, metro area, and many cities",
+  "granularity": "county",
+  "update_frequency": "monthly (plus annual revisions)",
+  "history": "multi-decade series available for most counties (official BLS handbook: https://www.bls.gov/opub/hom/lau/)",
+  "license": "US Government public data, free, no commercial-use restriction. Programmatic API requires a free registration key from bls.gov/developers (same low-friction pattern as census_api_key already in use); bulk flat files (e.g. download.bls.gov/pub/time.series/la/la.txt) are available with no key at all.",
+  "cost": "Free. Public API has a published 50-series-per-request limit (and a daily query cap on the free tier) — fine for ~190 NYC NTAs mapped to 5 counties today, would need request batching if expanded to many counties nationally.",
+  "correlation": {
+    "ran": false,
+    "notes": "app/research/evaluate_series.py doesn't exist yet. Worth testing county unemployment-rate trend against FHFA/Zillow appreciation once that tooling lands — falling unemployment is a textbook leading indicator for housing demand."
+  },
+  "potential_use": "backend/app/scoring/neighborhood.py 'demographics' pillar — currently only Census ACS (5-year estimates, slow-moving, lagged by design). County-level monthly unemployment rate and its recent trend (e.g. 1-2yr change) would add a timelier economic-momentum signal alongside ACS's structural population/income/education trends, and it's nationally available at county granularity so it ports cleanly beyond NYC.",
+  "recommendation": "recommend",
+  "recommendation_summary": "Solid, nationally generalizable complement to the existing Census ACS demographics pillar: adds a monthly, timely economic signal where ACS only gives a slow 5-year-lagged one. Free key registration mirrors the pattern already used for Census. Main integration cost is the 50-series/request batching for counties beyond NYC's 5, which is a manageable implementation detail, not a blocker.",
+  "memo": "research/memos/2026-10-29-bls-laus-unemployment.md"
+}

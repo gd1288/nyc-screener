@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data source research candidate",
+  "description": "One evaluated candidate from the research-sources skill. Written to research/candidates/<slug>.json.",
+  "type": "object",
+  "required": [
+    "name", "slug", "url", "evaluated_date", "coverage", "granularity",
+    "update_frequency", "history", "license", "cost", "recommendation"
+  ],
+  "properties": {
+    "name": { "type": "string", "description": "Human-readable source name" },
+    "slug": { "type": "string", "description": "research/candidates/<slug>.json, research/memos/<date>-<slug>.md" },
+    "url": { "type": "string", "description": "Primary documentation or download URL" },
+    "evaluated_date": { "type": "string", "format": "date" },
+    "coverage": { "type": "string", "description": "Geographic/thematic coverage, e.g. 'national, all counties' or 'NYC only'" },
+    "granularity": {
+      "type": "string",
+      "enum": ["national", "state", "msa", "county", "zip", "zcta", "tract", "parcel", "mixed"]
+    },
+    "update_frequency": { "type": "string", "description": "e.g. weekly, monthly, quarterly, annual" },
+    "history": { "type": "string", "description": "How far back usable history goes" },
+    "license": { "type": "string", "description": "License/ToS summary; must confirm no login-wall-for-commercial-use and no clause blocking product use" },
+    "cost": { "type": "string", "description": "Confirm free, note any rate limit or API key registration requirement" },
+    "correlation": {
+      "type": ["object", "null"],
+      "description": "Quantitative evaluation results if app/research/evaluate_series.py was available to run; null if that tooling doesn't exist yet",
+      "properties": {
+        "ran": { "type": "boolean" },
+        "notes": { "type": "string" }
+      }
+    },
+    "potential_use": { "type": "string", "description": "Where in the app this would plug in (pillar, assumption, adapter)" },
+    "recommendation": {
+      "type": "string",
+      "enum": ["recommend", "recommend-low-priority", "recommend-deferred", "do-not-recommend"]
+    },
+    "recommendation_summary": { "type": "string", "description": "One paragraph: why" },
+    "memo": { "type": "string", "description": "Path to the companion memo" }
+  }
+}

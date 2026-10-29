@@ -1,0 +1,20 @@
+{
+  "name": "FRED MORTGAGE30US (Freddie Mac PMMS 30-Year Fixed Mortgage Rate)",
+  "slug": "fred-mortgage30us",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "evaluated_date": "2026-10-29",
+  "coverage": "national (single US series, no sub-national breakdown)",
+  "granularity": "national",
+  "update_frequency": "weekly (Thursday)",
+  "history": "1971-present",
+  "license": "Published by the Federal Reserve Bank of St. Louis (FRED), sourced from Freddie Mac's Primary Mortgage Market Survey. Public, free, redistribution requires citation (\"Copyrighted: Citation Required\" tag on FRED is a citation requirement, not a reuse ban) — same model as other FRED series. No login wall for data access; a free, instant API key is standard practice for programmatic FRED access (same registration pattern already used for census_api_key in this codebase).",
+  "cost": "Free. Direct CSV pull (https://fred.stlouisfed.org/graph/fredgraph.csv?id=MORTGAGE30US) works with no key at all; the official api.stlouisfed.org endpoint wants a free API key for programmatic/production use. No rate limit concerns for a single weekly series pulled at most daily.",
+  "correlation": {
+    "ran": false,
+    "notes": "app/research/evaluate_series.py (Phase 4) doesn't exist yet. Not applicable here anyway: this is a single national macro input, not a neighborhood-level predictor to correlate against local HPI/ZORI."
+  },
+  "potential_use": "backend/app/scoring/investment.py:21 — Assumptions.interest_rate defaults to a hardcoded 0.065. This series would let that default track the live market rate instead of going stale, which directly affects every mortgage payment, cash-flow and IRR calculation shown to a user. Would need a new small source (kind likely 'neighborhood'-adjacent but really a single AppSetting-style value, not a NeighborhoodMetric) that writes one scalar instead of a table.",
+  "recommendation": "recommend",
+  "recommendation_summary": "Fixes a real, currently-hardcoded value used in every investment calculation shown in the app (6.5% default, who knows how stale). Trivial integration: one national weekly scalar, no NTA/zip joining, no new geography handling. Free, no real rate-limit risk, same free-API-key pattern already used for Census. Highest value-to-effort ratio of the five candidates reviewed this run.",
+  "memo": "research/memos/2026-10-29-fred-mortgage30us.md"
+}
