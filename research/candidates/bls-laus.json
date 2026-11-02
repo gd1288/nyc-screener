@@ -1,0 +1,20 @@
+{
+  "slug": "bls-laus",
+  "name": "BLS Local Area Unemployment Statistics (LAUS)",
+  "url": "https://www.bls.gov/lau/",
+  "date_evaluated": "2026-11-02",
+  "gap": "The only local economic-health signal currently in the Growth Score is census_acs.py's 5-year ACS estimates (income, education, age, tenure), which are heavily lagged (5-year rolling window, compared 10 years apart) and update only twice a year. There is no timely employment/labor-market indicator, even though local job growth is a standard leading indicator of housing demand and rent growth that an investor would look at.",
+  "coverage": "national — every US county, metro area (MSA/MD), and many cities; for NYC, the 5 boroughs are LAUS's 5 counties (New York, Kings, Queens, Bronx, Richmond), a clean 1:1 match to the existing county list in census_acs.py",
+  "granularity": "county (and metro/city for larger areas) — coarser than tract/NTA, so it would apply as one value per borough/county rather than varying within it; fine for NYC (5 boroughs = 5 data points) but would be coarse for a single-county metro elsewhere",
+  "update_frequency": "monthly (with the usual ~1 month publication lag), plus annual benchmark revisions",
+  "history_available": "NOT INDEPENDENTLY VERIFIED — search results didn't give an exact start year; LAUS county series are commonly cited elsewhere as going back to the 1990s, but confirm the actual earliest year on bls.gov before relying on it for a multi-decade backtest.",
+  "license": "Produced by BLS, a federal agency (US Dept. of Labor) -> federal government work, public domain is the expected default and a third-party source (an MCP server's own dataset description) explicitly labels it public domain, but this was NOT confirmed on BLS's own terms page this run. No login required for the public data pages per search results; an optional free API key raises the query-rate limit, same pattern the project already uses for census_api_key.",
+  "cost": "free; without a registered key BLS limits query volume (and recommends against pulling all ~3,000+ counties in one run) — a non-issue here since the project only ever needs ~5 NYC counties (or a handful per metro once area-modeled)",
+  "access_method": "BLS public API v2 (JSON, series IDs like LAUCN360610000000003 for New York County) with an optional free key from bls.gov/developers; bulk flat files also available under bls.gov/lau",
+  "correlation": {
+    "computed": false,
+    "notes": "app/research/evaluate_series.py does not exist yet (Phase 4 not built). Not evaluated quantitatively this run; worth running once that tool exists, since unemployment-rate *trend* (not level) is the more plausible leading signal for rent/price growth and that's a time-series relationship evaluate_series.py would be positioned to check."
+  },
+  "recommend": "recommend-with-caveat",
+  "recommendation": "Worth adding as a `neighborhood`-kind source keyed by county, joined to NTAs the same way census_acs.py already groups by county (NYC's 5 boroughs = 5 counties, so no new crosswalk logic needed). The caveat is granularity: at the county level this gives one number per borough, which is a real signal for distinguishing boroughs but adds nothing to differentiate neighborhoods within a borough — so it should feed a citywide/boro-level 'local labor market' factor rather than being treated as a neighborhood-level metric, and should be evaluated for actual predictive lift (via evaluate_series.py, once built) before being weighted into the Growth Score rather than added on the assumption that it helps. Before implementing: confirm the series start year and the public-domain claim directly on bls.gov, since neither was independently verified this run."
+}

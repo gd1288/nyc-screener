@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research candidate",
+  "description": "One proposed data source candidate from the research-sources skill. Written to research/candidates/<slug>.json.",
+  "type": "object",
+  "required": ["slug", "name", "url", "date_evaluated", "coverage", "granularity", "update_frequency", "license", "cost", "recommendation", "recommend"],
+  "properties": {
+    "slug": {"type": "string", "description": "kebab-case id, matches the filename and the memo filename suffix"},
+    "name": {"type": "string"},
+    "url": {"type": "string", "description": "primary documentation or data-access URL"},
+    "date_evaluated": {"type": "string", "format": "date"},
+    "gap": {"type": "string", "description": "what gap in the screener this would fill"},
+    "coverage": {"type": "string", "description": "geographic scope, e.g. 'national', 'NYC 5 counties'"},
+    "granularity": {"type": "string", "description": "e.g. tract, ZCTA, county, metro, national"},
+    "update_frequency": {"type": "string"},
+    "history_available": {"type": "string", "description": "how far back data goes, if relevant to backtesting"},
+    "license": {"type": "string", "description": "license/ToS summary: login wall? commercial-use restriction? attribution required?"},
+    "cost": {"type": "string", "description": "should state 'free' plus any rate limit, or 'none found - flag as risk'"},
+    "access_method": {"type": "string", "description": "API, bulk CSV/XLSX download, Socrata, etc. — note any auth/key requirement"},
+    "correlation": {
+      "type": ["object", "null"],
+      "description": "quantitative evaluation vs FHFA HPI / Zillow ZORI, if app/research/evaluate_series.py was run; null if not computed",
+      "properties": {
+        "computed": {"type": "boolean"},
+        "notes": {"type": "string"}
+      }
+    },
+    "recommend": {"type": "string", "enum": ["recommend", "recommend-with-caveat", "do-not-recommend"]},
+    "recommendation": {"type": "string", "description": "one-paragraph recommendation"}
+  }
+}
