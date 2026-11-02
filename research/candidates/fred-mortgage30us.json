@@ -1,0 +1,20 @@
+{
+  "slug": "fred-mortgage30us",
+  "name": "FRED MORTGAGE30US (Freddie Mac PMMS 30-year fixed mortgage rate, via FRED)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "date_evaluated": "2026-11-02",
+  "gap": "backend/app/scoring/investment.py's Assumptions.interest_rate defaults to a hardcoded 0.065 with no data source behind it at all — not even an occasional manual update. A live/historical national mortgage-rate series would let the default track actual market rates and let a future backtest vary financing cost by purchase date instead of using one static number for every historical scenario.",
+  "coverage": "national (US average, not region-specific — financing rate doesn't vary by neighborhood the way other factors in this project do)",
+  "granularity": "national only",
+  "update_frequency": "weekly (Thursdays), via Freddie Mac's Primary Mortgage Market Survey",
+  "history_available": "weekly back to April 1971 — more than enough for any backtest horizon this project uses",
+  "license": "FLAG: do not treat as cleanly free-to-use. This series is Freddie Mac's (a GSE, not a federal agency) Primary Mortgage Market Survey data, redistributed by the St. Louis Fed's FRED platform. FRED's own Terms of Use (fred.stlouisfed.org/legal, fred.stlouisfed.org/docs/api/terms_of_use.html) state the service is for 'non-commercial, educational, and personal uses' and that other uses, including commercial, 'are subject to additional restrictions' / require the copyright holder's written permission. Series-level rights vary by provider, and this one is explicitly Freddie Mac-copyrighted data, not a US-government public-domain series. This directly runs into this project's hard rule: 'no clause blocking commercial/product use.'",
+  "cost": "the FRED API key itself is free (instant self-service signup), but see license flag above — cost isn't the issue here, usage rights are",
+  "access_method": "FRED API (JSON/XML, requires free API key, same pattern as census_api_key) or direct CSV via fredgraph.csv?id=MORTGAGE30US",
+  "correlation": {
+    "computed": false,
+    "notes": "Not evaluated quantitatively — this is a financing-cost input to investment.py's cash-flow model, not a growth-score predictor, so FHFA HPI / ZORI correlation isn't the relevant check for this candidate."
+  },
+  "recommend": "do-not-recommend",
+  "recommendation": "Do not implement as-is. The data itself is exactly what's missing (investment.py's financing-cost assumption is currently just a hardcoded guess), the API is free and well-documented, and history goes back to 1971 — but FRED's own Terms of Use read as restricting non-personal/non-educational use without the copyright holder's permission, which fails this project's license screening rule ('no clause blocking commercial/product use') as written. This run's search budget only reached secondary summaries of the ToS, not the full official text, so the block is provisional: get a straight answer by reading fred.stlouisfed.org/docs/api/terms_of_use.html directly (or asking FRED) before reconsidering, or look instead for a purely-federal alternative (e.g. a Federal Reserve Board H.15 series), though none of those publish the specific 30-year-fixed-mortgage number this project wants."
+}
