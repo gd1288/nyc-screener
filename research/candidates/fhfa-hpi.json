@@ -1,0 +1,17 @@
+{
+  "slug": "fhfa-hpi",
+  "name": "FHFA House Price Index (purchase-only, metro/state/national; county/tract are developmental)",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "gap": "backend/app/scoring/backtest.py's docstring already treats 'FHFA tract HPI growth' as the ground-truth benchmark the growth score should predict against, but no FHFA data is actually ingested anywhere — the momentum pillar and the backtest both rely solely on Zillow Research ZHVI (app/sources/zillow_research.py), which is a single private-sector index. FHFA HPI (repeat-sales, mortgage-transaction based) is methodologically independent of Zillow's estimate-based ZHVI and is the standard academic/regulatory benchmark, and critically it is a genuinely national, uninterrupted series (since 1975 for the purchase-only MSA index) — unlike Zillow Research CSVs, which this project's own adapter currently hard-filters to NYC counties only (zillow_research.py:16 NYC_COUNTIES).",
+  "coverage": "national — MSA and state official indexes go back decades; county and census-tract 'all-transactions' indexes exist but FHFA itself labels them developmental/experimental",
+  "granularity": "metro (CBSA) and state: official, non-developmental. County and census-tract: developmental only, in XLSX not CSV (e.g. hpi_at_bdl_county.xlsx), annual.",
+  "update_frequency": "quarterly (official MSA/state indexes); annual for the developmental county/tract files",
+  "history_available": "MSA purchase-only index: since 1975. Developmental county/tract files: shorter and FHFA flags them as lower-confidence.",
+  "license": "US government work, public domain, no login or key, freely redistributable.",
+  "cost": "Free, no key, no rate limit (static file downloads).",
+  "api_key_required": false,
+  "correlation": null,
+  "recommendation": "Recommend the metro/state level only, not county. I verified via search that FHFA does NOT publish a clean official county-level CSV the way the skill's gaps-finding assumed — the only county file (hpi_at_bdl_county.xlsx) is explicitly marked 'developmental' by FHFA and is XLSX, less reliable than the backtest's current docstring implies. The metro/state purchase-only index, however, is official, long-running, CSV, and would give the project a second, methodologically-independent price series to cross-check Zillow ZHVI and to use for non-NYC metros once the area-model migration (mentioned in backend/CLAUDE.md) happens — this is the single best candidate here for the project's stated 'generalizing to any US neighborhood' goal, since Zillow Research alone would otherwise be the only price-momentum series available nationally. Flag the backtest.py docstring's claim about 'FHFA tract HPI growth' as presently aspirational, not implemented.",
+  "status": "proposed",
+  "evaluated_at": "2026-11-05"
+}

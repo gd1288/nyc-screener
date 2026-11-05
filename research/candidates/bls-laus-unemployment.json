@@ -1,0 +1,17 @@
+{
+  "slug": "bls-laus-unemployment",
+  "name": "BLS Local Area Unemployment Statistics (LAUS) — county/metro unemployment rate and labor force",
+  "url": "https://www.bls.gov/lau/",
+  "gap": "The demographics pillar (neighborhood.py) covers population, income, education, and age mix via Census ACS, but has no labor-market/employment signal, and no national series at all exists anywhere in sources.yaml — every current 'development'/'demographics'/'quality' source (dof_sales, development.py, transit.py, livability.py, census_acs for the NYC counties) is NYC-specific, which cuts against the project's stated goal of generalizing to any US neighborhood/property type.",
+  "coverage": "national — every US county, metro area (CBSA), and many cities",
+  "granularity": "county and metro (CBSA); NYC-specific use would need a tract-to-county join, same pattern census_acs.py already uses via the tract relationship file",
+  "update_frequency": "monthly, with annual averages",
+  "history_available": "multi-decade for most series IDs",
+  "license": "US government work, public domain, no restriction.",
+  "cost": "Free via the BLS Public Data API without a key; a free registration key raises the daily query limit (from 25/day unregistered to 500/day registered) and unlocks bulk multi-series requests — same pattern as the project's existing census_api_key/rentcast_api_key gated sources.",
+  "api_key_required": false,
+  "correlation": null,
+  "recommendation": "Weak recommend, lower priority than fred-mortgage-rate and fhfa-hpi. Employment growth is a textbook leading indicator for housing demand and is genuinely national (unlike most of this project's current demographic/development signals), so it fits the stated gap well. But it would need a new demographics sub-metric and a decision on whether/how it folds into the existing pillar weights, plus the series ID lookup is county-by-county (no single national series ID the way ACS variable codes are) — more adapter complexity than the other two candidates for a less differentiated payoff, since ACS already partially captures economic trajectory via income growth. Worth doing after fred-mortgage-rate and fhfa-hpi, not instead of them.",
+  "status": "proposed",
+  "evaluated_at": "2026-11-05"
+}
