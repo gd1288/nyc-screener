@@ -1,0 +1,17 @@
+{
+  "slug": "hud-fair-market-rents",
+  "name": "HUD Fair Market Rents (FMR) — county/metro and Small Area (ZIP-level) 40th-percentile gross rent estimates",
+  "url": "https://www.huduser.gov/portal/datasets/fmr.html",
+  "gap": "gross_rent_yield (valuation pillar) and the per-property rent assumption in investment.py both currently depend on Zillow ZORI, which this project's own adapter (zillow_research.py) hard-filters to NYC ZIP codes in NYC counties. There is no rent series at all that covers counties outside NYC, so the valuation pillar and the whole investment-math module would silently have no rent data the moment the project is pointed at a non-NYC area.",
+  "coverage": "national — every US county/metro, every fiscal year since FY1983; Small Area FMRs give ZIP-level detail within large metros",
+  "granularity": "county/metro (standard FMR) or ZIP (Small Area FMR, used mainly in larger metros including NYC)",
+  "update_frequency": "annual (new fiscal-year file published by October 1 each year, by law)",
+  "history_available": "FY1983-present",
+  "license": "US government work (HUD), public domain, no login or key required for the static downloads.",
+  "cost": "Free; no rate limit on the static CSV/Excel downloads. A programmatic API also exists (huduser.gov) but documentation for it is thinner than the plain file downloads.",
+  "api_key_required": false,
+  "correlation": null,
+  "recommendation": "Recommend as a fallback/complement, not a replacement for ZORI. FMR is a regulatory estimate (40th-percentile 'standard quality' rent for Section 8 purposes) rather than a market-rate index, so it's a noisier proxy for condo asking rents than ZORI where ZORI is available — but it is the only free rent series with literally national county coverage, which ZORI (even unfiltered) doesn't guarantee for small/rural counties. Good value as a documented fallback for gross_rent_yield and investment.py's rent assumption whenever a target area has no ZORI coverage, directly supporting the project's 'any US neighborhood' goal. Lower priority than the mortgage-rate and FHFA candidates since it only matters once non-NYC areas are actually being screened.",
+  "status": "proposed",
+  "evaluated_at": "2026-11-05"
+}

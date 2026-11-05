@@ -1,0 +1,17 @@
+{
+  "slug": "fred-mortgage-rate",
+  "name": "FRED MORTGAGE30US (Freddie Mac PMMS 30-year fixed mortgage rate, via FRED)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "gap": "backend/app/scoring/investment.py:21 hardcodes `interest_rate: float = 0.065` on the Assumptions dataclass used for every per-property projection (monthly payment, loan balance, cash flow, IRR). There is no live source for the actual current mortgage rate anywhere in sources.yaml.",
+  "coverage": "national (single US-wide weekly average; not geography-specific, which is fine since mortgage rate is a national input, not a neighborhood metric)",
+  "granularity": "national",
+  "update_frequency": "weekly (Thursdays)",
+  "history_available": "weekly since 1971-04-02",
+  "license": "Underlying data is Freddie Mac's Primary Mortgage Market Survey; FRED labels the series 'Copyrighted: Citation Required' — usable with citation to Freddie Mac/FRED, but FRED's general terms prohibit commercial redistribution of copyrighted third-party series without permission. This project would only consume the latest value (and maybe history for a rate-sensitivity assumption), not republish the series as a dataset, which matches how Zillow Research data (similarly licensed) is already used in app/sources/zillow_research.py.",
+  "cost": "Free. FRED API requires a free registered API key (32-char token); no rate limit documented for this light a use. A keyless CSV (fredgraph.csv?id=MORTGAGE30US) also exists but the project already has a precedent (census_api_key, rentcast key) for key-gated free sources, so the API key is the better-documented route.",
+  "api_key_required": true,
+  "correlation": null,
+  "recommendation": "Recommend. This is a narrow, well-scoped gap, not a new metric/pillar: it replaces one hardcoded constant with a live value that already has a clear consumer (Assumptions.interest_rate in investment.py) and an obvious adapter pattern to copy (a small requires=['fred_api_key'] Source, kind would need a new small 'setting'/'macro' kind or just a direct AppSetting write — worth a short design check against base.py's Source contract during add-data-source). Low implementation cost, high relevance: the per-property return numbers currently shown to users assume a static 6.5% rate that could be badly stale by the time this is read. Could also unlock a rate-sensitivity scenario in the Monte Carlo valuation work once app/valuation/ exists.",
+  "status": "proposed",
+  "evaluated_at": "2026-11-05"
+}

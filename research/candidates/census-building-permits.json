@@ -1,0 +1,17 @@
+{
+  "slug": "census-building-permits",
+  "name": "Census Bureau Building Permits Survey (BPS) — county/metro monthly new residential unit permits",
+  "url": "https://www.census.gov/construction/bps/",
+  "gap": "The development pillar (pipeline_units_pct, new_units_5y_pct, rezoned_area_pct) is built entirely from NYC DOB data (app/sources/development.py: HousingDatabase, Rezonings) and NYC rezoning records — there is no version of this pillar that would work for any other US county/metro, which is a direct conflict with the project's stated goal of generalizing beyond NYC.",
+  "coverage": "national — census division, state, metro (CBSA), county, and permit-issuing place; complete county/metro coverage only since 2022 (was partial/sampled before that)",
+  "granularity": "county and metro (CBSA)",
+  "update_frequency": "monthly, released alongside the national new-residential-construction estimates",
+  "history_available": "place-level files back to 1997 via HUD's SOCDS mirror; official county/metro monthly files have complete coverage only from 2022 onward, which is thin for a 5-10yr pipeline trend outside of sampled areas",
+  "license": "US government work, public domain, no restriction.",
+  "cost": "Free static file downloads, no key. I could not confirm an official modern Census API/JSON endpoint for county-level BPS in my searches (the Census Bureau's general data API doesn't appear to cover BPS); HUD's SOCDS portal offers a queryable interface as an alternative but its own uptime/documentation is thin.",
+  "api_key_required": false,
+  "correlation": null,
+  "recommendation": "Don't recommend yet, on history grounds, not cost/license. Complete monthly county/metro coverage is only available from 2022 onward per Census's own announcement — too short a window to build a 5-year or 10-year pipeline trend metric analogous to pipeline_units_pct/new_units_5y_pct, which is the whole point of this pillar. It's directionally the right national counterpart to the NYC DOB data, but worth revisiting once more years of complete coverage accumulate, or pairing with HUD's longer place-level SOCDS mirror (1997+) if someone is willing to deal with its rougher interface. De-prioritize relative to the other four candidates this run.",
+  "status": "proposed",
+  "evaluated_at": "2026-11-05"
+}
