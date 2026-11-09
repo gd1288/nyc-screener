@@ -1,0 +1,25 @@
+{
+  "name": "Census Bureau Building Permits Survey (BPS)",
+  "url": "https://www.census.gov/construction/bps/",
+  "what_it_measures": "New privately-owned housing units authorized by building permits, by number of units in structure. Roughly 9,000 permit-issuing jurisdictions respond to the monthly survey (per HUD's SOCDS); about 900+ counties reach 100% monthly reporting completeness, with full nationwide county coverage only guaranteed in the annual rollup. Aggregated to county/place/metro/state/national.",
+  "coverage": "national (~9,000 permit-issuing jurisdictions report monthly; ~900+ counties have complete monthly reporting, full county coverage otherwise annual)",
+  "granularity": "county, place (permit-issuing jurisdiction), CBSA, state, national",
+  "update_frequency": "monthly (also year-to-date and annual rollups)",
+  "history_available": "monthly data back to January 1997 per HUD's SOCDS mirror of this survey; Census's own site holds comparable depth",
+  "access_method": "No confirmed REST API for county-level data in this run (the Census EITS timeseries API appears to cover only national/regional New Residential Construction (`eits/resconst`), not county-level permits). County-level access is via direct bulk download: Census's 'Current Data' page on census.gov/construction/bps serves recent months as Excel files; legacy ASCII/comma-delimited text files were discontinued after October 2019. HUD's SOCDS Building Permits Database (socds.huduser.gov/permits) offers a web query tool over the same underlying county data back to 1997.",
+  "license": "US government work / public domain (standard Census Bureau data terms).",
+  "cost": "free",
+  "rate_limit": "n/a (bulk file download / web query tool, not a rate-limited API)",
+  "correlation_evaluated": false,
+  "correlation_results": null,
+  "fills_gap": "A new-housing-supply growth signal that generalizes nationally. The project's existing supply-side signals (housing_database, rezonings in app/sources/development.py) are NYC-specific Socrata/Open Data feeds; this is the closest nationally-available analog (new permits as a leading indicator of future supply growth in a neighborhood/county).",
+  "caveats": [
+    "No clean documented REST API confirmed for county-level granularity in this run — this would be a bulk-file adapter (like zillow_research.py's CSV fetch) rather than an API-key adapter, and needs a format check directly on census.gov/construction/bps's 'Current Data' page before implementation (Excel now, ASCII before Nov 2019).",
+    "County-level permit counts give at most borough-level (5-way) differentiation inside NYC, since each borough is its own county — coarser than the NTA geography the other pillars use; its main value is for the stated any-US-neighborhood generalization goal, where county is often the finest free unit available anyway.",
+    "Consider whether HUD's SOCDS mirror (a cleaner, purpose-built query tool over the same data) is actually the easier integration point than Census's own page."
+  ],
+  "recommendation": "recommend-with-caveats",
+  "recommendation_note": "Real, free, nationally-generalizing supply signal with a long history, but the access mechanics (bulk Excel/ASCII, not a clean API) need to be nailed down before an add-data-source implementation, and it adds little differentiation for NYC's 5-county geography today. Recommended for the US-generalization roadmap, not as an urgent NYC-focused win.",
+  "status": "proposed",
+  "date_evaluated": "2026-11-09"
+}

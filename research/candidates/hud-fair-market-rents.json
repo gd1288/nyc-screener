@@ -1,0 +1,26 @@
+{
+  "name": "HUD Fair Market Rents (FMR)",
+  "url": "https://www.huduser.gov/portal/datasets/fmr.html",
+  "what_it_measures": "Annual estimate of gross rent (rent + utilities) at the 40th percentile of the local rental market, by unit size (efficiency through 4BR), for every county/CBSA/ZIP-area in the US. Published by HUD PD&R; used nationally to set Section 8 payment standards.",
+  "coverage": "national (all US counties, CBSAs, and HUD-defined metro FMR areas)",
+  "granularity": "county / CBSA (also has a 'Small Area FMR' variant at ZIP-code level for ~80 designated metro areas)",
+  "update_frequency": "annual (new fiscal-year schedule each fall)",
+  "history_available": "Static annual schedules published back to the 1980s on huduser.gov; the documented API (per third-party wrappers like the R packages hudr/rhud) exposes current and some recent prior fiscal years by county FIPS or CBSA code — exact API history depth not independently confirmed, see caveats.",
+  "access_method": "Free HUD FMR API (token via huduser.gov registration), with a state endpoint (all counties/metros in a state) and an entity endpoint (by county FIPS or CBSA code). Also plain CSV/Excel bulk downloads per fiscal year on huduser.gov if the API's range turns out to be thin.",
+  "license": "Listed as Public Domain by a third-party API aggregator (apis.io), linking to HUD's own API ToS. Not independently verified against HUD's ToS page in this run.",
+  "cost": "free (requires a free API token, no payment, no trial window)",
+  "rate_limit": "not confirmed in this run; typical of federal statistical APIs (generous, no paid tier)",
+  "correlation_evaluated": false,
+  "correlation_results": null,
+  "fills_gap": "Rent-side input for investment yield/cash-flow estimates (scoring/investment.py) and for the neighborhood growth score's rent signal, in any county nationwide. zillow_research.py's ZHVI/ZORI pull is itself national data but is filtered down to NYC's 5 counties (NYC_COUNTIES) in the adapter as written, and RentCast listings are budget-capped at 31 requests/month. census_acs.py is also national-grade ACS data in principle, but as implemented it's hardcoded to NYC's 5 counties (COUNTIES = NY/Kings/Queens/Bronx/Richmond, state:36 only) and its VARS list has no rent variable (no B25064-type field) at all. So today there is no rent benchmark anywhere outside NYC in this codebase; FMR would be the first one.",
+  "caveats": [
+    "Need to confirm exactly how many fiscal years the live API exposes vs. requiring a scrape of static per-year CSV/Excel schedules for a backtest-length history.",
+    "FMR is a regulatory rent-setting number (40th percentile), not a transaction-based market rent index — treat as a rent *level* benchmark, not a rent *growth* signal; pair with Zillow ZORI (where available) for trend.",
+    "License should be re-confirmed directly on huduser.gov/HUD's API ToS page (not just a third-party aggregator) before an add-data-source implementation.",
+    "Census ACS table B25064 (median gross rent, tract-level, national) is a free alternative/complement already inside the project's existing Census API key and billing — worth a look before assuming FMR is the only option, though it would need census_acs.py's county allowlist and VARS extended, which it doesn't do today."
+  ],
+  "recommendation": "recommend",
+  "recommendation_note": "Free, public-domain-licensed, genuinely national at county granularity, no API-budget conflict with RentCast. Directly fills a real, stated gap (rent benchmark outside NYC) rather than duplicating an existing source. Confirm the live API's historical depth and re-check the official ToS page during add-data-source implementation, but nothing found in this search raises a cost or license blocker.",
+  "status": "proposed",
+  "date_evaluated": "2026-11-09"
+}

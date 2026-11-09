@@ -1,0 +1,25 @@
+{
+  "name": "BLS Local Area Unemployment Statistics (LAUS)",
+  "url": "https://www.bls.gov/lau/data-overview.htm",
+  "what_it_measures": "Monthly unemployment rate and labor force estimates for ~7,000 areas including every US county.",
+  "coverage": "national (all US counties and other LAUS areas)",
+  "granularity": "county (also state, metro division, and some sub-county areas)",
+  "update_frequency": "monthly",
+  "history_available": "decades (LAUS series generally run back to the 1990s or earlier for most counties)",
+  "access_method": "Free BLS API v2 (registration gives a free key with a higher daily query cap; unregistered use is allowed at a lower cap) returning JSON by series ID, or a bulk flat-file download at download.bls.gov/pub/time.series/la/ with no key at all.",
+  "license": "US government work; BLS data is public domain / free to use, no login required for the bulk flat files.",
+  "cost": "free",
+  "rate_limit": "Not independently confirmed for the current API in this run; third-party sources describe a daily query cap that is higher with a free registered key. The no-key bulk flat-file route has no such limit.",
+  "correlation_evaluated": false,
+  "correlation_results": null,
+  "fills_gap": "None of the current neighborhood-growth sources (housing_database, rezonings in app/sources/development.py; subway_access, planned_catalysts in app/sources/transit.py; nypd_felonies, liquor_licenses, future_floodplain in app/sources/livability.py) generalize outside NYC — most are NYC Open Data / Socrata feeds (planned_catalysts instead reads a local catalysts.yaml config, not Socrata). census_acs.py is national-grade ACS data in principle but is hardcoded to NYC's 5 counties and has no employment-status variable (no B23025-type field) in its VARS dict. County-level LAUS unemployment is a standard, nationally-available economic-health signal that would give the growth score a real input anywhere in the US.",
+  "caveats": [
+    "NYC's 5 boroughs are each their own county (New York, Kings, Queens, Bronx, Richmond), so county-level LAUS does give borough-level differentiation inside NYC today — it's not zero signal, just coarser than NTA. Full within-borough differentiation would need the CBSA/area-model migration mentioned in backend/CLAUDE.md for non-NYC metros, and a finer-than-county series (none found) for NYC itself.",
+    "Monthly cadence is overkill for a slow-moving structural indicator; a quarterly refresh would be plenty and cheaper on the request budget.",
+    "Confirm the current (not historical) BLS API v2 endpoint and rate-limit numbers directly at bls.gov before implementing — this run relied on secondary sources for limit specifics."
+  ],
+  "recommendation": "recommend-with-caveats",
+  "recommendation_note": "Free, genuinely national, long history — a solid growth-score input. Recommended; inside NYC it gives only borough-level (not NTA-level) differentiation, but it generalizes immediately to every other US county, which is the project's stated goal.",
+  "status": "proposed",
+  "date_evaluated": "2026-11-09"
+}

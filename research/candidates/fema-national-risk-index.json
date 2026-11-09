@@ -1,0 +1,25 @@
+{
+  "name": "FEMA National Risk Index (NRI)",
+  "url": "https://hazards.fema.gov/nri/data-resources",
+  "what_it_measures": "Composite and per-hazard risk scores (18 natural hazards — flood, wildfire, heat wave, hurricane, earthquake, etc.) plus expected annual loss, social vulnerability, and community resilience components, for every US county and census tract.",
+  "coverage": "national (all US counties and census tracts)",
+  "granularity": "county and census tract",
+  "update_frequency": "periodic (FEMA has released a handful of updated editions since the NRI's initial launch; not a continuously-updated time series)",
+  "history_available": "An archive of prior NRI editions exists (hazards.fema.gov/nri/data-archive), but this is a slowly-revised structural risk score, not a long monthly/annual time series suited to the backtest's lead/lag correlation method.",
+  "access_method": "Free direct bulk download — CSV/table, shapefile, and geodatabase formats — from FEMA's own site, no login, no key.",
+  "license": "Data.gov lists the license as https://www.usa.gov/government-works (standard US government works notice — generally no copyright restriction), but a related FEMA/CRSI dataset on Data.gov is tagged with a different (EPA Science Hub) license, so the exact file's license should be re-checked against the metadata bundled with the specific download, not assumed from the dataset family.",
+  "cost": "free",
+  "rate_limit": "none (static bulk file download)",
+  "correlation_evaluated": false,
+  "correlation_results": null,
+  "fills_gap": "backend/app/sources/livability.py's future_floodplain source is NYC-specific (NYC Open Data). The project's stated goal of generalizing to any US neighborhood currently has no hazard/climate-risk signal at all outside NYC. NRI would give every US county/tract a comparable multi-hazard risk score for the livability/risk pillar of the growth score.",
+  "caveats": [
+    "This is a slowly-changing structural score, not a growth predictor in the backtest sense — don't expect meaningful correlation/lead-lag against FHFA HPI or Zillow ZORI; its value is as a risk-adjustment input, not a return predictor.",
+    "Re-confirm the license on the actual file metadata before implementing, given the conflicting license tag seen on a sibling FEMA dataset.",
+    "Tract-level is finer than the project's current NTA-level NYC geography; would need a tract->NTA (and, post area-model migration, tract->CBSA-area) crosswalk, similar to the existing ZIP->NTA weighting pattern in zillow_research.py."
+  ],
+  "recommendation": "recommend",
+  "recommendation_note": "Free, nationally complete at a granularity the project can already crosswalk (same pattern as the existing ZIP->NTA weighting), and fills a concrete, currently NYC-only pillar. Primary open item is confirming the license on the specific download file, which add-data-source's ToS check should do before implementation.",
+  "status": "proposed",
+  "date_evaluated": "2026-11-09"
+}
