@@ -1,0 +1,25 @@
+{
+  "name": "FRED MORTGAGE30US (30-Year Fixed Rate Mortgage Average, US)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "what_it_measures": "Weekly average 30-year fixed-rate conventional mortgage rate (Freddie Mac Primary Mortgage Market Survey, distributed via the St. Louis Fed's FRED database).",
+  "coverage": "national (single US-wide series, not geographically segmented)",
+  "granularity": "national / point-in-time (no sub-national breakdown)",
+  "update_frequency": "weekly",
+  "history_available": "back to 1971",
+  "access_method": "Free FRED API (api.stlouisfed.org), requires a free API key issued instantly on registration, simple REST GET returning the series as JSON/XML/CSV.",
+  "license": "Ambiguous without a per-series check: FRED's general Terms of Use restrict 'wholesale downloading' and distinguish personal/educational use from commercial use, which may need permission depending on the underlying data owner's copyright. MORTGAGE30US is sourced from Freddie Mac's PMMS; whether that specific series carries the stricter 'other uses' restriction was not confirmed in this run.",
+  "cost": "free (API key, no payment)",
+  "rate_limit": "not confirmed in this run; FRED API is generally generous for single-series polling at this cadence (weekly)",
+  "correlation_evaluated": false,
+  "correlation_results": null,
+  "fills_gap": "backend/app/scoring/investment.py's Assumptions.interest_rate is currently a hardcoded constant (0.065) used for every property's amortization/cash-flow projection (see monthly_payment/loan_balance calls in investment.py:142,184). A live national mortgage-rate feed would let the default assumption track reality instead of staying fixed, without requiring the user to supply a rate on every analysis.",
+  "caveats": [
+    "This is a single national scalar, not a neighborhood metric — it would plug into scoring/investment.py's default Assumptions, not NeighborhoodMetric rows; implementation shape differs from the other 'neighborhood' sources in sources.yaml.",
+    "Confirm MORTGAGE30US's specific copyright/redistribution status on its own FRED series page (not just FRED's general ToS) before implementing — the general terms single out 'commercial' use of copyrighted series as needing permission.",
+    "Low update value for a weekly series feeding a default that's probably re-evaluated far less often than weekly; a simpler manual/quarterly-refresh config value could get most of the benefit at zero integration cost — worth weighing against the other candidates here."
+  ],
+  "recommendation": "recommend-with-caveats",
+  "recommendation_note": "Directly addresses a real hardcoded-constant gap and is free and easy to pull, but (a) its license needs a series-specific confirmation beyond FRED's generic ToS, and (b) it's a single scalar rather than a per-neighborhood metric, so it's a smaller, different-shaped win than the other candidates. Worth doing, but lower priority than HUD FMR or FEMA NRI unless the project specifically wants to stop hardcoding the interest rate.",
+  "status": "proposed",
+  "date_evaluated": "2026-11-09"
+}

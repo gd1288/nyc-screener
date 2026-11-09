@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data source research candidate",
+  "description": "One record per candidate data source evaluated by the research-sources skill. Written to research/candidates/<slug>.json.",
+  "type": "object",
+  "required": ["name", "url", "coverage", "granularity", "update_frequency", "license", "cost", "recommendation", "status"],
+  "properties": {
+    "name": { "type": "string", "description": "Human-readable name of the source/series." },
+    "url": { "type": "string", "description": "Primary documentation or landing page URL." },
+    "what_it_measures": { "type": "string" },
+    "coverage": { "type": "string", "description": "Geographic scope, e.g. 'national', 'NYC only'." },
+    "granularity": { "type": "string", "description": "e.g. tract, ZCTA, county, CBSA, national, point." },
+    "update_frequency": { "type": "string" },
+    "history_available": { "type": "string", "description": "How far back usable history goes." },
+    "access_method": { "type": "string", "description": "API, bulk CSV/Excel download, etc." },
+    "license": { "type": "string" },
+    "cost": { "type": "string" },
+    "rate_limit": { "type": "string" },
+    "correlation_evaluated": {
+      "type": "boolean",
+      "description": "Whether app/research/evaluate_series.py was run against this candidate."
+    },
+    "correlation_results": {
+      "type": ["object", "null"],
+      "description": "Correlation/lead-lag numbers vs FHFA HPI / Zillow ZORI, if computed."
+    },
+    "fills_gap": { "type": "string", "description": "What existing adapter/pillar/field this would improve or replace." },
+    "caveats": { "type": "array", "items": { "type": "string" } },
+    "recommendation": { "type": "string", "enum": ["recommend", "recommend-with-caveats", "do-not-recommend"] },
+    "recommendation_note": { "type": "string" },
+    "status": { "type": "string", "enum": ["proposed", "approved", "rejected", "implemented"] },
+    "date_evaluated": { "type": "string", "format": "date" }
+  }
+}
