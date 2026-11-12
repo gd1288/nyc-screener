@@ -1,0 +1,21 @@
+{
+  "name": "FRED — 30-Year Fixed Rate Mortgage Average (MORTGAGE30US)",
+  "slug": "fred-mortgage30us",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "measures": "Weekly US average 30-year fixed-rate mortgage rate (Freddie Mac Primary Mortgage Market Survey, distributed via the St. Louis Fed's FRED API).",
+  "coverage": "national (single US-wide series, not regional)",
+  "granularity": "national",
+  "update_frequency": "weekly (Thursdays)",
+  "history_available": "weekly since 1971",
+  "cost": "free; FRED API key required but free to obtain, no trial/paid tier; third-party reports ~120 req/min limit (unconfirmed against FRED's own terms, but the series is a single tiny call so irrelevant in practice)",
+  "license": "FRED series pages mark MORTGAGE30US 'Copyrighted: Citation Required' (source: Freddie Mac) — attribution needed on reuse, no commercial-use block found. A keyless CSV route also exists at fredgraph.csv for the same series.",
+  "auth": "free API key (fred.stlouisfed.org/docs/api/api_key.html)",
+  "correlation_results": null,
+  "recommend": true,
+  "recommendation": "backend/app/scoring/investment.py currently hardcodes Assumptions.interest_rate = 0.065 as a static default for every mortgage-payment and cash-flow projection in the investment engine. MORTGAGE30US is a free, no-trial, long-history (54 years), national weekly series that would let that default track actual prevailing rates instead of a stale constant — a direct, high-leverage fix for the single biggest hardcoded assumption in the valuation math, and it fits the project's US-wide generalization goal since it's not NYC-specific. Implementation is a thin adapter (one series, one HTTP call) writing the latest observation (and optionally recent history for a backtest of rate sensitivity) to a new metric/assumption table. Strongly recommend as the next data source.",
+  "open_questions": [
+    "Confirm actual FRED rate limit and whether polling frequency should be weekly or on-demand at request time.",
+    "Decide whether to store the full history (for sensitivity backtesting) or just the latest value (for live assumptions) — probably both, cheaply, since it's one series."
+  ],
+  "date_evaluated": "2026-11-12"
+}

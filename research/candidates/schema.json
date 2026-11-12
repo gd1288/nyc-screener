@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data source research candidate",
+  "description": "One evaluated candidate from a research-sources run. File name: research/candidates/<slug>.json",
+  "type": "object",
+  "required": [
+    "name", "slug", "url", "measures", "coverage", "granularity",
+    "update_frequency", "history_available", "cost", "license", "auth",
+    "recommend", "recommendation", "date_evaluated"
+  ],
+  "properties": {
+    "name": { "type": "string", "description": "Human-readable source name" },
+    "slug": { "type": "string", "description": "Matches the candidate JSON and memo file names" },
+    "url": { "type": "string", "description": "Primary docs/landing URL" },
+    "measures": { "type": "string", "description": "What the series/dataset measures" },
+    "coverage": { "type": "string", "description": "Geographic coverage, e.g. 'national', 'nyc-only'" },
+    "granularity": { "type": "string", "description": "tract | zcta | county | msa | state | national" },
+    "update_frequency": { "type": "string" },
+    "history_available": { "type": "string", "description": "How far back usable history goes" },
+    "cost": { "type": "string", "description": "Must confirm genuinely free, not a trial; note any rate limit" },
+    "license": { "type": "string", "description": "License/ToS summary; note any restriction on commercial/product use" },
+    "auth": { "type": "string", "description": "e.g. 'none', 'free API key / registration'" },
+    "correlation_results": {
+      "type": ["object", "null"],
+      "description": "Output of app/research/evaluate_series.py against FHFA tract HPI / Zillow ZORI, if that tool exists yet; null otherwise"
+    },
+    "recommend": { "type": "boolean" },
+    "recommendation": { "type": "string", "description": "One-paragraph recommend/don't-recommend rationale" },
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "date_evaluated": { "type": "string", "format": "date" }
+  }
+}
