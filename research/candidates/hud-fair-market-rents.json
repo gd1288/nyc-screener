@@ -1,0 +1,22 @@
+{
+  "name": "HUD Fair Market Rents (FMR) API",
+  "slug": "hud-fair-market-rents",
+  "url": "https://www.huduser.gov/portal/datasets/fmr.html",
+  "measures": "HUD's annual Fair Market Rent estimates by bedroom count (studio-4BR), used for Section 8/voucher payment standards — a standardized, government rent benchmark per county/metro area.",
+  "coverage": "national (all US counties and metro FMR areas)",
+  "granularity": "county-level FMR is published per HUD Metro FMR Area, not per county within a metro — all five NYC boroughs (each its own county) sit inside one 'New York, NY HUD Metro FMR Area' along with Putnam/Rockland/Westchester, so plain county-level FMR gives a single number across every NYC NTA, i.e. no intra-NYC signal. The usable product for this project is Small Area FMR (SAFMR), published at ZIP-code level for most large metros including NYC — that's the primary granularity to target, not an optional extra.",
+  "update_frequency": "annual, per federal fiscal year",
+  "history_available": "multiple past fiscal years available via the API (exact depth not confirmed in this pass — check huduser.gov/hudapi docs)",
+  "cost": "free; no trial tier found",
+  "license": "Governed by https://www.huduser.gov/portal/dataset/api-terms-of-service.html. A third-party mirror labels the FMR API 'Public Domain'; HUD's terms reportedly require a non-endorsement notice ('uses the HUD User Data API ... not endorsed or certified by HUD User') when the data is used in an app. No commercial-use block found, but read the official terms page before shipping.",
+  "auth": "free bearer token via huduser.gov/hudapi/register",
+  "correlation_results": null,
+  "recommend": true,
+  "recommendation": "The project's rent-growth and rent-yield metrics (zori_cagr_3y, gross_rent_yield) currently lean on Zillow's ZORI, which has uneven metro coverage and isn't a government series. HUD FMR is free, no-trial, and nationally complete, but plain county-level FMR is useless as an NYC neighborhood signal (one value for all five boroughs via the shared metro FMR area) — the scoring in neighborhood.py compares NTAs against each other, so a flat metric adds nothing. Small Area FMR (ZIP-level) is the version actually worth implementing: it would give real intra-NYC variation and still generalizes nationally wherever SAFMRs are published. Recommend conditional on confirming SAFMR coverage for NYC ZIPs; downgrade to don't-recommend if it turns out not to be published for this metro.",
+  "open_questions": [
+    "Confirm SAFMRs are actually published for NYC-metro ZIP codes (not just the big flat county/metro FMR) — this is the crux of whether this source is usable at all for neighborhood scoring.",
+    "Confirm exact number of historical fiscal years exposed via the API vs. only bulk Excel/CSV archives.",
+    "Read the official ToS page directly (api-terms-of-service.html) before use — only mirrored summaries were checked this pass."
+  ],
+  "date_evaluated": "2026-11-12"
+}

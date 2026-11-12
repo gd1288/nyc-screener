@@ -1,0 +1,22 @@
+{
+  "name": "BLS Local Area Unemployment Statistics (LAUS) — county unemployment rate",
+  "slug": "bls-laus-county-unemployment",
+  "url": "https://www.bls.gov/lau/",
+  "measures": "County-level unemployment rate and labor force, from BLS's LAUS program. Series IDs follow the documented LAUCN<state FIPS><county FIPS><measure code> pattern (e.g. LAUCN480150000000003 style construction; exact measure-code suffix for 'unemployment rate' should be re-confirmed against BLS's current docs before coding).",
+  "coverage": "national (all US counties)",
+  "granularity": "county",
+  "update_frequency": "monthly (with an annual benchmark revision)",
+  "history_available": "long monthly history via the flat files at download.bls.gov/pub/time.series/la/ (exact API-accessible depth not confirmed this pass)",
+  "cost": "free. BLS's own FAQ requires registration for API v2 to get higher limits; a third-party source claims a keyless tier capped at 25 requests/day vs 500/day registered, but this was not confirmed against bls.gov directly. The bulk flat files are also reported (unconfirmed this pass) to 403 requests that don't send an identifying User-Agent header — not literally frictionless even though no key is required; any such User-Agent must not embed any user-identifying information.",
+  "license": "US government public data, no login wall for the bulk flat files; normal BLS reuse terms (public domain, attribution appreciated but not contractually required for government statistical data).",
+  "auth": "none for bulk flat-file download; free registration recommended for the JSON API (data.bls.gov/registrationEngine/) to get usable rate limits",
+  "correlation_results": null,
+  "recommend": true,
+  "recommendation": "County unemployment/employment growth is a plausible leading indicator for housing demand and is currently absent from the growth pillar (population_change_10y, income_cagr_10y, bachelors_share_change_10y, age_25_34_share from Census ACS cover demographic trajectory but nothing on jobs). But be honest about granularity: in NYC, 'county' means borough, so this is 5 values spread across roughly 200 NTAs — weak as an intra-NYC differentiator, since neighborhood.py's scoring compares NTAs against each other and a near-flat metric across ~40 NTAs per borough adds little signal. The real value is for the project's stated national-generalization goal, where most other US counties aren't subdivided into dozens of neighborhoods the way NYC boroughs are, so county-level LAUS is a much more meaningful per-area signal elsewhere. Recommend with that caveat made explicit, implemented against the documented bulk flat files (download.bls.gov/pub/time.series/la/la.data.64.County) rather than the rate-limited JSON API.",
+  "open_questions": [
+    "Confirm the correct measure-code suffix for 'unemployment rate' (vs. labor force, employment level, unemployment level) in the LAUCN series ID.",
+    "The bulk flat files are reported (unconfirmed) to reject requests without an identifying User-Agent header (403) — confirm, and if real, set one that does not include any user-identifying information.",
+    "Decide whether to even bother surfacing this inside NYC itself (5 boroughs, weak signal) vs. only enabling it once the screener covers other metros where county-level actually differentiates neighborhoods."
+  ],
+  "date_evaluated": "2026-11-12"
+}

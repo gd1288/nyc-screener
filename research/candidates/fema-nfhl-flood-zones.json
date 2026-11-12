@@ -1,0 +1,21 @@
+{
+  "name": "FEMA National Flood Hazard Layer (NFHL)",
+  "slug": "fema-nfhl-flood-zones",
+  "url": "https://www.fema.gov/flood-maps/national-flood-hazard-layer",
+  "measures": "Current effective FEMA flood zone designations (100-year/500-year floodplain, etc.) as polygons, nationwide.",
+  "coverage": "national",
+  "granularity": "parcel/polygon-level (vector flood zone boundaries), aggregable to neighborhood/tract like the existing future_floodplain source does",
+  "update_frequency": "rolling, as FEMA issues map revisions per county/jurisdiction — no single nationwide refresh date",
+  "history_available": "current effective maps only (this is a hazard-zone snapshot, not a time series)",
+  "cost": "free per FEMA's own documentation (FIRMs, FIS, and NFHL geodatabases are free to download), but bulk nationwide access is awkward in practice — the FEMA Flood Map Service Center serves data by state/county rather than one bulk file, and the clean paid alternatives (LightBox, nationalflooddata.com) exist specifically because of this friction.",
+  "license": "data.gov catalog entry describes the dataset as intended for public access and use; no commercial-use restriction found, but the authoritative FEMA licensing page was not located this pass — confirm before shipping.",
+  "auth": "none for the official downloads",
+  "correlation_results": null,
+  "recommend": false,
+  "recommendation": "The project already has a flood-risk signal (future_floodplain, NYC's own 2050s-projection layer from NYC Open Data), so NFHL would mainly add national generalization rather than fill an NYC gap. The data is nominally free with no auth, but bulk nationwide ingestion is the documented pain point (serves per-state/county, no single clean bulk endpoint; existing workarounds are unofficial community scripts), which is a meaningfully heavier lift than every other candidate in this batch and heavier than this project's existing per-city pattern (e.g. acs/socrata adapters hitting one documented endpoint). Don't recommend for now relative to the other three candidates; revisit if/when the screener actually expands past NYC and a maintainer is willing to budget the extra ingestion work, or if a cleaner bulk access point turns up.",
+  "open_questions": [
+    "Is there a single nationwide bulk download (vs. per-state/county) that was missed in this pass?",
+    "If implemented, would it replace or run alongside the existing NYC-specific future_floodplain projection layer (they measure different things: current base flood zones vs. a 2050s climate projection)?"
+  ],
+  "date_evaluated": "2026-11-12"
+}
