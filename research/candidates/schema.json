@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research candidate",
+  "description": "One proposed external data source, as written by the research-sources skill / research-analyst routine. Describes the source, not an implementation.",
+  "type": "object",
+  "required": ["slug", "name", "url", "proposed_date", "coverage", "granularity", "update_frequency", "license", "cost", "history", "correlation", "recommendation", "status"],
+  "properties": {
+    "slug": {"type": "string", "description": "Matches the candidate JSON filename and the memo slug."},
+    "name": {"type": "string"},
+    "url": {"type": "string", "format": "uri", "description": "Primary docs/download page."},
+    "proposed_date": {"type": "string", "format": "date"},
+    "gap": {"type": "string", "description": "The specific gap this fills, in this project's own terms (e.g. a hardcoded assumption, a missing metric)."},
+    "coverage": {"type": "string", "description": "Geographic scope, e.g. 'national', 'NYC-specific'."},
+    "granularity": {"type": "string", "description": "e.g. tract, ZCTA, county, MSA, state, national, point-in-time (no geography)."},
+    "update_frequency": {"type": "string"},
+    "license": {"type": "string", "description": "What's confirmed about reuse terms, and what's still open."},
+    "cost": {"type": "string", "description": "Confirmation of free, any API key/registration needed, any rate limit."},
+    "history": {"type": "string", "description": "How far back usable history goes."},
+    "proposed_kind": {"type": "string", "description": "Likely app.sources.base.Source `kind` if implemented (boundaries/neighborhood/sales/listings/sold_check), or 'not a Source — other mechanism' if it doesn't fit the per-neighborhood-metric model."},
+    "correlation": {"type": "string", "description": "Quantitative evaluation result, or 'not computed — app/research/evaluate_series.py does not exist yet'."},
+    "recommendation": {"type": "string", "enum": ["recommend", "recommend-with-caveats", "dont-recommend", "defer"]},
+    "recommendation_detail": {"type": "string"},
+    "status": {"type": "string", "enum": ["proposed", "approved", "rejected", "implemented"]}
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "slug": "fred-mortgage30us",
+  "name": "FRED MORTGAGE30US — 30-Year Fixed Rate Mortgage Average (Freddie Mac PMMS, via FRED)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "proposed_date": "2026-11-16",
+  "gap": "backend/app/scoring/investment.py:21 hardcodes `interest_rate: float = 0.065` as the default financing assumption for every property's cash-flow projection. That default drifts out of date as real mortgage rates move and has to be hand-edited. A live weekly rate series would let the default track reality instead.",
+  "coverage": "national (one series, not neighborhood-specific)",
+  "granularity": "point-in-time, no geography — a single US average rate per week",
+  "update_frequency": "weekly, Thursdays (Freddie Mac PMMS survey)",
+  "license": "Not fully confirmed. FRED and fhfa.gov/fred.stlouisfed.org could not be reached from this session to read primary terms (network policy blocks these hosts; see note below). From search snippets: Freddie Mac's general Content Use Policy requires written consent to republish site content, but carves out an exception for automatically-updated series like PMMS data — republishing it (e.g. a chart or the raw series) is covered by 'a limited, non-exclusive, non-transferable, royalty-free license' without needing separate written consent, subject to Freddie Mac's Content Use Policy and un-retrieved syndication terms. FRED's own citation note is 'Copyrighted: Citation Required', i.e. attribution needed, not a login/paywall. Net: looks usable with an attribution line, but this project's 'no clause blocking commercial/product use' bar isn't cleanly confirmed — worth a direct read of Freddie Mac's Content Use Policy and FRED's Terms of Use before shipping.",
+  "cost": "Free. CSV download (fredgraph.csv?id=MORTGAGE30US) reportedly needs no key. The FRED API (for structured JSON access) needs a free API key via registration, same pattern this project already accepts for Census (`requires = ['census_api_key']`). No rate limit concerns expected for a weekly pull.",
+  "history": "Back to April 1971 — by far the longest history of anything evaluated this run.",
+  "proposed_kind": "not a Source in the per-neighborhood-metric sense — this is one scalar for the whole app, not something that varies by neighborhood or produces a percentile. It would need a different mechanism than `write_metrics`/`NeighborhoodMetric`: e.g. a small settings/assumptions table the investment scoring reads at request time, refreshed on its own schedule. That's a design decision for whoever implements it, not resolved here.",
+  "correlation": "not computed — app/research/evaluate_series.py does not exist yet, and this isn't the kind of candidate that correlation-testing applies to (it's an assumption input, not a neighborhood growth predictor).",
+  "recommendation": "recommend",
+  "recommendation_detail": "Rank #1. This isn't a new predictive signal, it's a direct fix for a stale hardcoded financial assumption that materially affects every cash-flow number the app shows. Low implementation risk (one small free series, long history, weekly cadence is more than enough), the only open item is confirming redistribution terms before shipping. Needs fred.stlouisfed.org (or an FRED API mirror) allowlisted in the environment's network policy to implement and run.",
+  "status": "proposed"
+}
