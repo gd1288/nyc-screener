@@ -1,0 +1,18 @@
+{
+  "slug": "bls-laus-unemployment",
+  "name": "BLS Local Area Unemployment Statistics (LAUS) — county-level unemployment rate and labor force",
+  "url": "https://www.bls.gov/lau/",
+  "proposed_date": "2026-11-16",
+  "gap": "No employment/labor-market signal exists anywhere in this codebase today (grep for unemployment/LAUS/employment turned up nothing). Local job-market strength is a classic housing-demand driver an investor would care about, and it's missing entirely from the Growth Score inputs.",
+  "coverage": "national",
+  "granularity": "county (and MSA, city) monthly estimates for ~7,600 areas",
+  "update_frequency": "monthly",
+  "license": "BLS is a federal statistical agency; its published data is standard US-government public-domain data. Not independently re-confirmed this run (bls.gov wasn't fetched directly — see network note below), but this is the normal, low-risk case (same category as Census, which this project already treats as clean).",
+  "cost": "Free. BLS's Public Data API is usable without registration at low volume; v2 (needed for the request volume a monthly multi-county pull would use) needs a free registration key, same pattern as Census/FRED. A bulk flat-file alternative also exists (ZIP download of county labor-force data) for the last ~14 months without any key, with longer history via BLS's own database query tool.",
+  "history": "Monthly county data available back to roughly 1990 via the query tools; exact start varies by series/area.",
+  "proposed_kind": "neighborhood — would map county -> NYC's 5 boroughs -> NTA.",
+  "correlation": "not computed — app/research/evaluate_series.py does not exist yet.",
+  "recommendation": "defer",
+  "recommendation_detail": "Rank #3, don't implement yet. For NYC specifically, LAUS is county-level and NYC's 5 counties are exactly the 5 boroughs — so this would give only 5 distinct values spread across this project's ~200 NTAs (neighborhoods within the same borough would all score identically on this metric). Per backend/CLAUDE.md's scoring invariant, every metric becomes a percentile within its comparison set, and a 5-value metric percentiled across 200 neighborhoods carries very little information at NYC's current granularity. This gets much more useful once the area-model migration moves comparison sets to CBSA (county-level data is a natural fit for comparing *across* metros, where county is often the right granularity). Recommend revisiting after that migration rather than implementing now.",
+  "status": "proposed"
+}

@@ -1,0 +1,5 @@
+{
+  "fred-mortgage30us": {"status": "proposed", "date": "2026-11-16", "recommendation": "recommend"},
+  "fhfa-hpi": {"status": "proposed", "date": "2026-11-16", "recommendation": "recommend-with-caveats"},
+  "bls-laus-unemployment": {"status": "proposed", "date": "2026-11-16", "recommendation": "defer"}
+}

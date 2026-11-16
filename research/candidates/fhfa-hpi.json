@@ -1,0 +1,18 @@
+{
+  "slug": "fhfa-hpi",
+  "name": "FHFA House Price Index (HPI) — purchase-only, all-transactions, by state/MSA/county/tract",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "proposed_date": "2026-11-16",
+  "gap": "The research-sources skill (SKILL.md step 4) names FHFA tract HPI growth as one of the two benchmark series (alongside Zillow ZORI) that future candidates should be correlation-tested against once app/research/evaluate_series.py exists. A grep of backend/ found no existing FHFA ingestion anywhere — the benchmark the skill assumes is available doesn't actually exist in this codebase yet. Also useful standalone: it's an independent, repeat-sales-based home-price index, methodologically different from Zillow's ZHVI (which this project already ingests via zillow_research.py) and with much longer history, so it's a genuine second opinion on neighborhood appreciation, not a duplicate of what's already there.",
+  "coverage": "national",
+  "granularity": "state, MSA, county, and census-tract files exist separately (the county and tract 'local HPI' files are experimental/annual, not the long-running quarterly state/MSA series)",
+  "update_frequency": "quarterly for the main state/MSA all-transactions index; the county/tract 'local HPI' files are annual",
+  "license": "Not fully confirmed — www.fhfa.gov could not be reached from this session (network policy; see note below). FHFA describes its indexes as 'the only public, freely available house price indexes' covering all 50 states, which reads as open, but no explicit public-domain statement was found in the time budget for this search. U.S. federal government work product is ordinarily public domain by default (17 U.S.C. §105), which would apply here, but that's an inference, not a confirmed read of FHFA's own terms page.",
+  "cost": "Free, no login found. Master dataset downloadable as CSV/JSON/XML/SQL per FHFA's datasets page. No API key needed for the standard quarterly state/MSA CSVs (unlike FRED/Census). The experimental county file is reportedly .xlsx, not CSV — would need an Excel parser, not a plain CSV read like this project's other sources.",
+  "history": "Quarterly US index back to 1975; state-level and MSA coverage starts later (varies by area, generally 1980s on); county/tract 'local HPI' files are a newer, shorter experimental series.",
+  "proposed_kind": "neighborhood (would need to be joined MSA/county -> NYC's 5 counties -> NTA the same way census_acs.py already does tract -> NTA; this adds no new geocoding problem for the NYC use case). For the US-wide goal, county-level is the natural level to carry across metros generalized to.",
+  "correlation": "not computed — app/research/evaluate_series.py does not exist yet. Note this candidate's own value is partly *as* a future benchmark/backtest input, not solely as a predictor to be benchmarked itself, so 'correlate it against FHFA HPI' doesn't apply (it would be the FHFA data).",
+  "recommendation": "recommend-with-caveats",
+  "recommendation_detail": "Rank #2. Strong case for closing the gap between what SKILL.md assumes exists (an FHFA benchmark) and what's actually in the codebase (none). Before implementing: (1) confirm the license/terms page directly once fhfa.gov is reachable, (2) decide whether to use the long-running quarterly state/MSA series (CSV, more history, coarser geography) or the annual county/tract 'local HPI' files (finer geography, shorter history, Excel format) — probably both, for different jobs (MSA series as backtest ground truth, county/tract as a possible extra neighborhood-growth metric). Needs www.fhfa.gov allowlisted to implement.",
+  "status": "proposed"
+}
