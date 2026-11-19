@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research candidate",
+  "description": "One evaluated data-source candidate from the research-sources skill. File name: research/candidates/<slug>.json",
+  "type": "object",
+  "required": [
+    "slug", "name", "url", "coverage", "granularity", "update_frequency",
+    "license", "cost", "auth", "history", "recommendation", "verdict", "evaluated_at"
+  ],
+  "properties": {
+    "slug": { "type": "string", "description": "Matches the file name and memo slug." },
+    "name": { "type": "string" },
+    "url": { "type": "string", "description": "Canonical docs/landing page, not a deep API endpoint." },
+    "coverage": { "type": "string", "description": "e.g. 'national', 'national, metro areas only', 'NYC only'." },
+    "granularity": { "type": "string", "description": "e.g. 'county', 'tract', 'ZCTA', 'metro/CBSA', 'national'." },
+    "update_frequency": { "type": "string" },
+    "license": { "type": "string", "description": "License/ToS summary; must note any clause blocking commercial/product use." },
+    "cost": { "type": "string", "description": "Must confirm actually free, not a trial, and any rate limit." },
+    "auth": { "type": "string", "description": "'none' or what's required, e.g. 'free registration key (like CENSUS_API_KEY)'." },
+    "history": { "type": "string", "description": "How far back the series goes; a backtest needs real depth." },
+    "correlation": {
+      "type": ["object", "null"],
+      "description": "Quantitative evaluation against FHFA HPI / Zillow ZORI, if app/research/evaluate_series.py exists and was run. Null if not computed, with a note why in recommendation."
+    },
+    "integration_notes": { "type": "string", "description": "How it would plug into sources.yaml / app/sources/, and what existing metric or hardcoded assumption it would replace or supplement." },
+    "recommendation": { "type": "string", "description": "One paragraph: recommend / don't recommend, and why." },
+    "verdict": { "type": "string", "enum": ["recommend", "conditional", "do_not_recommend"] },
+    "evaluated_at": { "type": "string", "format": "date" }
+  }
+}

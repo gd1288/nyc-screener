@@ -1,0 +1,17 @@
+{
+  "slug": "bls-qcew-county-employment",
+  "name": "BLS Quarterly Census of Employment and Wages (QCEW) - county employment and establishment counts",
+  "url": "https://www.bls.gov/cew/additional-resources/open-data/",
+  "coverage": "national (every county, state, and the US; also Puerto Rico/USVI)",
+  "granularity": "county (FIPS), with industry (NAICS) breakouts available per county",
+  "update_frequency": "quarterly, with roughly a 5-6 month publication lag (and BLS discontinued detailed MSA-level breakouts starting Q2 2025, now publishing MSA totals only - county-level detail is unaffected)",
+  "license": "Public domain US government statistical data; no registration-wall or commercial-use restriction found.",
+  "cost": "Free, no API key. BLS publishes the data as flat CSV/open-data files at a documented URL/directory convention (not a key-gated REST API) - unlimited since there's no quota, just the cost of downloading county-level files.",
+  "auth": "none",
+  "history": "County-level QCEW series go back to the 1990s depending on area; ample depth for a 10-year-growth backtest.",
+  "correlation": null,
+  "integration_notes": "Would be a new 'neighborhood' kind source (NAICS total covered employment + establishment counts by county -> apportioned to NTAs the same way CensusAcs splits tract data across NTAs, backend/app/sources/census_acs.py). Fills a real hole in the 'demographics' pillar, which today only has Census population/income/education/age (no employment-growth or jobs-density signal), and would generalize cleanly nationally since it's county-indexed everywhere, not an NYC-specific geography.",
+  "recommendation": "Conditional recommend. Employment growth is a standard, economically well-motivated leading indicator for housing demand, the series is genuinely free and national, and it would plug a real pillar gap. But it adds real implementation cost: data ships as large per-area CSV files (not a simple JSON query), and applying it to NYC's 5 counties needs a county-to-NTA population-weighted split like the existing census tract->NTA crosswalk, which is nontrivial glue code. It's also a lagging, not leading series in practice (5-6 month publication lag plus it's reporting what already happened), so it would mostly restate momentum the project's own backtest already found weak (DEFAULT_WEIGHTS momentum=5, see neighborhood.py). Worth a follow-up with evaluate_series.py once that exists to check actual lead-time correlation against FHFA HPI/ZORI before committing engineering time - don't build this on priors alone.",
+  "verdict": "conditional",
+  "evaluated_at": "2026-11-19"
+}

@@ -1,0 +1,17 @@
+{
+  "slug": "hud-fair-market-rents",
+  "name": "HUD Fair Market Rents (FMR) API",
+  "url": "https://www.huduser.gov/portal/datasets/fmr.html",
+  "coverage": "national (every metro area and every nonmetro county)",
+  "granularity": "metro/CBSA area or county (HUD publishes 'Small Area FMRs' at ZIP-code granularity for certain large metros, including New York, which is finer than the county/metro default)",
+  "update_frequency": "annual (new FY FMRs published each fall)",
+  "license": "Public-domain federal statistical data per HUD's API terms of service (huduser.gov/portal/dataset/api-terms-of-service.html); terms mainly restrict implying HUD endorsement of a product, not commercial/product use itself. Could not fetch the full terms text live to triple-check redistribution clauses - worth a quick confirm before building.",
+  "cost": "Free. Requires a free self-serve account and bearer token (huduser.gov/hudapi/public/register), no paid tier.",
+  "auth": "free registration key, sent as a bearer token header (same pattern as RENTCAST_API_KEY/CENSUS_API_KEY - a 'requires' entry, not a blocker)",
+  "history": "FMR series exist annually back to the 1980s; current-year snapshot is what matters most for this use since it's a rent-level estimate, not a growth series.",
+  "correlation": null,
+  "integration_notes": "Would supplement/cross-check gross_rent_yield (valuation pillar) and zori_cagr_3y (momentum pillar), both currently sourced only from Zillow Research data (app/sources/zillow_research.py). Zillow's ZORI only covers ~100 of the largest US metros, so outside NYC's current market, HUD FMR would be the only available rent signal at all once the area-model migration generalizes beyond NYC - this is squarely a 'national is preferred per the US-wide goal' candidate even though it adds little in NYC today (Zillow already covers all 5 boroughs here).",
+  "recommendation": "Conditional recommend, but sequence it after the area-model/US generalization work, not now. For NYC specifically it's largely redundant with the existing Zillow ZORI series this project already has rights to use and already pipes into zori_cagr_3y - implementing it today would mean maintaining two rent sources with no incremental NYC coverage. Its real value is as the rent-data fallback for any US metro Zillow doesn't cover, so it belongs on the backlog for whenever the screener actually expands past NYC, not as a near-term add.",
+  "verdict": "conditional",
+  "evaluated_at": "2026-11-19"
+}
