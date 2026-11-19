@@ -1,0 +1,17 @@
+{
+  "slug": "census-building-permits-survey",
+  "name": "Census Bureau Building Permits Survey (BPS)",
+  "url": "https://www.census.gov/construction/bps/",
+  "coverage": "national (state, CBSA/metro, county, and ~9,000 individual permit-issuing places)",
+  "granularity": "county or permit-issuing place (finer than NYC's current NTA geography in principle, via place-level files)",
+  "update_frequency": "monthly, with annual summary files",
+  "license": "Public-domain US government statistical data; no restriction found.",
+  "cost": "Free. No documented REST/JSON API was found under api.census.gov (the EITS timeseries API's closest match, 'resconst', covers the New Residential Construction release, a different product, not BPS). The real access path is bulk flat files served from www2.census.gov/econ/bps/ (fixed-width/CSV by month, no key) or HUD's SOCDS Building Permits database (socds.huduser.gov/permits), which has a query UI/export and goes back to 1997.",
+  "auth": "none",
+  "history": "Census.gov's own BPS files go back decades at state/metro level; SOCDS place-level monthly data goes back to January 1997 - solid depth for a permits-pipeline backtest.",
+  "correlation": null,
+  "integration_notes": "Directly relevant to the 'development' pillar, which today is built entirely from NYC-specific sources: DCP Housing Database and MIH rezonings (app/sources/development.py, both NYC Socrata endpoints). Neither generalizes past NYC. BPS is the natural national substitute/supplement for 'pipeline_units_pct' and 'new_units_5y_pct' once the area-model migration happens, since every US county/place reports to it.",
+  "recommendation": "Conditional recommend, same sequencing caveat as HUD FMR: it's the single most important source for making the development pillar work outside NYC at all, but there's no clean documented JSON API - it's bulk fixed-width/CSV files - so implementation cost is higher than a typical Socrata adapter, and for NYC today the existing DCP Housing Database is a richer, already-working NYC-specific source with pipeline/filed/approved/permitted stages BPS doesn't break out. Don't build this to improve NYC scores now; flag it as the pillar's path to national coverage and revisit when area-model generalization is actually underway.",
+  "verdict": "conditional",
+  "evaluated_at": "2026-11-19"
+}
