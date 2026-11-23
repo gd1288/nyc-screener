@@ -1,0 +1,20 @@
+{
+  "slug": "fhfa-house-price-index",
+  "name": "FHFA House Price Index (HPI)",
+  "publisher": "Federal Housing Finance Agency",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "measures": "Repeat-sales house price appreciation index (not a price level) built from conforming mortgage transactions, published at national/census-division/state/MSA/county/ZIP/tract levels.",
+  "coverage": "National, down to county and tract in some products.",
+  "granularity": "county",
+  "update_frequency": "quarterly (some products monthly)",
+  "history_start": "1975 nationally; state/MSA generally from the 1980s; county/tract vintages vary and can be shorter",
+  "cost": "free",
+  "login_required": false,
+  "license": "US federal agency data described as 'publicly available'; FHFA notes the HPI name itself is a registered trademark (branding protection only, not a reuse restriction on the underlying data). No explicit commercial-use prohibition found; worth a final confirmation against FHFA's terms-of-use page before shipping, since this run could not verify that page directly (network access to fhfa.gov was not reachable from this session).",
+  "rate_limit": "None — static file downloads.",
+  "proposed_use": "Either (a) a second, repeat-sales-based appreciation series to cross-check/backfill `zillow_research`'s ZHVI in counties where Zillow coverage is thin, or (b) the backtest benchmark the research-sources procedure itself calls for once `app/research/evaluate_series.py` exists (scoring correlation of candidate series against FHFA HPI growth).",
+  "correlation": null,
+  "recommendation": "conditional",
+  "recommendation_detail": "Technically solid and a natural complement to the existing Zillow-based appreciation signal, but its best role is ambiguous right now: as a growth-score input it's largely redundant with `zillow_research` (both measure home-price appreciation) in the markets the screener already covers well, and this project's own research procedure already names FHFA HPI as the intended *backtest benchmark* rather than a live input, which argues for building it alongside `app/research/evaluate_series.py` (not yet built) rather than as a standalone source today. Recommend revisiting once Phase 4 evaluation tooling exists, or if a specific county is found where Zillow coverage is too sparse to drive the Growth Score.",
+  "evaluated_date": "2026-11-23"
+}

@@ -1,0 +1,20 @@
+{
+  "slug": "census-building-permits-survey",
+  "name": "Building Permits Survey (BPS)",
+  "publisher": "U.S. Census Bureau",
+  "url": "https://www.census.gov/permits",
+  "measures": "New privately-owned residential housing units authorized by building permits (count, by structure size: 1-unit, 2-unit, 3-4 unit, 5+ unit), issued by permit-issuing jurisdictions and aggregated to county/CBSA/state/national.",
+  "coverage": "National — every US county containing a permit-issuing jurisdiction (~20,000 places), aggregated to ~900 counties monthly and essentially all counties annually.",
+  "granularity": "county",
+  "update_frequency": "monthly (county/CBSA/state/national monthly files); annual file has fuller county coverage",
+  "history_start": "varies by geography; county-level annual files available back to the 1980s, place-level further back",
+  "cost": "free",
+  "login_required": false,
+  "license": "US federal statistical publication, public domain, no registration or key required for the static download files at census.gov/permits.",
+  "rate_limit": "None — static file downloads.",
+  "proposed_use": "Generalizes `backend/app/sources/development.py`'s `HousingDatabase` (NYC DCP Housing Database — completions/pipeline by 2020 NTA) to any US county, which the project's own goal ('generalizing to any US neighborhood and property type') currently has no non-NYC equivalent for. Would feed the development/supply-pipeline pillar of the Growth Score outside NYC.",
+  "correlation": null,
+  "recommendation": "approve",
+  "recommendation_detail": "This is the strongest candidate for the project's explicit US-generalization goal: the current permit/pipeline signal is entirely NYC-specific (Socrata query against the DCP Housing Database), so any neighborhood outside NYC has no supply-pipeline input to the Growth Score at all. BPS is federal, free, no-login, monthly, and nationally comprehensive at the county level. The tradeoff is granularity — county, not neighborhood/tract — which is coarser than the NYC NTA-level signal it would sit alongside, but that's consistent with this project's own stated preference ('national is preferred... NYC-only is acceptable only for a clearly NYC-specific signal') and still meaningfully more granular than state or national.",
+  "evaluated_date": "2026-11-23"
+}

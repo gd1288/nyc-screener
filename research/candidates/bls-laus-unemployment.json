@@ -1,0 +1,20 @@
+{
+  "slug": "bls-laus-unemployment",
+  "name": "Local Area Unemployment Statistics (LAUS)",
+  "publisher": "U.S. Bureau of Labor Statistics",
+  "url": "https://download.bls.gov/pub/time.series/la/",
+  "measures": "Monthly labor force, employment, unemployment level and unemployment rate for ~8,300 areas including every US county, metro area, and state.",
+  "coverage": "National — all US counties, metro areas, and states.",
+  "granularity": "county",
+  "update_frequency": "monthly",
+  "history_start": "varies by area; many county series back to the early-to-mid 1990s",
+  "cost": "free",
+  "login_required": false,
+  "license": "US federal statistical publication, public domain. The bulk flat files at download.bls.gov require no account; a free API key is only needed for BLS's API v2 (higher query volume), not for this bulk download path.",
+  "rate_limit": "None on the bulk flat-file download used here.",
+  "proposed_use": "A local labor-market-health signal (unemployment rate level and trend) feeding the Growth Score as a leading indicator alongside Census ACS income/demographic data, available for any US county.",
+  "correlation": null,
+  "recommendation": "conditional",
+  "recommendation_detail": "Solid government source with full national county coverage and a long monthly history, but two practical frictions keep this at 'conditional' rather than 'approve': (1) the bulk files are fixed-width/pipe-delimited BLS 'time.series' format, not CSV, so the adapter needs a parser rather than a simple CSV reader (more adapter work than the other candidates here); (2) during the run, a source noted BLS canceled its October 2025 unemployment publication during a government shutdown, meaning the series can have unscheduled gaps that a consuming pipeline needs to tolerate. Worth building once a national labor-market pillar is prioritized, but it's more adapter effort than `fred-mortgage30us` or `census-building-permits-survey` for a less novel signal (Census ACS already carries some labor-force data).",
+  "evaluated_date": "2026-11-23"
+}
