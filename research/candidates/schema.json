@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data source research candidate",
+  "description": "One evaluated candidate from the research-sources procedure. Written to research/candidates/<slug>.json. See .claude/skills/research-sources/SKILL.md for the procedure that produces these.",
+  "type": "object",
+  "required": [
+    "slug", "name", "publisher", "url", "measures", "coverage", "granularity",
+    "update_frequency", "history_start", "cost", "login_required", "license",
+    "proposed_use", "correlation", "recommendation", "recommendation_detail",
+    "evaluated_date"
+  ],
+  "properties": {
+    "slug": {"type": "string", "description": "Matches the filename stem, e.g. 'fred-mortgage30us'."},
+    "name": {"type": "string", "description": "Human-readable series/dataset name."},
+    "publisher": {"type": "string", "description": "Issuing agency or organization, e.g. 'Federal Reserve Bank of St. Louis (FRED)'."},
+    "url": {"type": "string", "description": "Primary URL for the data (download page or direct file/API)."},
+    "measures": {"type": "string", "description": "What the series/dataset actually measures."},
+    "coverage": {"type": "string", "description": "Geographic/market coverage, e.g. 'National, all US counties'."},
+    "granularity": {"type": "string", "enum": ["national", "state", "msa", "county", "zcta", "tract", "place", "other"]},
+    "update_frequency": {"type": "string", "description": "e.g. 'weekly', 'monthly', 'quarterly', 'annual'."},
+    "history_start": {"type": "string", "description": "Earliest available observation, e.g. '1971' or 'varies by geography'."},
+    "cost": {"type": "string", "enum": ["free", "free_with_limits", "paid"]},
+    "login_required": {"type": "boolean", "description": "Whether any account/signup is needed for the access path actually proposed (not necessarily every access path the publisher offers)."},
+    "license": {"type": "string", "description": "License/ToS summary, including any citation or redistribution requirements."},
+    "rate_limit": {"type": "string", "description": "Any request/row limits on the proposed access path, if applicable."},
+    "proposed_use": {"type": "string", "description": "Where this would plug into the screener: which scoring pillar, assumption, or display field."},
+    "correlation": {
+      "type": ["object", "null"],
+      "description": "Quantitative evaluation vs FHFA HPI growth / Zillow ZORI, if app/research/evaluate_series.py exists and was run. Null if that tooling doesn't exist yet (qualitative evaluation only).",
+      "properties": {
+        "benchmark": {"type": "string"},
+        "regions_tested": {"type": "array", "items": {"type": "string"}},
+        "correlation_coefficient": {"type": "number"},
+        "lead_lag_months": {"type": "number"}
+      }
+    },
+    "recommendation": {"type": "string", "enum": ["approve", "conditional", "reject"]},
+    "recommendation_detail": {"type": "string", "description": "One-paragraph recommend/don't-recommend rationale."},
+    "evaluated_date": {"type": "string", "format": "date"}
+  }
+}

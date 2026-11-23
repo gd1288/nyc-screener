@@ -1,0 +1,20 @@
+{
+  "slug": "fred-mortgage30us",
+  "name": "30-Year Fixed Rate Mortgage Average in the United States (MORTGAGE30US)",
+  "publisher": "Freddie Mac Primary Mortgage Market Survey, distributed via FRED (Federal Reserve Bank of St. Louis)",
+  "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=MORTGAGE30US",
+  "measures": "National average commitment rate for a 30-year fixed-rate conventional mortgage, including average fees and points.",
+  "coverage": "National (single US-wide series, not broken out by geography).",
+  "granularity": "national",
+  "update_frequency": "weekly",
+  "history_start": "1971",
+  "cost": "free",
+  "login_required": false,
+  "license": "Published federal statistical series; FRED requires citing Freddie Mac and FRED/St. Louis Fed in reuse but places no paywall or login on the CSV export endpoint.",
+  "rate_limit": "None observed on the plain CSV export; FRED's programmatic API (a separate access path, not the one proposed here) requires a free API key for higher-volume use, but is not needed for a single series fetched periodically.",
+  "proposed_use": "Replace the hardcoded `interest_rate: float = 0.065` default in `backend/app/scoring/investment.py`'s `Assumptions` dataclass with the latest observed (or a trailing average of) this series, so per-property return projections use the real prevailing financing cost instead of a frozen constant that will silently go stale.",
+  "correlation": null,
+  "recommendation": "approve",
+  "recommendation_detail": "This is the clearest and lowest-risk candidate found this run: it does not add a new scoring signal, it fixes an assumption that is already live in the investment math (`investment.py` line 21) and currently never updates. The series is free, no-login, weekly, has 50+ years of history (ample for any backtest), and is a standard reference rate with no ambiguity about what it measures. The only caveat is a Freddie Mac PMMS methodology change on 2022-11-17 that breaks strict pre/post comparability in the series — irrelevant for using the latest value as a live input, but worth a one-line comment if the series is ever used historically.",
+  "evaluated_date": "2026-11-23"
+}

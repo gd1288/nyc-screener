@@ -1,0 +1,20 @@
+{
+  "slug": "hud-fair-market-rents",
+  "name": "Fair Market Rents (FMR)",
+  "publisher": "U.S. Department of Housing and Urban Development (HUD USER)",
+  "url": "https://www.huduser.gov/portal/datasets/fmr.html",
+  "measures": "HUD's administrative estimate of gross rent (rent + utilities) at roughly the 40th percentile of a local rental market, by bedroom count, used to set Section 8 payment standards.",
+  "coverage": "National — all US metro areas and non-metro counties.",
+  "granularity": "county",
+  "update_frequency": "annual",
+  "history_start": "1983 (a standing 'FMR History 1983-Present' file is published), though the all-bedroom breakout was only confirmed on an archived version of the page, not the current one",
+  "cost": "free",
+  "login_required": false,
+  "license": "US federal agency publication; the static history/current-year files on huduser.gov need no account. Note: HUD's separate FMR *API* does require creating an account and an access token — the proposed access path here is the plain file download, not the API, to avoid that login wall.",
+  "rate_limit": "None — static file downloads.",
+  "proposed_use": "A second, administrative rent-level benchmark (vs. `zillow_research`'s ZORI) by county, most useful as a fallback in smaller markets where Zillow's rent index has thin or no coverage.",
+  "recommendation": "conditional",
+  "recommendation_detail": "Free, no-login, and nationally comprehensive, which fits this project's county-generalization goal, but it's a weaker candidate than the others this run for two reasons: it's annual (coarser cadence than ZORI or the mortgage/permit candidates), and in the markets this screener currently serves well (NYC, and generally larger metros) Zillow ZORI already covers the same ground, so the marginal value is concentrated in exactly the smaller/thinner markets this project hasn't prioritized yet. Worth building if/when the project expands into markets where Zillow rent coverage is known to be sparse, not as a near-term priority.",
+  "correlation": null,
+  "evaluated_date": "2026-11-23"
+}
