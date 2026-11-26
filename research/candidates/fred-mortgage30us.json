@@ -1,0 +1,21 @@
+{
+  "slug": "fred-mortgage30us",
+  "name": "FRED: 30-Year Fixed Rate Mortgage Average in the United States (MORTGAGE30US)",
+  "url": "https://fred.stlouisfed.org/series/MORTGAGE30US",
+  "coverage": "national",
+  "granularity": "national (single series; no metro/state breakout)",
+  "update_frequency": "weekly",
+  "history_start": "1971-04",
+  "license": "Sourced from Freddie Mac's Primary Mortgage Market Survey via FRED; FRED's own series pages note the underlying data are copyrighted by the submitting source (Freddie Mac) and should be redistributed 'as is' with attribution, not resold as a dataset. Fine for reading a single current value into an internal calculation; cite Freddie Mac/FRED if the number is ever shown in the UI.",
+  "cost": "free",
+  "auth": "none",
+  "fits_existing_adapter": null,
+  "replaces_hardcoded_assumption": "app.scoring.investment.Assumptions.interest_rate (currently a flat 0.065 default for every projection)",
+  "correlation": {
+    "computed": false,
+    "note": "Not a correlation candidate in the usual sense (it's a financing-cost input, not a predictor of appreciation). Evaluation here is about data quality/availability, which is confirmed: a plain CSV fetch with no key, same shape as the existing zillow_research.py pattern."
+  },
+  "recommendation": "recommend",
+  "recommendation_summary": "The project currently hardcodes interest_rate=0.065 in every investment projection regardless of when the user runs the screener; 30-year rates have ranged roughly 6-8% over the last two years, so a stale hardcoded value silently skews every IRR/cash-flow projection. MORTGAGE30US is documented (by FRED's own graph-download help pages and by third-party tooling that uses this exact URL) as downloadable with no API key at https://fred.stlouisfed.org/graph/fredgraph.csv?id=MORTGAGE30US — the same no-login CSV-fetch shape the Zillow adapter already uses, weekly, back to 1971. Not independently fetched this run: a direct curl to fred.stlouisfed.org from this session was rejected by this environment's egress proxy with a 403 ('no rule or network setting allows this host'), which is this environment's policy, not evidence against the endpoint — confirm reachability once implementation work actually needs the host allowed. The one wrinkle is architectural, not data quality: this is a single national scalar, not a per-neighborhood NeighborhoodMetric, so it doesn't fit the existing 'kind: neighborhood' Source contract cleanly — it would need a small new storage spot (e.g. a one-row settings/assumptions table or a 'kind: macro' Source) rather than reusing write_metrics. Flagging that for whoever picks this up; it's a real but small design decision, not a reason to reject the source.",
+  "evaluated_at": "2026-11-26"
+}

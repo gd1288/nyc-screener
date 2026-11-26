@@ -1,0 +1,21 @@
+{
+  "slug": "hud-small-area-fmr",
+  "name": "HUD Small Area Fair Market Rents (SAFMR)",
+  "url": "https://www.huduser.gov/portal/datasets/fmr.html",
+  "coverage": "national",
+  "granularity": "ZIP (ZCTA) within designated metro areas; county/CBSA-level FMR elsewhere (the exact count/list of SAFMR-designated metros was not confirmed this run — check huduser.gov's current SAFMR area list before implementing)",
+  "update_frequency": "annual (new fiscal-year file each Oct)",
+  "history_start": "FMR bulk files available back to the early 2000s; SAFMR (ZIP-level) file history not confirmed this run — verify the earliest available SAFMR fiscal year on huduser.gov",
+  "license": "US federal government data, public domain",
+  "cost": "free",
+  "auth": "free_registration",
+  "fits_existing_adapter": null,
+  "replaces_hardcoded_assumption": null,
+  "correlation": {
+    "computed": false,
+    "note": "Not run; would be worth checking SAFMR vs. Zillow ZORI agreement in NYC NTAs where both exist before trusting SAFMR numbers elsewhere."
+  },
+  "recommendation": "recommend",
+  "recommendation_summary": "The project's only rent series today is Zillow ZORI, which has patchy coverage once you leave large metros, working against the stated any-US-neighborhood goal. HUD SAFMR gives a federally computed rent-by-bedroom-count figure for every ZIP in its designated metro areas (plus a coarser county/CBSA figure everywhere else), updated yearly, and is explicitly designed to be comparable across markets since it drives Section 8 payment standards nationwide. Access needs a free bearer token from huduser.gov (a short registration form, not a login wall or paid tier), which fits the project's 'no-login' preference loosely but not literally — worth confirming that's acceptable before implementing, since census_acs.py already tolerates a similar free-key pattern via CENSUS_API_KEY. Important caveat not fully explored this run: FMRs are set at roughly the 40th percentile of gross rent (rent plus utilities) for the area, a deliberately below-median figure for voucher-payment purposes, so raw FMR values likely run below market asking rent for condos specifically — any comparison against ZORI needs that adjustment made explicit, not treated as an apples-to-apples number. Net value: cross-checks/backfills ZORI rather than replacing it, most useful for non-NYC rollout.",
+  "evaluated_at": "2026-11-26"
+}

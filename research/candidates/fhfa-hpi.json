@@ -1,0 +1,21 @@
+{
+  "slug": "fhfa-hpi",
+  "name": "FHFA House Price Index (HPI), MSA-level, purchase-only, NSA",
+  "url": "https://www.fhfa.gov/data/hpi/datasets",
+  "coverage": "national",
+  "granularity": "MSA/state/national (quarterly, authoritative); a separate annual tract-level 'developmental' HPI also exists, mapping to NTA via the same tract-to-NTA crosswalk census_acs.py already uses, but FHFA itself labels this tier experimental",
+  "update_frequency": "quarterly",
+  "history_start": "1975 (MSA series)",
+  "license": "US federal government data, public domain; FHFA cautions to confirm links use https",
+  "cost": "free",
+  "auth": "none",
+  "fits_existing_adapter": null,
+  "replaces_hardcoded_assumption": null,
+  "correlation": {
+    "computed": false,
+    "note": "Intended use is as an independent backtest benchmark, not a neighborhood metric; evaluate_series.py (Phase 4) doesn't exist yet so no lead/lag vs. the Growth Score was computed this pass."
+  },
+  "recommendation": "do_not_recommend",
+  "recommendation_summary": "This research-sources skill's own evaluation step names 'FHFA tract HPI growth' as a backtest benchmark, so the right product to weigh is the tract-level developmental index, not the quarterly MSA series (an earlier pass of this memo mistakenly argued against the wrong one — the tract product does map to NTA via the same crosswalk census_acs.py already uses, so granularity is not actually the problem). The real issue is that FHFA itself labels the tract/developmental tier experimental, is only published annually (vs. the fully-vetted MSA series' quarterly cadence), and its only use in this project per the skill is as a backtest-validation input, not a Growth Score signal — it has nothing to contribute until app/research/evaluate_series.py (Phase 4) exists to consume it. The project's existing backtest ground truth (DOF condo sales plus Zillow ZHVI at ZIP/NTA) is already finer and production-grade. Net: not worth building now, specifically because there's no consumer for it yet and the only NTA-level version of this data is FHFA's own experimental tier — revisit once Phase 4 backtest infrastructure exists and needs a second, independent benchmark.",
+  "evaluated_at": "2026-11-26"
+}
