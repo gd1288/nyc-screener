@@ -1,0 +1,21 @@
+{
+  "slug": "census-acs-vacancy-rate",
+  "name": "Census ACS 5-Year: Vacancy Status (tables B25002/B25004)",
+  "url": "https://api.census.gov/data/2023/acs/acs5/groups/B25002.html",
+  "coverage": "national",
+  "granularity": "tract (aggregated to NTA by the existing adapter)",
+  "update_frequency": "annual (5-year release)",
+  "history_start": "2009 (5-year ACS)",
+  "license": "US Census Bureau public data, no restrictions on reuse",
+  "cost": "free",
+  "auth": "free_registration",
+  "fits_existing_adapter": "backend/app/sources/census_acs.py",
+  "replaces_hardcoded_assumption": "app.scoring.investment.Assumptions.vacancy_pct (currently a flat 0.05 for every property/neighborhood)",
+  "correlation": {
+    "computed": false,
+    "note": "app/research/evaluate_series.py (Phase 4) doesn't exist yet in this repo, so no quantitative lead/lag or correlation check was run this pass. The case here rests on directly replacing a hardcoded constant with a real, neighborhood-varying measurement, which is independently verifiable (sanity-check against known high-vacancy vs low-vacancy NYC neighborhoods once loaded)."
+  },
+  "recommendation": "recommend",
+  "recommendation_summary": "census_acs.py already pulls ACS variables by tract and aggregates to NTA using the same CENSUS_API_KEY and tract-relationship machinery this needs; adding a couple of variables to the VARS dict is a small diff to an adapter that already exists, not a new Source. It replaces investment.py's hardcoded vacancy_pct=0.05 — applied identically to every property today — with an actual per-neighborhood rental vacancy rate, and because ACS is national, it works for the project's any-US-neighborhood goal without extra code. Formula matters here: the correct rental vacancy rate is B25004_002E / (B25003_003E + B25004_002E + B25004_003E) — for-rent-vacant divided by (renter-occupied + for-rent-vacant + rented-but-not-occupied) — the standard ACS/DP04 definition. B25003_003E ('renters') is already in census_acs.py's VARS. A naive vacant/total-units formula (e.g. B25002_003E/B25002_001E, or even B25004_002E/B25002_001E) divides by all housing units including owner-occupied, which understates rental vacancy badly in owner-heavy neighborhoods.",
+  "evaluated_at": "2026-11-26"
+}

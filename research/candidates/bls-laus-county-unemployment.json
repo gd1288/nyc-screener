@@ -1,0 +1,21 @@
+{
+  "slug": "bls-laus-county-unemployment",
+  "name": "BLS Local Area Unemployment Statistics (LAUS), county-level",
+  "url": "https://www.bls.gov/lau/",
+  "coverage": "national",
+  "granularity": "county (NYC = 5 counties/boroughs; no finer breakdown)",
+  "update_frequency": "monthly, with an annual benchmark revision",
+  "history_start": "1990 (monthly county data)",
+  "license": "US federal government data, public domain",
+  "cost": "free",
+  "auth": "none",
+  "fits_existing_adapter": null,
+  "replaces_hardcoded_assumption": null,
+  "correlation": {
+    "computed": false,
+    "note": "Not computed. BLS itself canceled at least one recent month's release during a government shutdown (Oct 2025 per BLS/state labor-agency notices), which should be checked for recurrence before depending on monthly cadence."
+  },
+  "recommendation": "do_not_recommend",
+  "recommendation_summary": "The public v1 API needs no key (25 series/query, 25 queries/day, 10 years of history per request) and would be easy to wire up, and employment growth is a plausible Growth Score input. But county is the finest granularity BLS publishes for both LAUS and its establishment-level QCEW program (QCEW does not go to ZIP level, correcting an earlier pass of this memo) — and NYC's five counties are the five boroughs, so it can't distinguish neighborhoods within a borough at all. That's a much coarser signal than every other metric already in the Growth Score (NTA-level housing pipeline, transit, crime, ACS income/education); it would functionally be a single number repeated across dozens of NTAs per borough. A genuinely finer-grained employment proxy would have to come from a different source entirely, such as Census ZIP Code Business Patterns (ZBP) — establishment and employment counts by ZIP, from Census rather than BLS — which this research pass did not have search budget left to evaluate. Given the project is actively building out NTA-granularity signals, county-level LAUS on its own is a weak addition; worth reconsidering alongside ZBP or another sub-county source in a future pass.",
+  "evaluated_at": "2026-11-26"
+}

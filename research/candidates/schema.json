@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Data source research candidate",
+  "description": "One entry per candidate evaluated by the research-sources skill. File name is research/candidates/<slug>.json.",
+  "type": "object",
+  "required": [
+    "slug", "name", "url", "coverage", "granularity", "update_frequency",
+    "history_start", "license", "cost", "auth", "recommendation", "evaluated_at"
+  ],
+  "properties": {
+    "slug": {"type": "string", "description": "Matches the filename stem and the memo filename suffix."},
+    "name": {"type": "string"},
+    "url": {"type": "string", "format": "uri", "description": "Primary docs or download page."},
+    "coverage": {"type": "string", "enum": ["national", "nyc_only", "metro_only"]},
+    "granularity": {"type": "string", "description": "e.g. tract, zcta, county, msa, national."},
+    "update_frequency": {"type": "string"},
+    "history_start": {"type": "string", "description": "Earliest available period, e.g. '1971-04' or '2010'."},
+    "license": {"type": "string", "description": "License/ToS summary; note any commercial-use or login restriction."},
+    "cost": {"type": "string", "enum": ["free"], "description": "Only 'free' candidates are proposed; note rate limits in notes."},
+    "auth": {"type": "string", "enum": ["none", "free_registration"], "description": "Whether a key/token is needed, even if free."},
+    "fits_existing_adapter": {"type": ["string", "null"], "description": "Path of an existing adapter this could extend instead of a new Source subclass."},
+    "replaces_hardcoded_assumption": {"type": ["string", "null"], "description": "Dotted name of a hardcoded constant this would feed instead, if any."},
+    "correlation": {
+      "type": ["object", "null"],
+      "description": "Output of app/research/evaluate_series.py, if it exists and was run.",
+      "properties": {
+        "computed": {"type": "boolean"},
+        "note": {"type": "string"}
+      }
+    },
+    "recommendation": {"type": "string", "enum": ["recommend", "do_not_recommend"]},
+    "recommendation_summary": {"type": "string", "description": "One paragraph."},
+    "evaluated_at": {"type": "string", "format": "date"}
+  }
+}
